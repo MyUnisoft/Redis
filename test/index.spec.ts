@@ -2,7 +2,7 @@
 import { initRedis, closeRedis, getConnectionPerf } from "../src/index";
 
 beforeAll(async() => {
-  await initRedis({ port: 6379 } as any);
+  await initRedis({ port: process.env.REDIS_PORT } as any);
 });
 
 describe("getConnectionPerf", () => {

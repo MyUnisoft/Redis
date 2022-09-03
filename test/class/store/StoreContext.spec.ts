@@ -17,7 +17,7 @@ let sessionContext: StoreContext;
 const kDefaultCookieOptions = { sameSite: "none", secure: true };
 
 beforeAll(async() => {
-  await initRedis({ port: 6379 } as any);
+  await initRedis({ port: process.env.REDIS_PORT } as any);
   await clearAllKeys();
 });
 
