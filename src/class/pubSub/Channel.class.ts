@@ -9,15 +9,20 @@ export interface ChannelOptions {
   prefix?: string;
 }
 
-export interface PublishOptions<T> {
+export interface Message {
   event: string;
   data: any;
-  metadata: T;
 }
 
-export class Channel<T = Record<string, any> | void> {
-  protected name: string;
-  protected prefix: string;
+export type MessageWithMetadata<T> = Message & {
+  metadata: T;
+};
+
+export type PublishOptions<T> = T extends Record<string, any> ? MessageWithMetadata<T> : Message;
+
+export class Channel<T = void> {
+  readonly name: string;
+  readonly prefix: string;
 
   constructor(options: ChannelOptions, redis?: Redis) {
     if (redis) {
@@ -36,6 +41,6 @@ export class Channel<T = Record<string, any> | void> {
   }
 
   public async publish(options: PublishOptions<T>) {
-    await this.redis.publish(this.prefix + this.name, JSON.stringify(options));
+    await this.redis.publish(`${this.prefix ? `${this.prefix}-` : ""}` + this.name, JSON.stringify(options));
   }
 }
