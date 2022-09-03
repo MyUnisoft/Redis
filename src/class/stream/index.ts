@@ -1,3 +1,3 @@
-export * as Stream from "./Stream.class";
-export * as Interpersonal from "./Interpersonal.class";
-export * as Intrapersonal from "./Intrapersonal.class";
+export * from "./Stream.class";
+export * from "./Interpersonal.class";
+export * from "./Intrapersonal.class";

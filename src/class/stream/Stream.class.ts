@@ -260,6 +260,3 @@ export class Stream extends EventEmitter {
       );
   }
 }
-
-export * as Interpersonal from "./Interpersonal.class";
-export * as Intrapersonal from "./Intrapersonal.class";
