@@ -39,7 +39,6 @@
   },
   "dependencies": {
     "@lukeed/uuid": "^2.0.0",
-    "@myunisoft/events": "^1.2.1",
     "dayjs": "^1.10.7",
     "ioredis": "^5.0.5",
     "lodash.isempty": "^4.4.0"
