@@ -82,8 +82,7 @@ describe("Channel", () => {
 
     test("channel should be instance of Channel", async() => {
       expect(channel).toBeInstanceOf(Channel);
-      expect(channel.name).toBe(name);
-      expect(channel.prefix).toBe(prefix);
+      expect(channel.name).toBe(prefixedName);
     });
 
     test(`WHEN calling publish,
