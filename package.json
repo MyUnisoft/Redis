@@ -10,16 +10,23 @@
     "test:watch": "jest --watchAll",
     "test": "jest"
   },
-  "keywords": [],
   "author": "Hallaert Nicolas <hallaert.nicolas.pro@gmail.com>",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "files": [
     "dist"
   ],
   "bugs": {
-    "url": "https://gitlab.com/myunisoft/back/redis/issues"
+    "url": "https://github.com/Rossb0b/Redis/issues"
   },
-  "homepage": "https://gitlab.com/myunisoft/back/redis#readme",
+  "homepage": "https://github.com/Rossb0b/Redis#readme",
+  "keywords": [
+    "node",
+    "redis",
+    "session",
+    "store",
+    "stream",
+    "pubsub"
+  ],
   "devDependencies": {
     "@types/jest": "^27.0.2",
     "@types/node": "^16.10.2",
