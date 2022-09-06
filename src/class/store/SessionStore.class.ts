@@ -27,7 +27,7 @@ export class SessionStore<T extends object> extends KVPeer<T> {
     this.randomKeyGenerator = options?.randomKeyCallback ?? kDefaultRandomKeyGenerator;
   }
 
-  async setValue(value: Partial<T>, key?: KeyType): Promise<KeyType> {
+  async setValue(value: T, key?: KeyType): Promise<KeyType> {
     const finalKey = key ?? this.randomKeyGenerator();
 
     await super.setValue(value, finalKey, this.ttl);

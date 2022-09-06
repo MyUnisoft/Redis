@@ -14,7 +14,7 @@ const kBanTimeInSecond = 60 * 5;
 * @class RestrictedKV
 * @classdesc Implementation to prevent brute force attacks.
 */
-export class RestrictedKV extends KVPeer<Attempt> {
+export class RestrictedKV extends KVPeer<Partial<Attempt>> {
   private autoClearInterval;
 
   static getDefaultAttempt() {

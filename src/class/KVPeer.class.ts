@@ -14,6 +14,16 @@ type ValueType = string | Buffer | number | any[];
 
 export type KeyType = string | Buffer;
 
+export interface KVOptions<T> {
+  prefix?: string;
+  type?: KVType;
+  mapValue?: KVMapper<T>;
+}
+
+export type KVMapper<T> = (value: any) => T;
+
+export type KVType = "raw" | "object";
+
 /**
 * @class KVPeer
 * @extends EventEmitter
@@ -24,22 +34,26 @@ export type KeyType = string | Buffer;
 *
 * @example
 * new KVPeer();
-* new KVPeer({ prefix: "myPrefix-" });
+* new KVPeer({ prefix: "myPrefix" });
 */
-export class KVPeer<T = string> extends EventEmitter {
+export class KVPeer<T = string | Record<string, any>> extends EventEmitter {
   protected prefix: string;
+  protected prefixedName: string;
   protected type: KVType;
   protected mapValue: KVMapper<T>;
 
   constructor(options: KVOptions<T> = {}, redis?: Redis) {
     super();
 
+    const { prefix, type, mapValue } = options;
+
     if (redis) {
       this.redis = redis;
     }
-    this.prefix = options?.prefix ?? "";
-    this.type = options?.type ?? kDefaultKVType;
-    this.mapValue = options?.mapValue ?? ((value) => value);
+
+    this.prefix = prefix ? `${prefix}-` : "";
+    this.type = type ?? kDefaultKVType;
+    this.mapValue = mapValue ?? ((value) => value);
   }
 
   set redis(extInstance: Redis) {
@@ -50,7 +64,7 @@ export class KVPeer<T = string> extends EventEmitter {
     return getRedis();
   }
 
-  async setValue(value: Partial<T>, key: KeyType, expiresIn?: number): Promise<KeyType> {
+  async setValue(value: T, key: KeyType, expiresIn?: number): Promise<KeyType> {
     const finalKey = typeof key === "object" ? Buffer.from(this.prefix + key) : this.prefix + key;
     const multiRedis = this.redis.multi();
 
@@ -59,7 +73,7 @@ export class KVPeer<T = string> extends EventEmitter {
       multiRedis.set(finalKey, payload);
     }
     else {
-      const propsMap = new Map(Object.entries(value)) as Map<string, ValueType>;
+      const propsMap = new Map(Object.entries(value as Record<string, any>)) as Map<string, ValueType>;
       multiRedis.hmset(finalKey, propsMap);
     }
 
@@ -92,14 +106,3 @@ export class KVPeer<T = string> extends EventEmitter {
     return this.redis.del(finalKey);
   }
 }
-
-// TYPES & INTERFACES
-export interface KVOptions<T> {
-  prefix?: string;
-  type?: KVType;
-  mapValue?: KVMapper<T>;
-}
-
-export type KVMapper<T> = (value: any) => T;
-
-export type KVType = "raw" | "object";

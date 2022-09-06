@@ -103,7 +103,7 @@ export class StoreContext<T extends Store = Store> extends SessionStore<T> {
   * @param ctx - http context object.
   * @param payload - the new property to assign at the session
   */
-  async updateSession(ctx: FrameworkContext, payload: Partial<T>) {
+  async updateSession(ctx: FrameworkContext, payload: T) {
     const sessionId = this.getSessionId(ctx);
 
     await this.setValue(payload, sessionId);
@@ -135,7 +135,7 @@ export class StoreContext<T extends Store = Store> extends SessionStore<T> {
       initSession: (id: string, payload: T) => this.initSession(id, ctx, payload),
       destroySession: () => this.destroySession(ctx),
       getSession: () => this.getSession(ctx),
-      updateSession: (payload: Partial<T>) => this.updateSession(ctx, payload),
+      updateSession: (payload: T) => this.updateSession(ctx, payload),
       isUserAuthenticated: () => this.isUserAuthenticated(ctx)
     };
   }

@@ -34,12 +34,12 @@ describe("setValue() suite", () => {
   });
 
   it("should correctly set a string for 'raw' type and return the inserted key name", () => {
-    const prefix = "prefix-";
+    const prefix = "prefix";
     kvPeer = new KVPeer({ prefix });
     const key = randomValue();
 
     expect(kvPeer.setValue(randomValue(), key))
-      .resolves.toBe(`${prefix}${key}`);
+      .resolves.toBe(`${prefix}-${key}`);
   });
 
   it("should correctly set a string for 'raw' type and return the inserted key name WITHOUT PREFIX", () => {
