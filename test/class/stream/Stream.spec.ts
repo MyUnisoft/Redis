@@ -9,7 +9,7 @@ import { randomValue } from "../../fixtures/utils/randomValue";
 import { Entry } from "../../../src/types/index";
 
 // CONSTANTS
-let redisStream: Stream;
+let stream: Stream;
 const kStreamName = randomValue();
 const entries: string[] = [];
 const kLength = 10;
@@ -19,19 +19,19 @@ const kFrequency = 3000;
 describe("RedisStream instance", () => {
   beforeAll(async() => {
     await initRedis({ port: process.env.REDIS_PORT } as any);
-    redisStream = new Stream({ streamName: kStreamName, lastId: "0-0", frequency: kFrequency });
+    stream = new Stream({ streamName: kStreamName, lastId: "0-0", frequency: kFrequency });
 
-    const streamExist = await redisStream.streamExist();
+    const streamExist = await stream.streamExist();
 
     if (!streamExist) {
-      await redisStream.init();
+      await stream.init();
     }
 
-    expect(await redisStream.streamExist()).toBe(true);
+    expect(await stream.streamExist()).toBe(true);
 
 
     for (let index = 0; index < kLength; index++) {
-      const entryId = await redisStream.push({ foo: "bar" }, { metadata: "fake-metadata" });
+      const entryId = await stream.push({ foo: "bar" }, { metadata: "fake-metadata" });
 
       if (typeof entryId === "string") {
         entries.push(entryId);
@@ -40,8 +40,8 @@ describe("RedisStream instance", () => {
   });
 
   test("should instantiate with differents options in constructor", () => {
-    expect(redisStream).toBeInstanceOf(Stream);
-    expect(redisStream).toBeInstanceOf(EventEmitter);
+    expect(stream).toBeInstanceOf(Stream);
+    expect(stream).toBeInstanceOf(EventEmitter);
   });
 
   describe("Push", () => {
@@ -49,9 +49,9 @@ describe("RedisStream instance", () => {
         WHEN calling push
         THEN it should return a String`,
     async() => {
-      const entryId = await redisStream.push({ foo: "bar" }, {});
+      const entryId = await stream.push({ foo: "bar" }, {});
 
-      await redisStream.delEntry(entryId);
+      await stream.delEntry(entryId);
 
       expect(typeof entryId).toStrictEqual("string");
     });
@@ -65,12 +65,12 @@ describe("RedisStream instance", () => {
         isTrue: true,
         number: 20
       };
-      const entryId = await redisStream.push({
+      const entryId = await stream.push({
           key: "foo",
           value: Buffer.from(JSON.stringify(fakePayload))
         }, {});
 
-      await redisStream.delEntry(entryId);
+      await stream.delEntry(entryId);
 
       expect(typeof entryId).toStrictEqual("string");
     });
@@ -79,9 +79,9 @@ describe("RedisStream instance", () => {
         WHEN calling push
         THEN it should return a String`,
     async() => {
-      const entryId = await redisStream.push({ key: "foo", value: 20 }, {});
+      const entryId = await stream.push({ key: "foo", value: 20 }, {});
 
-      await redisStream.delEntry(entryId);
+      await stream.delEntry(entryId);
 
       expect(typeof entryId).toStrictEqual("string");
     });
@@ -90,9 +90,9 @@ describe("RedisStream instance", () => {
           WHEN calling push
           THEN it should push it with the custom ID & a timestamp`,
     async() => {
-      const entryId = await redisStream.push({ foo: "bar" }, { metadata: "fake_memberGroup_id_postUrl" });
+      const entryId = await stream.push({ foo: "bar" }, { metadata: "fake_memberGroup_id_postUrl" });
 
-      await redisStream.delEntry(entryId);
+      await stream.delEntry(entryId);
 
       expect(typeof entryId).toStrictEqual("string");
     });
@@ -104,7 +104,7 @@ describe("RedisStream instance", () => {
       const alreadyUsedId = entries[0];
 
       try {
-        await redisStream.push({ foo: "bar" }, { id: alreadyUsedId });
+        await stream.push({ foo: "bar" }, { id: alreadyUsedId });
       }
       catch (error) {
         expect(error.message)
@@ -121,7 +121,7 @@ describe("RedisStream instance", () => {
       const id = "00";
 
       try {
-        await redisStream.delEntry(id);
+        await stream.delEntry(id);
       }
       catch (error) {
         expect(error.message).toStrictEqual(`Failed entry deletion for ${id}`);
@@ -134,7 +134,7 @@ describe("RedisStream instance", () => {
           WHEN calling getRange
           THEN it should return all entries`,
     async() => {
-      const foundEntries = await redisStream.getRange();
+      const foundEntries = await stream.getRange();
 
       expect(foundEntries.length).toBe(kLength);
     });
@@ -151,11 +151,11 @@ describe("RedisStream instance", () => {
 
       let foundEntries: Entry[] = [];
 
-      foundEntries = await redisStream.getRange(options);
+      foundEntries = await stream.getRange(options);
       expect(foundEntries.length).toBeLessThanOrEqual(options.count);
 
       options.count = 12;
-      foundEntries = await redisStream.getRange(options);
+      foundEntries = await stream.getRange(options);
       expect(foundEntries.length).toBeLessThanOrEqual(options.count);
     });
 
@@ -168,7 +168,7 @@ describe("RedisStream instance", () => {
         max: entries[0]
       };
 
-      const entry = await redisStream.getRange(options);
+      const entry = await stream.getRange(options);
       expect(entry[0].id).toBe(entries[0]);
     });
 
@@ -183,7 +183,7 @@ describe("RedisStream instance", () => {
         count: 2
       };
 
-      const foundEntries = await redisStream.getRange(options);
+      const foundEntries = await stream.getRange(options);
 
       expect(
         Number(foundEntries[0].id.replace(
@@ -204,7 +204,7 @@ describe("RedisStream instance", () => {
         count: 2
       };
 
-      const foundEntries = await redisStream.getRange(options);
+      const foundEntries = await stream.getRange(options);
 
       expect(
         Number(foundEntries[0].id.replace(
@@ -219,7 +219,7 @@ describe("RedisStream instance", () => {
           WHEN calling getRevRange
           THEN it should return all entries but in reverse order`,
     async() => {
-      const foundEntries = await redisStream.getRevRange();
+      const foundEntries = await stream.getRevRange();
 
       expect(foundEntries.length).toBe(kLength);
       expect(foundEntries[0].id).toBe(entries[9]);
@@ -237,11 +237,11 @@ describe("RedisStream instance", () => {
 
       let foundEntries: Entry[] = [];
 
-      foundEntries = await redisStream.getRevRange(options);
+      foundEntries = await stream.getRevRange(options);
       expect(foundEntries.length).toBeLessThanOrEqual(options.count);
 
       options.count = 12;
-      foundEntries = await redisStream.getRevRange(options);
+      foundEntries = await stream.getRevRange(options);
       expect(foundEntries.length).toBeLessThanOrEqual(options.count);
     });
 
@@ -254,7 +254,7 @@ describe("RedisStream instance", () => {
         max: entries[0]
       };
 
-      const entry = await redisStream.getRevRange(options);
+      const entry = await stream.getRevRange(options);
       expect(entry[0].id).toBe(entries[0]);
     });
 
@@ -269,7 +269,7 @@ describe("RedisStream instance", () => {
         count: 2
       };
 
-      const foundEntries = await redisStream.getRevRange(options);
+      const foundEntries = await stream.getRevRange(options);
 
       expect(
         Number(foundEntries[0].id.replace(
@@ -290,7 +290,7 @@ describe("RedisStream instance", () => {
         count: 2
       };
 
-      const foundEntries = await redisStream.getRevRange(options);
+      const foundEntries = await stream.getRevRange(options);
 
       expect(
         Number(foundEntries[0].id.replace(
@@ -302,7 +302,7 @@ describe("RedisStream instance", () => {
 
   describe("getLength", () => {
     test("should return the stream length", async() => {
-      const length = await redisStream.getLength();
+      const length = await stream.getLength();
 
       expect(length).toBe(kLength);
     });
@@ -314,10 +314,10 @@ describe("RedisStream instance", () => {
           THEN it should return the number of deleted entries`,
     async() => {
       let length = 10;
-      expect(await redisStream.trim(length)).toBe(0);
+      expect(await stream.trim(length)).toBe(0);
 
       length = 9;
-      const nbDeletedEntries = await redisStream.trim(length);
+      const nbDeletedEntries = await stream.trim(length);
       expect(nbDeletedEntries).toBe(kLength - length);
       entries.splice(0, nbDeletedEntries);
     });
@@ -327,10 +327,10 @@ describe("RedisStream instance", () => {
           THEN it should return the number of deleted entries`,
     async() => {
       let entryId = entries[0];
-      expect(await redisStream.trim(entryId)).toBe(0);
+      expect(await stream.trim(entryId)).toBe(0);
 
       entryId = entries[1];
-      const nbDeletedEntries = await redisStream.trim(entryId);
+      const nbDeletedEntries = await stream.trim(entryId);
       expect(nbDeletedEntries).toBe(1);
       entries.splice(0, nbDeletedEntries);
     });
@@ -339,12 +339,12 @@ describe("RedisStream instance", () => {
   test(`WHEN calling getInfo
         THEN it should return data about the current Stream`,
   async() => {
-    expect(await redisStream.getInfo()).toBeDefined();
+    expect(await stream.getInfo()).toBeDefined();
   });
 
   afterAll(async() => {
     for (const entryId of entries) {
-      await redisStream.delEntry(entryId);
+      await stream.delEntry(entryId);
     }
 
     await closeRedis();

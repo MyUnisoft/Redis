@@ -13,7 +13,7 @@ import {
 import { randomValue } from "../../fixtures/utils/randomValue";
 
 // Constants & variables
-let sessionContext: StoreContext;
+let storeContext: StoreContext;
 const kDefaultCookieOptions = { sameSite: "none", secure: true };
 
 beforeAll(async() => {
@@ -28,14 +28,14 @@ afterAll(async() => {
 // instace suite
 describe("Store Context initialization's suite", () => {
   it("should be instance of EventEmitter & StoreContext", () => {
-    sessionContext = new StoreContext<CustomStore>({
+    storeContext = new StoreContext<CustomStore>({
       authentificationField: "mail",
       sessionDuration: 3600,
       randomKeyCallback: () => "randomKey"
     });
 
-    expect(sessionContext).toBeInstanceOf(StoreContext);
-    expect(sessionContext).toBeInstanceOf(EventEmitter);
+    expect(storeContext).toBeInstanceOf(StoreContext);
+    expect(storeContext).toBeInstanceOf(EventEmitter);
   });
 });
 
@@ -49,7 +49,7 @@ function createFrameworkCtx() {
 // initSession SUITE
 describe("Store Context initSession suite", () => {
   beforeAll(() => {
-    sessionContext = new StoreContext<CustomStore>({ authentificationField: "mail", prefix: "store-context-" });
+    storeContext = new StoreContext<CustomStore>({ authentificationField: "mail", prefix: "store-context-" });
   });
 
   it("should throw an error if id is an empty string", async() => {
@@ -59,7 +59,7 @@ describe("Store Context initSession suite", () => {
     const payload = { returnTo: "http://localhost/" };
 
     try {
-      await sessionContext.initSession("", ctx, payload);
+      await storeContext.initSession("", ctx, payload);
     }
     catch (error) {
       expect(error.message).toBe("id must not be an empty string");
@@ -70,7 +70,7 @@ describe("Store Context initSession suite", () => {
     const key = randomValue();
     const ctx = createFrameworkCtx();
 
-    expect(await sessionContext.initSession(key, ctx, {})).toBe(key);
+    expect(await storeContext.initSession(key, ctx, {})).toBe(key);
   });
 
   it("should set a cookie when initSession() has been call", async() => {
@@ -78,7 +78,7 @@ describe("Store Context initSession suite", () => {
     const payload = { returnTo: "http://localhost/" };
     const sessionId = "A";
 
-    await sessionContext.initSession(sessionId, ctx, payload);
+    await storeContext.initSession(sessionId, ctx, payload);
 
     expect(ctx.setCookie).toHaveBeenCalledTimes(1);
     expect(ctx.setCookie).toHaveBeenCalledWith("session-id", sessionId, kDefaultCookieOptions);
@@ -88,7 +88,7 @@ describe("Store Context initSession suite", () => {
 // destroySession Suite
 describe("Store Context destroySession suite", () => {
   beforeAll(() => {
-    sessionContext = new StoreContext<CustomStore>({ authentificationField: "mail" });
+    storeContext = new StoreContext<CustomStore>({ authentificationField: "mail" });
   });
 
   it("should throw error if there is no cookie `session-id`", async() => {
@@ -97,7 +97,7 @@ describe("Store Context destroySession suite", () => {
     const ctx = createFrameworkCtx();
 
     try {
-      await sessionContext.destroySession(ctx);
+      await storeContext.destroySession(ctx);
     }
     catch (error) {
       expect(error.message).toBe("Unable to found any cookie session-id. Your session is probably expired!");
@@ -109,10 +109,10 @@ describe("Store Context destroySession suite", () => {
     const payload = { returnTo: "http://localhost/" };
     const sessionId = "A";
 
-    await sessionContext.initSession(sessionId, ctx, payload);
+    await storeContext.initSession(sessionId, ctx, payload);
     ctx.getCookie.mockImplementation(jest.fn(() => sessionId));
     ctx["session-id"] = sessionId;
-    await sessionContext.destroySession(ctx);
+    await storeContext.destroySession(ctx);
 
     expect(ctx.setCookie).toHaveBeenCalledTimes(2);
   });
@@ -121,7 +121,7 @@ describe("Store Context destroySession suite", () => {
 // getSession SUITE
 describe("Store Context getSession suite", () => {
   beforeAll(() => {
-    sessionContext = new StoreContext<CustomStore>({ authentificationField: "mail" });
+    storeContext = new StoreContext<CustomStore>({ authentificationField: "mail" });
   });
 
   it("should return the session if available", async() => {
@@ -129,11 +129,11 @@ describe("Store Context getSession suite", () => {
     const payload = { returnTo: "false" };
     const sessionId = "A";
 
-    await sessionContext.initSession(sessionId, ctx, payload);
+    await storeContext.initSession(sessionId, ctx, payload);
     ctx.getCookie.mockImplementation(jest.fn(() => sessionId));
     ctx["session-id"] = sessionId;
 
-    expect(await sessionContext.getSession(ctx)).toHaveProperty("returnTo", "false");
+    expect(await storeContext.getSession(ctx)).toHaveProperty("returnTo", "false");
   });
 });
 
@@ -141,33 +141,33 @@ describe("Store Context getSession suite", () => {
 // isAuthenticated SUITE
 describe("Store Context isUserAuthenticated suite", () => {
   beforeAll(() => {
-    sessionContext = new StoreContext<CustomStore>({ authentificationField: "mail" });
+    storeContext = new StoreContext<CustomStore>({ authentificationField: "mail" });
   });
 
   it("should return false for an undefined `session-id` cookie", async() => {
     const ctx = createFrameworkCtx();
 
-    expect(await sessionContext.isUserAuthenticated(ctx)).toBeFalsy();
+    expect(await storeContext.isUserAuthenticated(ctx)).toBeFalsy();
   });
 
   it("should return false if there is no data stored for the `session-id` cookie", async() => {
     const ctx = createFrameworkCtx();
 
-    sessionContext.initSession("non-null", ctx, {});
+    storeContext.initSession("non-null", ctx, {});
     ctx["session-id"] = "non-null";
     ctx.getCookie.mockImplementation(jest.fn(() => "session-id"));
-    sessionContext.destroySession(ctx);
+    storeContext.destroySession(ctx);
 
-    expect(await sessionContext.isUserAuthenticated(ctx)).toBeFalsy();
+    expect(await storeContext.isUserAuthenticated(ctx)).toBeFalsy();
   });
 
   it("should return true for a `session-id` cookie having data stored", async() => {
     const noAuthOptionsContext = new StoreContext();
     const ctx = createFrameworkCtx();
 
-    await sessionContext.initSession("user", ctx, {});
+    await storeContext.initSession("user", ctx, {});
 
-    expect(() => sessionContext.isUserAuthenticated(ctx)).toBeTruthy();
+    expect(() => storeContext.isUserAuthenticated(ctx)).toBeTruthy();
     expect(() => noAuthOptionsContext.isUserAuthenticated(ctx)).toBeTruthy();
   });
 });
@@ -208,25 +208,25 @@ describe("StoreContext useContext suite", () => {
 // SessionStore SUITE via super()
 describe("Store Context SessionStore suite", () => {
   beforeAll(() => {
-    sessionContext = new StoreContext<any>({ authentificationField: "mail" });
+    storeContext = new StoreContext<any>({ authentificationField: "mail" });
   });
 
   it("should return the key for the stored value", async() => {
-    const value = await sessionContext.setValue("value" as Partial<Store>);
+    const value = await storeContext.setValue("value" as Partial<Store>);
 
     expect(value).toBeDefined();
   });
 
   it("should delete the value for the according given key", async() => {
-    await sessionContext.setValue("value" as Partial<Store>, "key");
+    await storeContext.setValue("value" as Partial<Store>, "key");
 
-    const nbDeletedValue = await sessionContext.deleteValue("key");
+    const nbDeletedValue = await storeContext.deleteValue("key");
 
     expect(nbDeletedValue).toBe(1);
   });
 
   it("should not delete a non-existing existing key", async() => {
-    const nbDeletedValue = await sessionContext.deleteValue("non-existing");
+    const nbDeletedValue = await storeContext.deleteValue("non-existing");
 
     expect(nbDeletedValue).toBe(0);
   });

@@ -5,7 +5,7 @@ import { initRedis, closeRedis, clearAllKeys, RestrictedKV } from "../../src";
 import { randomValue } from "../fixtures/utils/randomValue";
 
 // Constants & variables
-let handler: RestrictedKV;
+let restrictedKV: RestrictedKV;
 
 beforeAll(async() => {
   await initRedis({ port: process.env.REDIS_PORT } as any);
@@ -18,9 +18,9 @@ afterAll(async() => {
 
 describe("class instance suite", () => {
   it("should be instantiated", () => {
-    handler = new RestrictedKV({ prefix: "auth-" });
-    expect(handler).toBeInstanceOf(RestrictedKV);
-    expect(handler).toBeInstanceOf(EventEmitter);
+    restrictedKV = new RestrictedKV({ prefix: "auth-" });
+    expect(restrictedKV).toBeInstanceOf(RestrictedKV);
+    expect(restrictedKV).toBeInstanceOf(EventEmitter);
   });
 
   it("should return a default payload with getDefaultAttempt() static method", () => {
@@ -38,7 +38,7 @@ describe("getRestrictedKV suite", () => {
   const payload = { failure: 0, lastTry, locked: false };
 
   beforeAll(() => {
-    handler = new RestrictedKV({ prefix: "auth-" });
+    restrictedKV = new RestrictedKV({ prefix: "auth-" });
   });
 
   beforeEach(async() => {
@@ -48,16 +48,16 @@ describe("getRestrictedKV suite", () => {
   it("should  return an Attempt Object in normal configuration", async() => {
     const key = randomValue();
 
-    await handler.setValue(payload, key);
-    await expect(handler.getAttempt(key)).resolves.toEqual(payload);
+    await restrictedKV.setValue(payload, key);
+    await expect(restrictedKV.getAttempt(key)).resolves.toEqual(payload);
   });
 
   it("should return an attempt object if failure property is not present", async() => {
     const emptyPayloadOne = { locked: false };
     const key = randomValue();
 
-    await handler.setValue(emptyPayloadOne, key);
-    await expect(handler.getAttempt(key))
+    await restrictedKV.setValue(emptyPayloadOne, key);
+    await expect(restrictedKV.getAttempt(key))
       .resolves.toEqual({ failure: 0, lastTry: Date.now(), locked: false });
   });
 
@@ -65,15 +65,15 @@ describe("getRestrictedKV suite", () => {
     const emptyPayloadTwo = { failure: 0 };
     const key = randomValue();
 
-    await handler.setValue(emptyPayloadTwo, key);
-    await expect(handler.getAttempt(key))
+    await restrictedKV.setValue(emptyPayloadTwo, key);
+    await expect(restrictedKV.getAttempt(key))
       .resolves.toEqual({ failure: 0, lastTry: Date.now(), locked: false });
   });
 });
 
 describe("failure suite", () => {
   beforeAll(() => {
-    handler = new RestrictedKV({ prefix: "auth-" });
+    restrictedKV = new RestrictedKV({ prefix: "auth-" });
   });
 
   beforeEach(async() => {
@@ -85,8 +85,8 @@ describe("failure suite", () => {
     const payload = { failure: 1, lastTry, locked: false };
     const key = randomValue();
 
-    await handler.setValue(payload, key);
-    await expect(handler.fail(key)).resolves.toHaveProperty("failure", 2);
+    await restrictedKV.setValue(payload, key);
+    await expect(restrictedKV.fail(key)).resolves.toHaveProperty("failure", 2);
   });
 
   it("should return an Attempt object with locked = true", async() => {
@@ -94,30 +94,30 @@ describe("failure suite", () => {
     const payload = { failure: 7, lastTry, locked: false };
     const key = randomValue();
 
-    await handler.setValue(payload, key);
+    await restrictedKV.setValue(payload, key);
 
-    expect(handler.fail(key))
+    expect(restrictedKV.fail(key))
       .resolves.toHaveProperty("locked", true);
   });
 
   it("should return an attempt with non-existing-key",
-    () => expect(handler.fail("nonExistentKey")).resolves.toHaveProperty("failure"));
+    () => expect(restrictedKV.fail("nonExistentKey")).resolves.toHaveProperty("failure"));
 
   it("should not increment failure if ban time in second is expired", async() => {
     const lastTry = Date.now() - (60 * 1000 * 60 * 24);
     const payload = { failure: 1, lastTry, locked: false };
     const key = randomValue();
 
-    await handler.setValue(payload, key);
+    await restrictedKV.setValue(payload, key);
 
-    expect(handler.fail(key))
+    expect(restrictedKV.fail(key))
       .resolves.toHaveProperty("failure", 1);
   });
 });
 
 describe("success suite", () => {
   beforeAll(() => {
-    handler = new RestrictedKV({ prefix: "auth-" });
+    restrictedKV = new RestrictedKV({ prefix: "auth-" });
   });
 
   beforeEach(async() => {
@@ -127,8 +127,8 @@ describe("success suite", () => {
   it("should return default payload for a non-existing key", async() => {
     const nonExistentKey = randomValue();
 
-    await handler.success(nonExistentKey);
-    await expect(handler.getAttempt(nonExistentKey)).resolves.toMatchObject({
+    await restrictedKV.success(nonExistentKey);
+    await expect(restrictedKV.getAttempt(nonExistentKey)).resolves.toMatchObject({
       failure: 0,
       locked: false
     });
@@ -139,10 +139,10 @@ describe("success suite", () => {
     const payload = { failure: 10, lastTry, locked: true };
     const key = randomValue();
 
-    await handler.setValue(payload, key);
-    await handler.success(key);
+    await restrictedKV.setValue(payload, key);
+    await restrictedKV.success(key);
 
-    await expect(handler.getAttempt(key)).resolves.toMatchObject({
+    await expect(restrictedKV.getAttempt(key)).resolves.toMatchObject({
       failure: 0,
       locked: false
     });
@@ -151,7 +151,7 @@ describe("success suite", () => {
 
 describe("clearExpired database suite", () => {
   beforeAll(() => {
-    handler = new RestrictedKV({ prefix: "auth-" });
+    restrictedKV = new RestrictedKV({ prefix: "auth-" });
   });
 
   beforeEach(async() => {
@@ -162,10 +162,10 @@ describe("clearExpired database suite", () => {
     const notExpiredPayload = { failure: 0, lastTry: Date.now(), locked: false };
     const key = randomValue();
 
-    await handler.setValue(notExpiredPayload, key);
-    await handler.clearExpired();
+    await restrictedKV.setValue(notExpiredPayload, key);
+    await restrictedKV.clearExpired();
 
-    expect(handler.getAttempt(key)).resolves.toEqual(notExpiredPayload);
+    expect(restrictedKV.getAttempt(key)).resolves.toEqual(notExpiredPayload);
   });
 
   it("should clear all keys from the database when invoked", async() => {
@@ -173,10 +173,10 @@ describe("clearExpired database suite", () => {
     const payload = { failure: 3, lastTry, locked: true };
     const key = randomValue();
 
-    await handler.setValue(payload, key);
-    await handler.clearExpired();
+    await restrictedKV.setValue(payload, key);
+    await restrictedKV.clearExpired();
 
-    expect(handler.getAttempt(key)).resolves.toMatchObject({
+    expect(restrictedKV.getAttempt(key)).resolves.toMatchObject({
       failure: 0,
       locked: false
     });
@@ -191,22 +191,22 @@ describe("clearExpired database suite", () => {
     const eventEmitter = new EventEmitter();
 
     eventEmitter.on("expiredKeys", expiredKeys);
-    handler.on("expiredKeys", expiredKeys);
+    restrictedKV.on("expiredKeys", expiredKeys);
 
-    await handler.setValue(payload, key);
-    await handler.clearExpired();
+    await restrictedKV.setValue(payload, key);
+    await restrictedKV.clearExpired();
 
     expect(expiredKeys).toHaveBeenCalled();
   });
 
   it("should return undefined if there is no stored keys that start with the 'auth-' prefix", async() => {
-    await expect(handler.clearExpired()).resolves.toBeUndefined();
+    await expect(restrictedKV.clearExpired()).resolves.toBeUndefined();
   });
 });
 
 describe("autoClearInterval database suite", () => {
   beforeAll(() => {
-    handler = new RestrictedKV({ prefix: "auth-", autoClearExpired: 3000 });
+    restrictedKV = new RestrictedKV({ prefix: "auth-", autoClearExpired: 3000 });
   });
 
   beforeEach(async() => {
@@ -214,7 +214,7 @@ describe("autoClearInterval database suite", () => {
   });
 
   afterAll(() => {
-    handler.clearAutoClearInterval();
+    restrictedKV.clearAutoClearInterval();
   });
 
   it("should clear all keys from the database when invoked", async() => {
@@ -222,11 +222,11 @@ describe("autoClearInterval database suite", () => {
     const payload = { failure: 3, lastTry, locked: true };
     const key = randomValue();
 
-    await handler.setValue(payload, key);
+    await restrictedKV.setValue(payload, key);
 
     await new Promise((resolve) => setTimeout(resolve, 5000));
 
-    expect(handler.getAttempt(key)).resolves.toMatchObject({
+    expect(restrictedKV.getAttempt(key)).resolves.toMatchObject({
       failure: 0,
       locked: false
     });

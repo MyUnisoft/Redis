@@ -17,7 +17,7 @@ const mockedEvents = jest.fn((entry) => {
 
 
 // CONSTANTS
-let stream: Intrapersonal;
+let intrapersonalStream: Intrapersonal;
 let readable: Readable;
 const entries: string[] = [];
 const kStreamName = randomValue();
@@ -28,17 +28,17 @@ const kFrequency = 3000;
 describe("basicStream instance", () => {
   beforeAll(async() => {
     await initRedis({ port: process.env.REDIS_PORT } as any);
-    stream = new Intrapersonal({ streamName: kStreamName, lastId: kLastId, count: kCount, frequency: kFrequency });
+    intrapersonalStream = new Intrapersonal({ streamName: kStreamName, lastId: kLastId, count: kCount, frequency: kFrequency });
 
-    await stream.init();
+    await intrapersonalStream.init();
 
-    expect(await stream.streamExist()).toBe(true);
+    expect(await intrapersonalStream.streamExist()).toBe(true);
 
     for (let index = 0; index < kCount; index++) {
-      entries.push(await stream.push({ foo: "bar" }, {}));
+      entries.push(await intrapersonalStream.push({ foo: "bar" }, {}));
     }
 
-    readable = Readable.from(stream[Symbol.asyncIterator]());
+    readable = Readable.from(intrapersonalStream[Symbol.asyncIterator]());
     readable.on("readable", () => {
       const chunk: Entry[] = readable.read();
 
@@ -56,7 +56,7 @@ describe("basicStream instance", () => {
     expect(mockedEvents).toHaveBeenCalledTimes(3);
 
     for (let index = 0; index < kCount; index++) {
-      entries.push(await stream.push({ foo: "bar" }, {}));
+      entries.push(await intrapersonalStream.push({ foo: "bar" }, {}));
     }
 
     await new Promise((resolve) => setTimeout(resolve, kFrequency));
@@ -70,7 +70,7 @@ describe("basicStream instance", () => {
     expect(mockedEvents).toHaveBeenCalledTimes(6);
 
     for (let index = 0; index < kCount; index++) {
-      entries.push(await stream.push({ foo: "bar" }, {}));
+      entries.push(await intrapersonalStream.push({ foo: "bar" }, {}));
     }
 
     await new Promise((resolve) => setTimeout(resolve, kFrequency));
@@ -82,7 +82,7 @@ describe("basicStream instance", () => {
   describe("consume", () => {
     beforeAll(async() => {
       for (let index = 0; index < 10; index++) {
-        const entryId = await stream.push({ foo: "bar" }, {});
+        const entryId = await intrapersonalStream.push({ foo: "bar" }, {});
 
         entries.push(entryId);
       }
@@ -93,7 +93,7 @@ describe("basicStream instance", () => {
           THEN it should call handleEntries and return X entries`,
     async() => {
       const count = 1;
-      const resolvedEntries = await stream.consume({ count, lastId: stream.lastId });
+      const resolvedEntries = await intrapersonalStream.consume({ count, lastId: intrapersonalStream.lastId });
 
       if (resolvedEntries) {
         expect(resolvedEntries.length).toBe(count);
@@ -107,7 +107,7 @@ describe("basicStream instance", () => {
           WHEN calling consume
           THEN it should call handleEntries and return X entries`,
     async() => {
-      const resolvedEntries = await stream.consume();
+      const resolvedEntries = await intrapersonalStream.consume();
 
       if (resolvedEntries) {
         expect(resolvedEntries.length).toBe(kCount);
@@ -123,7 +123,7 @@ describe("basicStream instance", () => {
           WHEN calling consume
           THEN it should call handleEntries and return * entries`,
     async() => {
-      const resolvedEntries = await stream.consume({ count: undefined, lastId: stream.lastId });
+      const resolvedEntries = await intrapersonalStream.consume({ count: undefined, lastId: intrapersonalStream.lastId });
 
       if (resolvedEntries) {
         for (const entry of resolvedEntries) {
@@ -131,14 +131,14 @@ describe("basicStream instance", () => {
         }
       }
 
-      expect(await stream.consume()).toStrictEqual([]);
+      expect(await intrapersonalStream.consume()).toStrictEqual([]);
     });
   });
 
   describe("cleanStream", () => {
     beforeAll(async() => {
       for (let index = 0; index < 10; index++) {
-        const entryId = await stream.push({ foo: "bar" }, {});
+        const entryId = await intrapersonalStream.push({ foo: "bar" }, {});
 
         entries.push(entryId);
       }
@@ -149,7 +149,7 @@ describe("basicStream instance", () => {
     async() => {
       expect.assertions(1);
 
-      const cleanedEntries = await stream.cleanStream();
+      const cleanedEntries = await intrapersonalStream.cleanStream();
       if (cleanedEntries) {
         expect(cleanedEntries.length).toBe(entries.length);
       }

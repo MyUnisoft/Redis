@@ -7,7 +7,7 @@ import { randomValue } from "../fixtures/utils/randomValue";
 import { KVPeer } from "../../src/index";
 
 // Constants & variables
-let redisKV: KVPeer;
+let kvPeer: KVPeer;
 
 beforeAll(async() => {
   await initRedis({ port: process.env.REDIS_PORT } as any);
@@ -21,9 +21,9 @@ afterAll(async() => {
 // KVPeer Instance
 describe("KVPeer instance suite", () => {
   it("should instantiate with differents options in constructor", () => {
-    redisKV = new KVPeer({ prefix: "prefix-" });
-    expect(redisKV).toBeInstanceOf(KVPeer);
-    expect(redisKV).toBeInstanceOf(EventEmitter);
+    kvPeer = new KVPeer({ prefix: "prefix-" });
+    expect(kvPeer).toBeInstanceOf(KVPeer);
+    expect(kvPeer).toBeInstanceOf(EventEmitter);
   });
 });
 
@@ -35,18 +35,18 @@ describe("setValue() suite", () => {
 
   it("should correctly set a string for 'raw' type and return the inserted key name", () => {
     const prefix = "prefix-";
-    redisKV = new KVPeer({ prefix });
+    kvPeer = new KVPeer({ prefix });
     const key = randomValue();
 
-    expect(redisKV.setValue(randomValue(), key))
+    expect(kvPeer.setValue(randomValue(), key))
       .resolves.toBe(`${prefix}${key}`);
   });
 
   it("should correctly set a string for 'raw' type and return the inserted key name WITHOUT PREFIX", () => {
-    redisKV = new KVPeer();
+    kvPeer = new KVPeer();
     const key = randomValue();
 
-    expect(redisKV.setValue(randomValue(), key))
+    expect(kvPeer.setValue(randomValue(), key))
       .resolves.toBe(key);
   });
 });
@@ -59,38 +59,38 @@ describe("getValue() suite", () => {
 
   // RAW TYPE GET VALUE
   it("should return a string value for RAW TYPE", async() => {
-    redisKV = new KVPeer({ prefix: "prefix-" });
+    kvPeer = new KVPeer({ prefix: "prefix-" });
     const value = randomValue();
     const key = randomValue();
 
-    await redisKV.setValue(value, key);
+    await kvPeer.setValue(value, key);
 
-    expect(redisKV.getValue(key))
+    expect(kvPeer.getValue(key))
       .resolves.toBe(value);
   });
 
   it("should return null for an non-existing key", () => {
-    redisKV = new KVPeer({ prefix: "prefix-" });
+    kvPeer = new KVPeer({ prefix: "prefix-" });
     const nonExistentKey = randomValue();
 
-    expect(redisKV.getValue(nonExistentKey))
+    expect(kvPeer.getValue(nonExistentKey))
       .resolves.toBeNull();
   });
 
   it("should return an object for RAW TYPE", async() => {
-    redisKV = new KVPeer({ prefix: "prefix-" });
+    kvPeer = new KVPeer({ prefix: "prefix-" });
     const entries = { property: randomValue() };
     const key = randomValue();
 
-    await redisKV.setValue(entries as any, key);
+    await kvPeer.setValue(entries as any, key);
 
-    expect(redisKV.getValue(key))
+    expect(kvPeer.getValue(key))
       .resolves.toBe(JSON.stringify(entries));
   });
 
   // OBJECT TYPE GET VALUE
   it("should return a mapped object for OBJECT TYPE", async() => {
-    redisKV = new KVPeer({
+    kvPeer = new KVPeer({
       prefix: "prefix-",
       type: "object",
       mapValue(value) {
@@ -102,17 +102,17 @@ describe("getValue() suite", () => {
 
     const key = randomValue();
     const entries = { property: randomValue() };
-    await redisKV.setValue(entries as any, key);
+    await kvPeer.setValue(entries as any, key);
 
-    expect(redisKV.getValue(key))
+    expect(kvPeer.getValue(key))
       .resolves.toEqual({ ...entries, mapped: true });
   });
 
   it("should return null for a non existing key and for OBJECT TYPE", () => {
-    redisKV = new KVPeer({ prefix: "prefix-", type: "object" });
+    kvPeer = new KVPeer({ prefix: "prefix-", type: "object" });
     const key = randomValue();
 
-    expect(redisKV.getValue(key))
+    expect(kvPeer.getValue(key))
       .resolves.toBeNull();
   });
 });
@@ -124,21 +124,21 @@ describe("deleteValue() suite", () => {
   });
 
   it("should correctly delete a key and return 1", async() => {
-    redisKV = new KVPeer({ prefix: "prefix-" });
+    kvPeer = new KVPeer({ prefix: "prefix-" });
     const value = randomValue();
     const key = randomValue();
 
-    await redisKV.setValue(value, key);
+    await kvPeer.setValue(value, key);
 
-    expect(redisKV.deleteValue(key))
+    expect(kvPeer.deleteValue(key))
       .resolves.toBe(1);
   });
 
   it("should correctly return O for a non existing key", () => {
-    redisKV = new KVPeer({ prefix: "prefix-" });
+    kvPeer = new KVPeer({ prefix: "prefix-" });
     const nonExistentKey = randomValue();
 
-    expect(redisKV.deleteValue(nonExistentKey))
+    expect(kvPeer.deleteValue(nonExistentKey))
       .resolves.toBe(0);
   });
 });
