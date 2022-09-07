@@ -1,4 +1,6 @@
-# Local instance installation guide
+<h1 align="center">
+  Local instance installation guide
+</h1>
 
 ## MAC
 

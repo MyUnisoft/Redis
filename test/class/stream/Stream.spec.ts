@@ -18,7 +18,7 @@ const kFrequency = 3000;
 
 describe("RedisStream instance", () => {
   beforeAll(async() => {
-    await initRedis({ port: process.env.REDIS_PORT } as any);
+    await initRedis({ port: process.env.REDIS_PORT, host: process.env.REDIS_HOST } as any);
     stream = new Stream({ streamName: kStreamName, lastId: "0-0", frequency: kFrequency });
 
     const streamExist = await stream.streamExist();

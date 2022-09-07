@@ -105,5 +105,6 @@ export async function clearAllKeys(extInstance?: Redis): Promise<void> {
 export * from "./class/stream/index";
 export * from "./class/pubSub/Channel.class";
 export * from "./class/KVPeer.class";
+export * from "./class/TimedKVPeer.class";
 export * from "./class/restrictedKV.class";
-export * from "./class/store/index";
+export * as Types from "./types/index";

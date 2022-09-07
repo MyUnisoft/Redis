@@ -1,103 +1,110 @@
-# class RedisKV
+<h1 align="center">
+  RedisKV
+</h1>
 
-## 1. Purpose of the class
+<p align="center">
+  This class is used to store and retrieve key-value pairs in Redis.
+</p>
 
-> This class is used to store and retrieve key-value pairs in Redis.
-
-> After redis server was launched, inside the terminal:
-```bash
-$ npm i @myunisoft/redis -P
-```
-
-## 2. type definition
+## Interface
 
 ```ts
-interface Attempt {
-  failure: number; // number of attempt
-  lastTry: number; // timeStamp representing last try
-  locked: boolean; // it represent if user is locked
+export type KVType = "raw" | "object";
+
+export type StringOrObject = string | Record<string, any>;
+
+type IsMetadataDefined<T, K> = K extends Record<string, any> ? T & { metadata: K } : T & Record<string, any>;
+
+type MappedValue<T extends StringOrObject, K extends StringOrObject> = T extends string ? string
+: IsMetadataDefined<T, K>;
+
+// How to restraint usage of the mapValue fn while T extends string?
+export type KVMapper<T extends StringOrObject, K extends StringOrObject> = (value: T) => MappedValue<T, K>;
+
+export interface KVOptions<T extends StringOrObject, K extends StringOrObject = Record<string, any>> {
+  prefix?: string;
+  type?: KVType;
+  mapValue?: KVMapper<T, K>;
+}
+
+export interface SetValueOptions<T> {
+  key: KeyType;
+  value: T;
+  expiresIn?: number;
 }
 ```
 
-## 3. Default value
+## Constants
 
 - kDefaultKVType = "raw"
 
-## 4. Options for instanciation
-> you can define an uniq prefix for all key by instance.
+## 📚 Usage
 
 ```ts
-options = { prefix: "myprefix-" };
-
-// expected key is myprefix-key
-```
-
-> you can define the type of value passed to the keys inside instance
-
-```ts
-// allowed types are:
-options = { type: "raw"}
-options = { type: "object"}
-```
-
-> you can define a function to process the retrieved value
-
-```ts
-options = {
-  mapValue: (value: number) => {
-    return value * 2;
-  }
-}
-```
-
-## 5. Methods on this class
-
-> first of all , you must instantiate the class
-
-```ts
-// third-party requirement
 import { RedisKV } from "@myunisoft/redis";
 
-// creating an instance
-const handler: RedisKV = new RedisKV(options);
+interface MyCustomObject {
+  foo: string;
+}
+
+interface Metadata {
+  bar: string;
+}
+
+const options: KVOptions<MyCustomObject, Metadata> = {
+  prefix: "local",
+  type: "object",
+  mapValue: (value: MyCustomObject) => {
+    value.metadata = {
+      bar: "foo"
+    };
+    
+    return value;
+  }
+}
+
+const customKvWrapper = new RedisKV<MyCustomObject, Metadata>(options);
 ```
 
-### setValue( )
+## 📜 API
+
+### setValue(options: SetValueOptions<T>): Promise<KeyType>
 
 > this method is used to set a key-value pair in Redis
 
 ```ts
-let key: string = "key";
-let value: Partial<T>;
+const key = "foo";
+const value: MyCustomObject = {
+  foo: "bar",
+};
 
-handler.setValue(value, key);
-
-// return value
-Promise<string>
+await customKvWrapper.setValue(key, value); // "local-foo"
 ```
 
-### getValue( )
+### getValue(key: KeyType): Promise<MappedValue<T, K> | null>
 
 > this method is used to get a value from Redis
 
 ```ts
-let key: string = "key";
+const returnValue = await customKvWrapper.getValue(key);
 
-handler.getValue(let);
-
-// return value
-Promise< T || null >
+console.Log(returnValue);
+/*
+  {
+    foo: "bar",
+    metadata: {
+      bar: "foo"
+    }
+  }
+*/
 ```
 
-### deleteValue( )
+### deleteValue(key: KeyType): Promise<number>
 
 > this method is used to delete a key-value pair
 
 ```ts
-let key: string = "key";
+const result = await customKvWrapper.deleteValue("key");
 
-handler.deleteValue("key");
-
-// return value
-Promise< number > // O otherwise 1 if success
+console.log(result); // 0 for Failure, 1 for Success
 ```

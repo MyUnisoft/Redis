@@ -2,15 +2,15 @@
 import EventEmitter from "events";
 
 // Import Internal Dependencies
-import { initRedis, closeRedis, clearAllKeys } from "../../src";
-import { randomValue } from "../fixtures/utils/randomValue";
+import {
+  initRedis,
+  closeRedis,
+  clearAllKeys
+} from "../../src";
 import { KVPeer } from "../../src/index";
 
-// Constants & variables
-let kvPeer: KVPeer;
-
 beforeAll(async() => {
-  await initRedis({ port: process.env.REDIS_PORT } as any);
+  await initRedis({ port: process.env.REDIS_PORT, host: process.env.REDIS_HOST } as any);
   await clearAllKeys();
 });
 
@@ -19,126 +19,265 @@ afterAll(async() => {
 });
 
 // KVPeer Instance
-describe("KVPeer instance suite", () => {
-  it("should instantiate with differents options in constructor", () => {
-    kvPeer = new KVPeer({ prefix: "prefix-" });
-    expect(kvPeer).toBeInstanceOf(KVPeer);
-    expect(kvPeer).toBeInstanceOf(EventEmitter);
-  });
-});
+describe("KVPeer instance", () => {
+  describe("Default instantiation", () => {
+    let kvPeer: KVPeer;
 
-// setValue Test suite
-describe("setValue() suite", () => {
-  beforeEach(async() => {
-    await clearAllKeys();
-  });
+    // CONSTANTS
+    const [stringRelatedKey, stringValue] = ["foo", "bar"];
+    const [objectRelatedKey, objectValue] = ["bar", { foo: "bar" }];
+    const fakeKey = "my-fake-key";
 
-  it("should correctly set a string for 'raw' type and return the inserted key name", () => {
-    const prefix = "prefix";
-    kvPeer = new KVPeer({ prefix });
-    const key = randomValue();
-
-    expect(kvPeer.setValue(randomValue(), key))
-      .resolves.toBe(`${prefix}-${key}`);
-  });
-
-  it("should correctly set a string for 'raw' type and return the inserted key name WITHOUT PREFIX", () => {
-    kvPeer = new KVPeer();
-    const key = randomValue();
-
-    expect(kvPeer.setValue(randomValue(), key))
-      .resolves.toBe(key);
-  });
-});
-
-// getValue Test suite
-describe("getValue() suite", () => {
-  beforeEach(async() => {
-    await clearAllKeys();
-  });
-
-  // RAW TYPE GET VALUE
-  it("should return a string value for RAW TYPE", async() => {
-    kvPeer = new KVPeer({ prefix: "prefix-" });
-    const value = randomValue();
-    const key = randomValue();
-
-    await kvPeer.setValue(value, key);
-
-    expect(kvPeer.getValue(key))
-      .resolves.toBe(value);
-  });
-
-  it("should return null for an non-existing key", () => {
-    kvPeer = new KVPeer({ prefix: "prefix-" });
-    const nonExistentKey = randomValue();
-
-    expect(kvPeer.getValue(nonExistentKey))
-      .resolves.toBeNull();
-  });
-
-  it("should return an object for RAW TYPE", async() => {
-    kvPeer = new KVPeer({ prefix: "prefix-" });
-    const entries = { property: randomValue() };
-    const key = randomValue();
-
-    await kvPeer.setValue(entries as any, key);
-
-    expect(kvPeer.getValue(key))
-      .resolves.toBe(JSON.stringify(entries));
-  });
-
-  // OBJECT TYPE GET VALUE
-  it("should return a mapped object for OBJECT TYPE", async() => {
-    kvPeer = new KVPeer({
-      prefix: "prefix-",
-      type: "object",
-      mapValue(value) {
-        value.mapped = true;
-
-        return value;
-      }
+    beforeAll(() => {
+      kvPeer = new KVPeer();
     });
 
-    const key = randomValue();
-    const entries = { property: randomValue() };
-    await kvPeer.setValue(entries as any, key);
+    it("should be well instantiated", () => {
+      expect(kvPeer).toBeInstanceOf(KVPeer);
+      expect(kvPeer).toBeInstanceOf(EventEmitter);
+    });
 
-    expect(kvPeer.getValue(key))
-      .resolves.toEqual({ ...entries, mapped: true });
+    test(`Given a valid value
+          WHEN calling setValue
+          THEN it should return the initial key`,
+    async() => {
+      const finalStringRelatedKey = await kvPeer.setValue({ key: stringRelatedKey, value: stringValue });
+      expect(finalStringRelatedKey).toBe(stringRelatedKey);
+
+      const finalObjectRelatedKey = await kvPeer.setValue({ key: objectRelatedKey, value: objectValue });
+      expect(finalObjectRelatedKey).toBe(objectRelatedKey);
+    });
+
+    test(`Given an invalid key
+          WHEN calling getValue
+          THEN it should return null`,
+    async() => {
+      const value = await kvPeer.getValue(fakeKey);
+      expect(value).toBe(null);
+    });
+
+    test(`Given a valid key
+          WHEN calling getValue
+          THEN it should return the associated value`,
+    async() => {
+      const stringRelatedValue = await kvPeer.getValue(stringRelatedKey);
+      expect(stringRelatedValue).toBe(stringValue);
+
+      const objectRelatedValue = await kvPeer.getValue(objectRelatedKey);
+      expect(objectRelatedValue).toBe(JSON.stringify(objectValue));
+    });
+
+    test(`Given an invalid key
+          WHEN calling deleteValue
+          THEN it should return 0`,
+    async() => {
+      const deletedEntries = await kvPeer.deleteValue(fakeKey);
+
+      expect(deletedEntries).toBe(0);
+    });
+
+    test(`Given an valid key
+          WHEN calling deleteValue
+          THEN it should return the number of deleted entry (1)`,
+    async() => {
+      const deletedEntries = await kvPeer.deleteValue(stringRelatedKey);
+
+      expect(deletedEntries).toBe(1);
+    });
   });
 
-  it("should return null for a non existing key and for OBJECT TYPE", () => {
-    kvPeer = new KVPeer({ prefix: "prefix-", type: "object" });
-    const key = randomValue();
+  describe("Working with prefixed keys", () => {
+    let kvPeer: KVPeer;
 
-    expect(kvPeer.getValue(key))
-      .resolves.toBeNull();
+    // CONSTANTS
+    const [key, value] = ["foo", "bar"];
+    const prefix = "jest";
+    const prefixedKey = `${prefix}-${key}`;
+
+    beforeAll(() => {
+      kvPeer = new KVPeer({
+        prefix
+      });
+    });
+
+    it("should be well instantiated", () => {
+      expect(kvPeer).toBeInstanceOf(KVPeer);
+      expect(kvPeer).toBeInstanceOf(EventEmitter);
+    });
+
+    test(`Given a valid value
+          WHEN calling setValue
+          THEN it should return the final key`,
+    async() => {
+      const finalKey = await kvPeer.setValue({ key, value });
+      expect(finalKey).toBe(prefixedKey);
+    });
+
+    test(`Given a valid key
+          WHEN calling getValue
+          THEN it should return the associated value`,
+    async() => {
+      const relatedValue = await kvPeer.getValue(key);
+      expect(relatedValue).toBe(value);
+    });
+
+    test(`Given an valid key
+          WHEN calling deleteValue
+          THEN it should return the number of deleted entry (1)`,
+    async() => {
+      const deletedEntries = await kvPeer.deleteValue(key);
+
+      expect(deletedEntries).toBe(1);
+    });
   });
-});
 
-// deleteValue Test suite
-describe("deleteValue() suite", () => {
-  beforeEach(async() => {
-    await clearAllKeys();
+  describe("Working with object type", () => {
+    let kvPeer: KVPeer;
+
+    // CONSTANTS
+    const [key, value] = ["foo", {
+      bar: [
+        {
+          foo: [
+            { bar: "foo" },
+            { foo: "bar" }
+          ]
+        },
+        {
+          bar: "foo"
+        }
+      ]
+    }];
+
+    beforeAll(() => {
+      kvPeer = new KVPeer({
+        type: "object"
+      });
+    });
+
+    it("should be well instantiated", () => {
+      expect(kvPeer).toBeInstanceOf(KVPeer);
+      expect(kvPeer).toBeInstanceOf(EventEmitter);
+    });
+
+    test(`Given a valid value
+          WHEN calling setValue
+          THEN it should return the final key`,
+    async() => {
+      const finalKey = await kvPeer.setValue({ key, value });
+      expect(finalKey).toBe(key);
+    });
+
+    test(`Given a valid key
+          WHEN calling getValue
+          THEN it should return the associated value`,
+    async() => {
+      const relatedValue = await kvPeer.getValue(key);
+      expect(relatedValue).toStrictEqual(value);
+    });
   });
 
-  it("should correctly delete a key and return 1", async() => {
-    kvPeer = new KVPeer({ prefix: "prefix-" });
-    const value = randomValue();
-    const key = randomValue();
+  describe("Working with mapValue", () => {
+    describe("mapped object without predefined type", () => {
+      let kvPeer: KVPeer<object>;
 
-    await kvPeer.setValue(value, key);
+      // CONSTANTS
+      const [key, value] = ["foo", {
+        bar: [ { foo: "bar" }, { bar: "foo" } ]
+      }];
+      const mapValue = (value: object) => {
+        value["mapped"] = true;
 
-    expect(kvPeer.deleteValue(key))
-      .resolves.toBe(1);
-  });
+        return value;
+      };
 
-  it("should correctly return O for a non existing key", () => {
-    kvPeer = new KVPeer({ prefix: "prefix-" });
-    const nonExistentKey = randomValue();
+      beforeAll(async() => {
+        kvPeer = new KVPeer({
+          type: "object",
+          mapValue
+        });
 
-    expect(kvPeer.deleteValue(nonExistentKey))
-      .resolves.toBe(0);
+        await kvPeer.setValue({ key, value });
+      });
+
+      test(`GIVEN a valid key
+            WHEN calling getValue
+            THEN it should return a mapped object according to the mapValue fn`,
+      async() => {
+        const finalValue = await kvPeer.getValue(key);
+        expect(finalValue).toStrictEqual({ ...value, mapped: true });
+      });
+    });
+
+    describe("mapped object with predefined type for additionnal values", () => {
+      interface MyCustomObject {
+        bar: Record<string, any>[];
+      }
+
+      interface Metadata {
+        bar: string;
+      }
+
+      let kvPeer: KVPeer<MyCustomObject, Metadata>;
+
+      // CONSTANTS
+      const [key, value] = ["foo", {
+        bar: [ { foo: "bar" }, { key: "value" } ]
+      }];
+      const mapValue = (value: MyCustomObject) => {
+        const metadata: Metadata = {
+          bar: "foo"
+        };
+
+        return Object.assign({}, value, { metadata });
+      }
+
+      beforeAll(async() => {
+        kvPeer = new KVPeer<MyCustomObject, Metadata>({
+          type: "object",
+          mapValue
+        });
+
+        await kvPeer.setValue({ key, value });
+      })
+
+      test(`GIVEN a valid key
+            WHEN calling getValue
+            THEN it should return a mapped object according to the mapValue fn`,
+      async() => {
+        const value = await kvPeer.getValue(key);
+
+        expect(value).toEqual({ ...value, metadata: { bar: "foo" }});
+      });
+    });
+
+    describe("mapped string", () => {
+      let kvPeer: KVPeer<string>;
+
+      // CONSTANTS
+      const [key, value] = ["foo", "bar"];
+      const mapValue = (value: string) => {
+        value = `foo-${value}`;
+
+        return value;
+      };
+
+      beforeAll(async() => {
+        kvPeer = new KVPeer({
+          type: "raw",
+          mapValue
+        });
+
+        await kvPeer.setValue({ key, value });
+      });
+
+      test(`GIVEN a valid key
+            WHEN calling getValue
+            THEN it should return a mapped object according to the mapValue fn`,
+      async() => {
+        const finalValue = await kvPeer.getValue(key);
+        expect(finalValue).toEqual(`foo-${value}`);
+      });
+    });
   });
 });

@@ -1,9 +1,13 @@
-# Basement
+<h1 align="center">
+  Stream
+</h1>
 
-This class is an abstraction of common Redis commands designed to work on a Redis Stream.
+<p align="center">
+  This class is an abstraction of common Redis commands designed to work on a Redis Stream.
+</p>
 
 
-## Type definition
+## Interface
 
 ```ts
 interface BasementOptions {
@@ -58,7 +62,7 @@ interface ConsumeOptions {
 ```
 
 
-## Usage
+## 📚 Usage
 
 ```ts
 const redisStream = new Basement({
@@ -68,6 +72,8 @@ const redisStream = new Basement({
   count: 10
 });
 ```
+
+## 📜 API
 
 ### streamExist
 
