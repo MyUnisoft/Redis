@@ -12,7 +12,7 @@ import * as utils from "../../utils/stream/index";
 // Import Types
 import {
   Entry
-} from "../../types/stream";
+} from "../../types/index";
 
 export interface ClaimOptions {
   /**

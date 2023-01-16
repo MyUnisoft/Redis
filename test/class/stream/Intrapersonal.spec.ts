@@ -27,7 +27,7 @@ const kFrequency = 3000;
 
 describe("basicStream instance", () => {
   beforeAll(async() => {
-    await initRedis({ port: process.env.REDIS_PORT } as any);
+    await initRedis({ port: process.env.REDIS_PORT, host: process.env.REDIS_HOST } as any);
     intrapersonalStream = new Intrapersonal({ streamName: kStreamName, lastId: kLastId, count: kCount, frequency: kFrequency });
 
     await intrapersonalStream.init();

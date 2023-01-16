@@ -16,6 +16,9 @@ module.exports = async function startContainers() {
     redis = await new GenericContainer("redis")
       .withExposedPorts(kRedisPort)
       .start();
+
+    process.env.REDIS_PORT = redis.getMappedPort(kRedisPort);
+    process.env.REDIS_HOST = redis.getHost();
   }
   catch (error) {
     console.error(error);

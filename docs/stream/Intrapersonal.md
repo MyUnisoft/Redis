@@ -1,9 +1,14 @@
-# Intrapersonal
+<h1 align="center">
+  Intrapersonal
+</h1>
 
-This class is an abstraction of a consumer acting out of a group, handling intrapersonal communication (with himself) through a redis stream.
+
+<p align="center">
+  This class is an abstraction of a consumer acting out of a group, handling intrapersonal communication (with himself) through a redis stream.
+</p>
 
 
-## Usage
+## 📚 Usage
 
 ```ts
 const consumer = new Intrapersonal({
@@ -15,6 +20,8 @@ const consumer = new Intrapersonal({
 
 const readable = Readable.from(basicStream[Symbol.asyncIterator]());
 ```
+
+## 📜 API
 
 ### consume
 

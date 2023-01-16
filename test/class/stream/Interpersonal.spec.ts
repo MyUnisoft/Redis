@@ -42,7 +42,7 @@ const kCount = 2;
 
 describe("Consumer", () => {
   beforeAll(async() => {
-    await initRedis({ port: process.env.REDIS_PORT } as any);
+    await initRedis({ port: process.env.REDIS_PORT, host: process.env.REDIS_HOST } as any);
 
     firstConsumer = new Interpersonal({
       streamName: kStreamName,

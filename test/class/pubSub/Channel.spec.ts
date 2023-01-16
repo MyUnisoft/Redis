@@ -8,7 +8,7 @@ import { initRedis, closeRedis, Channel, PublishOptions } from "../../../src/ind
 const mockedEvents = jest.fn();
 
 beforeAll(async() => {
-  await initRedis({ port: process.env.REDIS_PORT } as any);
+  await initRedis({ port: process.env.REDIS_PORT, host: process.env.REDIS_HOST } as any);
 });
 
 afterAll(async() => {
@@ -16,138 +16,163 @@ afterAll(async() => {
 });
 
 describe("Channel", () => {
-  describe("Channel without prefix & metadata", () => {
+  describe("Channel with extInstance", () => {
     let channel;
-    let subscriber: Redis;
+    let extInstance: Redis;
 
     // CONSTANTS
     const name = "channel";
 
     beforeAll(async() => {
-      channel = new Channel({ name: name });
+      extInstance = await initRedis({ port: process.env.REDIS_PORT, host: process.env.REDIS_HOST } as any, true);
 
-      subscriber = await initRedis({ port: process.env.REDIS_PORT } as any, true);
-
-      await subscriber.subscribe(name);
-      subscriber.on("message", (channel, message) => mockedEvents(channel, message));
+      channel = new Channel({ name }, extInstance);
     });
 
     afterAll(async() => {
-      await closeRedis(subscriber);
+      await closeRedis(extInstance);
     });
 
     test("channel should be instance of Channel", async() => {
       expect(channel).toBeInstanceOf(Channel);
       expect(channel.name).toBe(name);
     });
-
-    test(`WHEN calling publish,
-          THEN it should send a new message`, async() => {
-      const options = {
-        event: "foo",
-        data: {
-          foo: "bar"
-        }
-      };
-
-      await channel.publish(options);
-
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      expect(mockedEvents).toHaveBeenCalledWith(name, JSON.stringify(options));
-    });
   });
 
-  describe("Channel with prefix", () => {
-    let channel: Channel;
-    let subscriber: Redis;
+  describe("Channel with local instance", () => {
+    describe("Channel without prefix & metadata", () => {
+      let channel;
+      let subscriber: Redis;
 
-    // CONSTANTS
-    const name = "channel";
-    const prefix = "prefix";
-    const prefixedName = `${prefix}-${name}`;
+      // CONSTANTS
+      const name = "channel";
 
-    beforeAll(async() => {
-      channel = new Channel({ name, prefix });
+      beforeAll(async() => {
+        channel = new Channel({ name });
 
-      subscriber = await initRedis({ port: process.env.REDIS_PORT } as any, true);
+        subscriber = await initRedis({ port: process.env.REDIS_PORT, host: process.env.REDIS_HOST } as any, true);
 
-      await subscriber.subscribe(prefixedName);
-      subscriber.on("message", (channel, message) => mockedEvents(channel, message));
+        await subscriber.subscribe(name);
+        subscriber.on("message", (channel, message) => mockedEvents(channel, message));
+      });
+
+      afterAll(async() => {
+        await closeRedis(subscriber);
+      });
+
+      test("channel should be instance of Channel", async() => {
+        expect(channel).toBeInstanceOf(Channel);
+        expect(channel.name).toBe(name);
+      });
+
+      test(`WHEN calling publish,
+            THEN it should send a new message`, async() => {
+        const options = {
+          data: {
+            event: "foo",
+            foo: "bar"
+          }
+        };
+
+        await channel.publish(options);
+
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+
+        expect(mockedEvents).toHaveBeenCalledWith(name, JSON.stringify(options));
+      });
     });
 
-    afterAll(async() => {
-      await closeRedis(subscriber);
+    describe("Channel with prefix", () => {
+      let channel: Channel;
+      let subscriber: Redis;
+
+      // CONSTANTS
+      const name = "channel";
+      const prefix = "prefix";
+      const prefixedName = `${prefix}-${name}`;
+
+      beforeAll(async() => {
+        channel = new Channel({ name, prefix });
+
+        subscriber = await initRedis({ port: process.env.REDIS_PORT, host: process.env.REDIS_HOST } as any, true);
+
+        await subscriber.subscribe(prefixedName);
+        subscriber.on("message", (channel, message) => mockedEvents(channel, message));
+      });
+
+      afterAll(async() => {
+        await closeRedis(subscriber);
+      });
+
+      test("channel should be instance of Channel", async() => {
+        expect(channel).toBeInstanceOf(Channel);
+        expect(channel.name).toBe(prefixedName);
+      });
+
+      test(`WHEN calling publish,
+            THEN it should send a new message`, async() => {
+        const options = {
+          data: {
+            event: "foo",
+            foo: "bar"
+          }
+        };
+
+        await channel.publish(options);
+
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+
+        expect(mockedEvents).toHaveBeenCalledWith(prefixedName, JSON.stringify(options));
+      });
     });
 
-    test("channel should be instance of Channel", async() => {
-      expect(channel).toBeInstanceOf(Channel);
-      expect(channel.name).toBe(prefixedName);
-    });
+    describe("Channel with metadata", () => {
+      interface Metadata {
+        bar: string;
+      }
 
-    test(`WHEN calling publish,
-          THEN it should send a new message`, async() => {
-      const options = {
-        event: "foo",
-        data: {
-          foo: "bar"
-        }
-      };
+      let channel: Channel<Record<string, any>, Metadata>;
+      let subscriber: Redis;
 
-      await channel.publish(options);
+      // CONSTANTS
+      const name = "channel";
 
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      beforeAll(async() => {
+        channel = new Channel<Record<string, any>, Metadata>({ name });
 
-      expect(mockedEvents).toHaveBeenCalledWith(prefixedName, JSON.stringify(options));
-    });
-  });
+        subscriber = await initRedis({ port: process.env.REDIS_PORT, host: process.env.REDIS_HOST } as any, true);
 
-  describe("Channel with metadata", () => {
-    interface Metadata {
-      bar: string;
-    }
+        await subscriber.subscribe(name);
+        subscriber.on("message", (channel, message) => mockedEvents(channel, message));
+      });
 
-    let channel: Channel<Metadata>;
-    let subscriber: Redis;
+      afterAll(async() => {
+        await closeRedis(subscriber);
+      });
 
-    // CONSTANTS
-    const name = "channel";
+      test("channel should be instance of Channel", async() => {
+        expect(channel).toBeInstanceOf(Channel);
+        expect(channel.name).toBe(name);
+      });
 
-    beforeAll(async() => {
-      channel = new Channel<Metadata>({ name });
+      test(`WHEN calling publish,
+            THEN it should send a new message`, async() => {
+        const options: PublishOptions<Record<string, any>, Metadata> = {
+          data: {
+            event: "foo",
+            foo: "bar"
+          },
+          metadata: {
+            bar: "foo"
+          }
+        };
 
-      subscriber = await initRedis({ port: process.env.REDIS_PORT } as any, true);
+        await channel.publish(options);
 
-      await subscriber.subscribe(name);
-      subscriber.on("message", (channel, message) => mockedEvents(channel, message));
-    });
+        await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    afterAll(async() => {
-      await closeRedis(subscriber);
-    });
-
-    test("channel should be instance of Channel", async() => {
-      expect(channel).toBeInstanceOf(Channel);
-      expect(channel.name).toBe(name);
-    });
-
-    test(`WHEN calling publish,
-          THEN it should send a new message`, async() => {
-      const options: PublishOptions<Metadata> = {
-        event: "foo",
-        data: {
-          foo: "bar"
-        },
-        metadata: {
-          bar: "foo"
-        }
-      };
-
-      await channel.publish(options);
-
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      expect(mockedEvents).toHaveBeenCalledWith(name, JSON.stringify(options));
+        expect(mockedEvents).toHaveBeenCalledWith(name, JSON.stringify(options));
+      });
     });
   });
 });

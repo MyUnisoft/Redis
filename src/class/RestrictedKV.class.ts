@@ -3,31 +3,55 @@ import dayjs from "dayjs";
 import { Redis } from "ioredis";
 
 // Import Internal dependencies
-import { KVPeer, KVOptions, KeyType } from "./KVPeer.class";
+import { KVPeer, KVOptions } from "./KVPeer.class";
 import { getConnectionPerf } from "..";
+import { KeyType } from "../types/index";
 
 // CONSTANTS
-const kNumberOfAllowedAttempt = 6;
-const kBanTimeInSecond = 60 * 5;
+const kDefaultAllowedAttempt = 6;
+const kDefaultBanTime = 60 * 5;
+
+export type RestrictedKVOptions = Pick<KVOptions<Attempt>, "prefix"> & {
+  autoClearExpired?: number;
+  allowedAttempt?: number;
+  banTimeInSecond?: number;
+}
+
+// type Definition
+export interface Attempt {
+  failure: number;
+  lastTry: number;
+  locked: boolean;
+}
+
+export type RawAttempt = Record<keyof Attempt, string>;
 
 /**
 * @class RestrictedKV
 * @classdesc Implementation to prevent brute force attacks.
 */
 export class RestrictedKV extends KVPeer<Partial<Attempt>> {
-  private autoClearInterval;
+  private autoClearInterval: NodeJS.Timer | null;
+
+  protected allowedAttempt: number;
+  protected banTimeInSecond: number;
 
   static getDefaultAttempt() {
     return { failure: 0, lastTry: Date.now(), locked: false };
   }
 
-  constructor(options?: RestrictedKVOptions, redis?: Redis) {
+  constructor(options: RestrictedKVOptions = {}, redis?: Redis) {
+    const { prefix, autoClearExpired, allowedAttempt, banTimeInSecond } = options;
+
     super({
-      prefix: options?.prefix ?? "limited-",
+      prefix: prefix ?? "limited-",
       type: "object"
     }, redis);
 
-    if (options?.autoClearExpired) {
+    this.allowedAttempt = allowedAttempt ?? kDefaultAllowedAttempt;
+    this.banTimeInSecond = banTimeInSecond ?? kDefaultBanTime;
+
+    if (autoClearExpired) {
       this.autoClearInterval = setInterval(async() => {
         try {
           const connectionPerf = await getConnectionPerf(this.redis);
@@ -39,20 +63,22 @@ export class RestrictedKV extends KVPeer<Partial<Attempt>> {
         catch (error) {
           console.error(error);
         }
-      }, options.autoClearExpired).unref();
+      }, autoClearExpired).unref();
     }
   }
 
   private parseRawAttempt(data: RawAttempt): Attempt {
     return {
-      failure: Number(data?.failure ?? 0),
-      lastTry: Number(data?.lastTry ?? Date.now()),
-      locked: (data?.locked ?? "false") === "true"
+      failure: Number(data.failure ?? 0),
+      lastTry: Number(data.lastTry ?? Date.now()),
+      locked: (data.locked ?? "false") === "true"
     };
   }
 
   clearAutoClearInterval() {
-    clearInterval(this.autoClearInterval);
+    if (this.autoClearInterval) {
+      clearInterval(this.autoClearInterval);
+    }
     this.autoClearInterval = null;
   }
 
@@ -83,15 +109,15 @@ export class RestrictedKV extends KVPeer<Partial<Attempt>> {
 
     if (stored !== null) {
       const diff = dayjs().diff(stored.lastTry, "second");
-      if (diff < kBanTimeInSecond) {
+      if (diff < this.banTimeInSecond) {
         attempt.failure = stored.failure + 1;
       }
-      if (attempt.failure > kNumberOfAllowedAttempt) {
+      if (attempt.failure > this.allowedAttempt) {
         attempt.locked = true;
       }
     }
 
-    await this.setValue(attempt, key);
+    await this.setValue({ key, value: attempt });
 
     return attempt;
   }
@@ -115,7 +141,7 @@ export class RestrictedKV extends KVPeer<Partial<Attempt>> {
   *
   * @example handler.clearExpired()
   */
-  async clearExpired() {
+  async clearExpired(): Promise<void> {
     const promises = [this.redis.keysBuffer(`${this.prefix}*`), this.redis.keys(`${this.prefix}*`)];
 
     const data = [...await Promise.all(promises)].flat();
@@ -128,6 +154,7 @@ export class RestrictedKV extends KVPeer<Partial<Attempt>> {
 
       return { key, expired };
     }));
+
     const expiredKeys = results
       .filter((row) => row.expired)
       .map((row) => row.key);
@@ -154,20 +181,6 @@ export class RestrictedKV extends KVPeer<Partial<Attempt>> {
     const attempt = await this.getValue(finalKey) as Attempt;
     const lastTry = "lastTry" in attempt ? Number(attempt.lastTry) : null;
 
-    return lastTry === null ? false : dayjs().diff(lastTry, "second") >= kBanTimeInSecond;
+    return lastTry === null ? false : dayjs().diff(lastTry, "second") >= this.banTimeInSecond;
   }
 }
-
-export type RestrictedKVOptions = Pick<KVOptions<Attempt>, "prefix"> & {
-  autoClearExpired?: number;
-}
-
-// type Definition
-export interface Attempt {
-  failure: number;
-  lastTry: number;
-  locked: boolean;
-}
-
-export type RawAttempt = Record<keyof Attempt, string>;
-

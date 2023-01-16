@@ -1,10 +1,14 @@
-# GroupConsumer
+<h1 align="center">
+  Interpersonal
+</h1>
 
-This class is an abstraction of a Consumer (replication of a service) rattached to a Group (nature of a service) to handle interpersonal communication through a redis stream.
+<p align="center">
+  This class is an abstraction of a Consumer rattached to a Group to handle interpersonal communication through a redis stream.
+</p>
 
+## Interface
 
-## Type definition
-
+```ts
 interface ClaimOptions {
   /**
    * Time given for which a claimed entry is idle
@@ -17,9 +21,9 @@ interface GroupConsumerOptions extends BasementOptions {
   consumerName: string;
   claimOptions?: ClaimOptions;
 }
+```
 
-
-## Usage
+## 📚 Usage
 
 ```ts
 const consumer = new GroupConsumer({
@@ -43,6 +47,8 @@ readable.on("readable", async() => {
   }
 });
 ```
+
+## 📜 API
 
 ### init
 
