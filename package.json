@@ -10,6 +10,13 @@
     "test:watch": "jest --watchAll",
     "test": "jest"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MyUnisoft/Redis.git"
+  },
+  "publishConfig": {
+    "@myunisoft:registry": "https://registry.npmjs.org/"
+  },
   "author": "Hallaert Nicolas <hallaert.nicolas.pro@gmail.com>",
   "license": "MIT",
   "files": [
