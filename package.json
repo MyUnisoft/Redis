@@ -1,5 +1,5 @@
 {
-  "name": "@myunisoft/redis-utils",
+  "name": "@myunisoft/redis",
   "version": "3.0.0",
   "description": "MyUnisoft Redis package",
   "main": "./dist/index.js",
