@@ -31,7 +31,7 @@ $ yarn add @myunisoft/redis
 
 ## 📚 Usage
 
-> The package export methods to instantiate and close connection to Redis. By default, all features automatically re-use current active Redis connection.
+> The package export methods to instantiate and close connection to Redis. By default, all features automatically re-use the current Redis connection.
 
 ```js
 import assert from "assert";
@@ -48,28 +48,32 @@ assert.strictEqual(redis, getRedis());
 await closeRedis();
 ```
 
-The package exports a class that will allow you to perform create, update, get and delete operations without any difficulty (on raw or object values).
+## 📜 API
+
+### getConnectionPerf(extInstance?: Redis): Promise<GetConnectionPerfResponse>
 
 ```ts
-import { RedisKV } from "@myunisoft/redis";
-
-interface MyCustomObject {
-  foo: string;
-  life: number;
-  isReal: boolean;
+export interface GetConnectionPerfResponse {
+  isAlive: boolean;
+  perf?: number;
 }
-
-const customKvWrapper = new RedisKV<MyCustomObject>({
-  type: "object"
-});
-
-await customKvWrapper.setValue({ foo: "bar", life: 10, isReal: true }, "key");
-
-const obj = await customKvWrapper.getValue("key");
-console.log(obj);
 ```
 
-## 📜 API
+> This method is used to check Redis connection state.
+
+```ts
+const { isAlive } = await getConnectionPerf(); // true
+```
+
+### clearAllKeys(extInstance?: Redis): Promise<void>
+
+> This function is used to clear all keys from redis.
+
+```ts
+await clearAllKeys();
+```
+
+The package also exports many classes listed below.
 
 - [RedisKV](./docs/KVPeer.md)
 - [SessionStore](./docs/SessionStore.md)
