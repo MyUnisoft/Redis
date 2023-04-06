@@ -17,7 +17,7 @@ export type KVType = "raw" | "object";
 
 export type StringOrObject = string | Record<string, any>;
 
-type IsMetadataDefined<T, K> = K extends Record<string, any> ? T & { metadata: K } : T;
+type IsMetadataDefined<T extends Record<string, any>, K extends Record<string, any> | null = null> = K extends Record<string, any> ? T & { customData: K } : T;
 
 type MappedValue<T extends StringOrObject, K extends Record<string, any> | null = null> = T extends Record<string, any> ?
 IsMetadataDefined<T, K> : T;

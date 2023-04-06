@@ -7,9 +7,9 @@
 </p>
 
 <p align="center">
-    <a href="https://github.com/MyUnisoft/events"><img src="https://img.shields.io/github/package-json/v/MyUnisoft/events?style=flat-square" alt="npm version"></a>
-    <a href="https://github.com/MyUnisoft/events"><img src="https://img.shields.io/github/license/MyUnisoft/events?style=flat-square" alt="license"></a>
-    <a href="https://github.com/MyUnisoft/events"><img src="https://img.shields.io/github/languages/code-size/MyUnisoft/events?style=flat-square" alt="size"></a>
+    <a href="https://github.com/MyUnisoft/Redis"><img src="https://img.shields.io/github/package-json/v/MyUnisoft/redis?style=flat-square" alt="npm version"></a>
+    <a href="https://github.com/MyUnisoft/Redis"><img src="https://img.shields.io/github/license/MyUnisoft/Redis?style=flat-square" alt="license"></a>
+    <a href="https://github.com/MyUnisoft/Redis"><img src="https://img.shields.io/github/languages/code-size/MyUnisoft/Redis?style=flat-square" alt="size"></a>
 </p>
 
 ## 🚧 Requirements
@@ -75,10 +75,10 @@ await clearAllKeys();
 
 The package also exports many classes listed below.
 
-- [RedisKV](./docs/KVPeer.md)
-- [SessionStore](./docs/SessionStore.md)
-- [StoreContext](./docs/StoreContext.md)
-- [AuthAttempt](./docs/RestrictedKV.md)
+- [KVPeer](./docs/KVPeer.md)
+- [TimedKVPeer](./docs/TimedKVPeer.md)
+- [RestrictedKV](./docs/RestrictedKV.md)
+- [PubSub](./docs/pubsub/Channel.md)
 - [Stream](./docs/stream/Stream.md)
   - [Intrapersonal](./docs/stream/Intrapersonal.md)
   - [Interpersonal](./docs/stream/Interpersonal.md)

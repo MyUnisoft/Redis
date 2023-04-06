@@ -209,13 +209,13 @@ describe("KVPeer instance", () => {
       });
     });
 
-    describe("mapped object with predefined type for additionnal values", () => {
+    describe("mapped object with predefined type for additional values", () => {
       interface MyCustomObject {
         bar: Record<string, any>[];
       }
 
       interface Metadata {
-        bar: string;
+        meta: string;
       }
 
       let kvPeer: KVPeer<MyCustomObject, Metadata>;
@@ -226,10 +226,10 @@ describe("KVPeer instance", () => {
       }];
       const mapValue = (value: MyCustomObject) => {
         const metadata: Metadata = {
-          bar: "foo"
+            meta: "foo"
         };
 
-        return Object.assign({}, value, { metadata });
+        return Object.assign({}, value, { customData: metadata });
       }
 
       beforeAll(async() => {
@@ -247,7 +247,7 @@ describe("KVPeer instance", () => {
       async() => {
         const value = await kvPeer.getValue(key);
 
-        expect(value).toEqual({ ...value, metadata: { bar: "foo" }});
+        expect(value).toEqual({ ...value, customData: { bar: "foo" }});
       });
     });
 
