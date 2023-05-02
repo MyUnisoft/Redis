@@ -13,15 +13,15 @@ export type KVType = "raw" | "object";
 
 export type StringOrObject = string | Record<string, any>;
 
-type IsMetadataDefined<T, K> = K extends Record<string, any> ? T & { metadata: K } : T & Record<string, any>;
+type IsMetadataDefined<T extends Record<string, any>, K extends Record<string, any> | null = null> = K extends Record<string, any> ? T & { customData: K } : T;
 
-type MappedValue<T extends StringOrObject, K extends StringOrObject> = T extends string ? string
-: IsMetadataDefined<T, K>;
+type MappedValue<T extends StringOrObject, K extends Record<string, any> | null = null> = T extends Record<string, any> ?
+IsMetadataDefined<T, K> : T;
 
 // How to restraint usage of the mapValue fn while T extends string?
-export type KVMapper<T extends StringOrObject, K extends StringOrObject> = (value: T) => MappedValue<T, K>;
+export type KVMapper<T extends StringOrObject, K extends Record<string, any> | null = null> = (value: T) => MappedValue<T, K>;
 
-export interface KVOptions<T extends StringOrObject, K extends StringOrObject = Record<string, any>> {
+export class KVPeer<T extends StringOrObject = StringOrObject, K extends Record<string, any> | null = null> extends EventEmitter {
   prefix?: string;
   type?: KVType;
   mapValue?: KVMapper<T, K>;
@@ -92,7 +92,7 @@ console.Log(returnValue);
 /*
   {
     foo: "bar",
-    metadata: {
+    customData: {
       bar: "foo"
     }
   }
