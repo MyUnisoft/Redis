@@ -116,9 +116,6 @@ describe("Consumer", () => {
         mockedEvents(entry);
 
         continue;
-
-        await thirdConsumer.claimEntry(entry.id);
-        entries.splice(entries.indexOf(entry.id), 1);
       }
     });
   });
