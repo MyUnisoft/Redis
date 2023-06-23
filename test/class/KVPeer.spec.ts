@@ -247,7 +247,7 @@ describe("KVPeer instance", () => {
       async() => {
         const value = await kvPeer.getValue(key);
 
-        expect(value).toEqual({ ...value, customData: { bar: "foo" }});
+        expect(value).toEqual({ ...value, customData: { meta: "foo" }});
       });
     });
 

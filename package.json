@@ -23,9 +23,9 @@
     "dist"
   ],
   "bugs": {
-    "url": "https://github.com/Rossb0b/Redis/issues"
+    "url": "https://github.com/MyUnisoft/Redis/issues"
   },
-  "homepage": "https://github.com/Rossb0b/Redis#readme",
+  "homepage": "https://github.com/MyUnisoft/Redis#readme",
   "keywords": [
     "node",
     "redis",
