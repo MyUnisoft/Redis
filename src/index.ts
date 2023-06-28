@@ -11,7 +11,7 @@ const isPublisherInstance = (instance: Instance) => instance === "publisher";
 let publisher: Redis;
 let subscriber: Redis;
 
-type Instance = "subscriber" | "publisher";
+export type Instance = "subscriber" | "publisher";
 
 export function getRedis(instance: Instance = "publisher") {
   return isPublisherInstance(instance) ? publisher : subscriber;
