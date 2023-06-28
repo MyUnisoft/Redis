@@ -6,18 +6,22 @@ import { performance } from "perf_hooks";
 import Redis, { RedisOptions } from "ioredis";
 export { Redis } from "ioredis";
 
-let localRedis: Redis;
+let publisher: Redis;
+let subscriber: Redis;
 
-export function getRedis() {
-  return localRedis;
+export function getPublisher() {
+  return publisher;
+}
+
+export function getSubscriber() {
+  return subscriber;
 }
 
 /**
  *
- * Use to ensure the connection to the Redis instance.
+ * Ensure the connection to the Redis instance.
  * @param {Redis} instance
  * @param {number} [attempt=4]
- * @returns
  */
 async function assertConnection(instance: Redis, attempt = 4) {
   if (attempt <= 0) {
@@ -32,33 +36,56 @@ async function assertConnection(instance: Redis, attempt = 4) {
 }
 
 /**
-* this function init the store & wait if process exit for closing the store
+* Init a redis connection.
 * @param {object} redisOptions - represent object who contains all connections options
 *
 */
 export async function initRedis(
-  redisOptions: Partial<RedisOptions> & { port: number; host: string; },
-  extInstance?: boolean
+  redisOptions: Partial<RedisOptions> & { port?: number; host?: string; } = {},
+  initSubscriber?: boolean
 ): Promise<Redis> {
   const { port, host, password } = redisOptions;
 
-  const redis = new Redis(port, host, { password });
+  const redis = typeof port !== "undefined" && typeof host !== "undefined" ?
+    new Redis(port, host, { password }) :
+    new Redis({ password });
 
   await assertConnection(redis);
 
-  if (!extInstance) {
-    localRedis = redis;
+  if (initSubscriber) {
+    subscriber = redis;
+  }
+  else {
+    publisher = redis;
   }
 
   return redis;
 }
 
 /**
-  * this function is used to close the store
-  * @returns void
+ * Check Redis connection state.
+ */
+export async function getConnectionPerf(extInstance?: Redis): Promise<GetConnectionPerfResponse> {
+  const redis = extInstance ?? publisher;
+
+  const start = performance.now();
+
+  try {
+    await redis.ping();
+  }
+  catch {
+    return { isAlive: false };
+  }
+
+  return { isAlive: true, perf: performance.now() - start };
+}
+
+
+/**
+  * Close a single local connection.
   */
-export async function closeRedis(extInstance?: Redis): Promise<void> {
-  const redis = extInstance || localRedis;
+export async function closeRedis(isSubscriber: boolean = false): Promise<void> {
+  const redis = isSubscriber ? subscriber : publisher;
 
   const { isAlive } = await getConnectionPerf(redis);
 
@@ -73,31 +100,37 @@ export async function closeRedis(extInstance?: Redis): Promise<void> {
   await once(redis, "end");
 }
 
+/**
+ * Close every redis connections.
+ */
+export async function closeAllRedis(): Promise<void> {
+  const instances = [publisher, subscriber];
+
+  await Promise.all(instances.map(async(instance) => {
+    const { isAlive } = await getConnectionPerf(instance);
+
+    if (!isAlive) {
+      return;
+    }
+
+    setImmediate(() => {
+      instance.quit();
+    });
+
+    await once(instance, "end");
+  }));
+}
+
 export interface GetConnectionPerfResponse {
   isAlive: boolean;
   perf?: number;
 }
 
-export async function getConnectionPerf(extInstance?: Redis): Promise<GetConnectionPerfResponse> {
-  const redis = extInstance || localRedis;
-
-  const start = performance.now();
-
-  try {
-    await redis.ping();
-  }
-  catch {
-    return { isAlive: false };
-  }
-
-  return { isAlive: true, perf: performance.now() - start };
-}
-
 /**
-  * this function is used to clear all keys from redis
+  * Clear all keys from redis (it doesn't clean up streams or pubsub).
   */
-export async function clearAllKeys(extInstance?: Redis): Promise<void> {
-  const redis = extInstance || localRedis;
+export async function clearAllKeys(isSubscriber: boolean = false): Promise<void> {
+  const redis = isSubscriber ? subscriber : publisher;
 
   await redis.flushdb();
 }

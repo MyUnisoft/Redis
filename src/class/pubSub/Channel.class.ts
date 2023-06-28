@@ -2,7 +2,7 @@
 import { Redis } from "ioredis";
 
 // Import Internal Dependencies
-import { getRedis } from "../..";
+import { getPublisher } from "../..";
 
 export interface ChannelOptions {
   name: string;
@@ -28,7 +28,7 @@ export class Channel<
   constructor(options: ChannelOptions, redis?: Redis) {
     const { name, prefix } = options;
 
-    this.redis = typeof redis === "undefined" ? getRedis() : redis;
+    this.redis = typeof redis === "undefined" ? getPublisher() : redis;
 
     this.name = `${prefix ? `${prefix}-` : ""}` + name
   }

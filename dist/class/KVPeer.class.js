@@ -37,7 +37,7 @@ class KVPeer extends events_1.EventEmitter {
         this.redis = extInstance;
     }
     get redis() {
-        return (0, __1.getRedis)();
+        return (0, __1.getPublisher)();
     }
     async setValue(options) {
         const { key, value, expiresIn } = options;

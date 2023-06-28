@@ -2,7 +2,7 @@
 import { Redis } from "ioredis";
 
 // Import Internal Dependencies
-import { initRedis, closeRedis, Channel, PublishOptions } from "../../../src/index";
+import { initRedis, closeRedis, Channel, PublishOptions, getSubscriber } from "../../../src/index";
 
 // Mocks
 const mockedEvents = jest.fn();
@@ -18,19 +18,18 @@ afterAll(async() => {
 describe("Channel", () => {
   describe("Channel with extInstance", () => {
     let channel;
-    let extInstance: Redis;
 
     // CONSTANTS
     const name = "channel";
 
     beforeAll(async() => {
-      extInstance = await initRedis({ port: process.env.REDIS_PORT, host: process.env.REDIS_HOST } as any, true);
+      await initRedis({ port: process.env.REDIS_PORT, host: process.env.REDIS_HOST } as any, true);
 
-      channel = new Channel({ name }, extInstance);
+      channel = new Channel({ name }, getSubscriber());
     });
 
     afterAll(async() => {
-      await closeRedis(extInstance);
+      await closeRedis(true);
     });
 
     test("channel should be instance of Channel", async() => {
@@ -57,7 +56,7 @@ describe("Channel", () => {
       });
 
       afterAll(async() => {
-        await closeRedis(subscriber);
+        await closeRedis(true);
       });
 
       test("channel should be instance of Channel", async() => {
@@ -101,7 +100,7 @@ describe("Channel", () => {
       });
 
       afterAll(async() => {
-        await closeRedis(subscriber);
+        await closeRedis(true);
       });
 
       test("channel should be instance of Channel", async() => {
@@ -147,7 +146,7 @@ describe("Channel", () => {
       });
 
       afterAll(async() => {
-        await closeRedis(subscriber);
+        await closeRedis(true);
       });
 
       test("channel should be instance of Channel", async() => {

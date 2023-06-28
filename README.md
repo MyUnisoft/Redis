@@ -41,14 +41,34 @@ import {
   closeRedis
 } from "@myunisoft/redis";
 
-const redis = await initRedis();
+const publisher = await initRedis();
+const subscriber = await initRedis({}, true);
 
-assert.strictEqual(redis, getRedis());
+assert.strictEqual(publisher, getPublisher());
+assert.strictEqual(subscriber, getSubscriber());
 
-await closeRedis();
+await closeAllRedis();
 ```
 
 ## 📜 API
+
+### getPublisher(): Redis;
+
+> This function return the Redis publisher instance.
+
+---
+
+### getSubscriber(): Redis;
+
+> This function return the Redis subscriber instance.
+
+---
+
+### initRedis(redisOptions: Partial<RedisOptions> & { port?: number; host?: string; } = {}, initSubscriber?: boolean): Promise<Redis>
+
+> This function is used to init redis connections, passing extInstance at true, init the subscriber local instance, otherwise, it init the publisher local instance.
+
+---
 
 ### getConnectionPerf(extInstance?: Redis): Promise<GetConnectionPerfResponse>
 
@@ -58,16 +78,29 @@ export interface GetConnectionPerfResponse {
   perf?: number;
 }
 ```
-
-> This method is used to check Redis connection state.
+> This function is used to check Redis connection state.
 
 ```ts
 const { isAlive } = await getConnectionPerf(); // true
 ```
 
+---
+
+### closeRedis(isSubscriber: boolean = false): Promise<void>
+
+> This function is used to close a single local instance.
+
+---
+
+### closeAllRedis(): Promise<void>
+
+> This function is used to close every local instances.
+
+---
+
 ### clearAllKeys(extInstance?: Redis): Promise<void>
 
-> This function is used to clear all keys from redis.
+> This function is used to clear all keys from redis db (it doesn't clean up streams or pubsub !).
 
 ```ts
 await clearAllKeys();
