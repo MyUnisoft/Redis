@@ -35,10 +35,12 @@ const events_1 = require("events");
 const perf_hooks_1 = require("perf_hooks");
 // Import Third-party Dependencies
 const ioredis_1 = __importDefault(require("ioredis"));
+// CONSTANTS
+const isPublisherInstance = (instance) => instance === "publisher";
 let publisher;
 let subscriber;
-function getRedis(subscriberInstance = false) {
-    return subscriberInstance ? subscriber : publisher;
+function getRedis(instance = "publisher") {
+    return isPublisherInstance(instance) ? publisher : subscriber;
 }
 exports.getRedis = getRedis;
 /**
@@ -61,26 +63,26 @@ async function assertConnection(instance, attempt = 4) {
 * @param {object} redisOptions - represent object who contains all connections options
 *
 */
-async function initRedis(redisOptions = {}, initSubscriber) {
+async function initRedis(redisOptions = {}, instance = "publisher") {
     const { port, host, password } = redisOptions;
     const redis = typeof port !== "undefined" && typeof host !== "undefined" ?
         new ioredis_1.default(port, host, { password }) :
         new ioredis_1.default({ password });
-    await assertConnection(redis);
-    if (initSubscriber) {
-        subscriber = redis;
-    }
-    else {
+    if (isPublisherInstance(instance)) {
         publisher = redis;
     }
+    else {
+        subscriber = redis;
+    }
+    await assertConnection(instance);
     return redis;
 }
 exports.initRedis = initRedis;
 /**
  * Check Redis connection state.
  */
-async function getConnectionPerf(extInstance) {
-    const redis = extInstance ?? publisher;
+async function getConnectionPerf(instance = "publisher") {
+    const redis = isPublisherInstance(instance) ? publisher : subscriber;
     const start = perf_hooks_1.performance.now();
     try {
         await redis.ping();
@@ -94,9 +96,9 @@ exports.getConnectionPerf = getConnectionPerf;
 /**
   * Close a single local connection.
   */
-async function closeRedis(isSubscriber = false) {
-    const redis = isSubscriber ? subscriber : publisher;
-    const { isAlive } = await getConnectionPerf(redis);
+async function closeRedis(instance = "publisher") {
+    const redis = isPublisherInstance(instance) ? publisher : subscriber;
+    const { isAlive } = await getConnectionPerf(instance);
     if (!isAlive) {
         return;
     }
@@ -110,24 +112,25 @@ exports.closeRedis = closeRedis;
  * Close every redis connections.
  */
 async function closeAllRedis() {
-    const instances = [publisher, subscriber];
+    const instances = ["publisher", "subscriber"];
     await Promise.all(instances.map(async (instance) => {
+        const redis = getRedis(instance);
         const { isAlive } = await getConnectionPerf(instance);
         if (!isAlive) {
             return;
         }
         setImmediate(() => {
-            instance.quit();
+            redis.quit();
         });
-        await (0, events_1.once)(instance, "end");
+        await (0, events_1.once)(redis, "end");
     }));
 }
 exports.closeAllRedis = closeAllRedis;
 /**
   * Clear all keys from redis (it doesn't clean up streams or pubsub).
   */
-async function clearAllKeys(isSubscriber = false) {
-    const redis = isSubscriber ? subscriber : publisher;
+async function clearAllKeys(instance = "publisher") {
+    const redis = isPublisherInstance(instance) ? publisher : subscriber;
     await redis.flushdb();
 }
 exports.clearAllKeys = clearAllKeys;

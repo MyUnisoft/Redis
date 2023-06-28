@@ -10,7 +10,7 @@ import {
 import { KVPeer } from "../../src/index";
 
 beforeAll(async() => {
-  await initRedis({ port: process.env.REDIS_PORT, host: process.env.REDIS_HOST } as any);
+  await initRedis();
   await clearAllKeys();
 });
 

@@ -20,21 +20,15 @@ const kDefaultKVType = "raw";
 * new KVPeer({ prefix: "myPrefix" });
 */
 class KVPeer extends events_1.EventEmitter {
-    constructor(options = {}, redis) {
+    constructor(options = {}) {
         super();
         const { prefix, type, mapValue } = options;
-        if (redis) {
-            this.redis = redis;
-        }
         this.prefix = prefix ? `${prefix}-` : "";
         this.type = type ?? kDefaultKVType;
         this.mapValue = mapValue ?? this.defaultMapValue;
     }
     defaultMapValue(value) {
         return value;
-    }
-    set redis(extInstance) {
-        this.redis = extInstance;
     }
     get redis() {
         return (0, __1.getRedis)();

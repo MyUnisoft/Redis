@@ -54,14 +54,10 @@ export class KVPeer<T extends StringOrObject = StringOrObject, K extends Record<
   protected type: KVType;
   protected mapValue: KVMapper<T , K>;
 
-  constructor(options: KVOptions<T, K> = {}, redis?: Redis) {
+  constructor(options: KVOptions<T, K> = {}) {
     super();
 
     const { prefix, type, mapValue } = options;
-
-    if (redis) {
-      this.redis = redis;
-    }
 
     this.prefix = prefix ? `${prefix}-` : "";
     this.type = type ?? kDefaultKVType;
@@ -70,10 +66,6 @@ export class KVPeer<T extends StringOrObject = StringOrObject, K extends Record<
 
   private defaultMapValue(value: T): MappedValue<T, K> {
     return value as MappedValue<T, K>;
-  }
-
-  set redis(extInstance: Redis) {
-    this.redis = extInstance;
   }
 
   get redis() {

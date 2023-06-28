@@ -17,18 +17,18 @@ const kDefaultBanTime = 60 * 5;
 * @classdesc Implementation to prevent brute force attacks.
 */
 class RestrictedKV extends KVPeer_class_1.KVPeer {
-    constructor(options = {}, redis) {
+    constructor(options = {}) {
         const { prefix, autoClearExpired, allowedAttempt, banTimeInSecond } = options;
         super({
             prefix: prefix ?? "limited-",
             type: "object"
-        }, redis);
+        });
         this.allowedAttempt = allowedAttempt ?? kDefaultAllowedAttempt;
         this.banTimeInSecond = banTimeInSecond ?? kDefaultBanTime;
         if (autoClearExpired) {
             this.autoClearInterval = setInterval(async () => {
                 try {
-                    const connectionPerf = await (0, __1.getConnectionPerf)(this.redis);
+                    const connectionPerf = await (0, __1.getConnectionPerf)("publisher");
                     if (connectionPerf.isAlive) {
                         await this.clearExpired();
                     }

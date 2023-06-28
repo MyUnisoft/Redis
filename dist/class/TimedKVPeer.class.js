@@ -14,8 +14,8 @@ const kDefaultRandomKeyGenerator = () => (0, crypto_1.randomBytes)(6).toString("
 * @description TimedKVPeer represents an abstraction design to store time-lifed key-value peer. You probably don't need to use this class directly.
 */
 class TimedKVPeer extends KVPeer_class_1.KVPeer {
-    constructor(options = {}, redis) {
-        super({ ...options, type: "object" }, redis);
+    constructor(options = {}) {
+        super({ ...options, type: "object" });
         this.ttl = options.ttl ?? kDefaultTtl;
         this.randomKeyGenerator = options.randomKeyCallback ?? kDefaultRandomKeyGenerator;
     }

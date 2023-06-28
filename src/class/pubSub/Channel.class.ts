@@ -23,14 +23,15 @@ export class Channel<
   K extends Record<string, any> | null = null>
 {
   readonly name: string;
-  readonly redis: Redis;
 
-  constructor(options: ChannelOptions, redis?: Redis) {
+  constructor(options: ChannelOptions) {
     const { name, prefix } = options;
 
-    this.redis = typeof redis === "undefined" ? getRedis() : redis;
-
     this.name = `${prefix ? `${prefix}-` : ""}` + name
+  }
+
+  get redis() {
+    return getRedis();
   }
 
   public async publish(options: PublishOptions<T, K>) {

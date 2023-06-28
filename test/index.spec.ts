@@ -44,15 +44,15 @@ describe("closeAllRedis", () => {
     await initRedis({
       port: Number(process.env.REDIS_PORT),
       host: process.env.REDIS_HOST
-    }, true);
+    }, "subscriber");
   });
 
   test("given multiple redis instance, it must close every connections", async() => {
     expect.assertions(4);
 
     let perfs = await Promise.all([
-      getConnectionPerf(getRedis()),
-      getConnectionPerf(getRedis(true))
+      getConnectionPerf(),
+      getConnectionPerf("subscriber")
     ]);
 
     for (const perf of perfs) {
@@ -62,8 +62,8 @@ describe("closeAllRedis", () => {
     await closeAllRedis();
 
     perfs = await Promise.all([
-      getConnectionPerf(getRedis()),
-      getConnectionPerf(getRedis(true))
+      getConnectionPerf(),
+      getConnectionPerf("subscriber")
     ]);
 
     for (const perf of perfs) {

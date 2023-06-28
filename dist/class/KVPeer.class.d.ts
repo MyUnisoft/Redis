@@ -36,9 +36,8 @@ export declare class KVPeer<T extends StringOrObject = StringOrObject, K extends
     protected prefixedName: string;
     protected type: KVType;
     protected mapValue: KVMapper<T, K>;
-    constructor(options?: KVOptions<T, K>, redis?: Redis);
+    constructor(options?: KVOptions<T, K>);
     private defaultMapValue;
-    set redis(extInstance: Redis);
     get redis(): Redis;
     setValue(options: SetValueOptions<T>): Promise<KeyType>;
     getValue(key: KeyType): Promise<MappedValue<T, K> | null>;
