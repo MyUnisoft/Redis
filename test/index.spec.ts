@@ -3,8 +3,7 @@ import {
   initRedis,
   closeRedis,
   getConnectionPerf,
-  getPublisher,
-  getSubscriber,
+  getRedis,
   closeAllRedis
 } from "../src/index";
 
@@ -52,8 +51,8 @@ describe("closeAllRedis", () => {
     expect.assertions(4);
 
     let perfs = await Promise.all([
-      getConnectionPerf(getPublisher()),
-      getConnectionPerf(getSubscriber())
+      getConnectionPerf(getRedis()),
+      getConnectionPerf(getRedis(true))
     ]);
 
     for (const perf of perfs) {
@@ -63,8 +62,8 @@ describe("closeAllRedis", () => {
     await closeAllRedis();
 
     perfs = await Promise.all([
-      getConnectionPerf(getPublisher()),
-      getConnectionPerf(getSubscriber())
+      getConnectionPerf(getRedis()),
+      getConnectionPerf(getRedis(true))
     ]);
 
     for (const perf of perfs) {

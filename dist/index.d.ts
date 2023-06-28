@@ -1,7 +1,6 @@
 import Redis, { RedisOptions } from "ioredis";
 export { Redis } from "ioredis";
-export declare function getPublisher(): Redis;
-export declare function getSubscriber(): Redis;
+export declare function getRedis(subscriberInstance?: boolean): Redis;
 /**
 * Init a redis connection.
 * @param {object} redisOptions - represent object who contains all connections options

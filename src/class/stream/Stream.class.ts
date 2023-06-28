@@ -5,7 +5,7 @@ import { EventEmitter } from "events";
 import { Redis, RedisValue } from "ioredis";
 
 // Import Internal Depencencies
-import { getPublisher } from "../../index";
+import { getRedis } from "../../index";
 import * as utils from "../../utils/stream/index";
 
 // Import Types
@@ -98,7 +98,7 @@ export class Stream extends EventEmitter {
   }
 
   get redis() {
-    return getPublisher();
+    return getRedis();
   }
 
   public async streamExist(): Promise<boolean> {

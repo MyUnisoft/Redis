@@ -2,7 +2,7 @@
 import { Redis } from "ioredis";
 
 // Import Internal Dependencies
-import { initRedis, closeRedis, Channel, PublishOptions, getSubscriber } from "../../../src/index";
+import { initRedis, closeRedis, Channel, PublishOptions, getRedis } from "../../../src/index";
 
 // Mocks
 const mockedEvents = jest.fn();
@@ -25,7 +25,7 @@ describe("Channel", () => {
     beforeAll(async() => {
       await initRedis({ port: process.env.REDIS_PORT, host: process.env.REDIS_HOST } as any, true);
 
-      channel = new Channel({ name }, getSubscriber());
+      channel = new Channel({ name }, getRedis(true));
     });
 
     afterAll(async() => {

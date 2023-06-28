@@ -29,7 +29,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Types = exports.clearAllKeys = exports.closeAllRedis = exports.closeRedis = exports.getConnectionPerf = exports.initRedis = exports.getSubscriber = exports.getPublisher = void 0;
+exports.Types = exports.clearAllKeys = exports.closeAllRedis = exports.closeRedis = exports.getConnectionPerf = exports.initRedis = exports.getRedis = void 0;
 // Import Node.js Dependencies
 const events_1 = require("events");
 const perf_hooks_1 = require("perf_hooks");
@@ -37,14 +37,10 @@ const perf_hooks_1 = require("perf_hooks");
 const ioredis_1 = __importDefault(require("ioredis"));
 let publisher;
 let subscriber;
-function getPublisher() {
-    return publisher;
+function getRedis(subscriberInstance = false) {
+    return subscriberInstance ? subscriber : publisher;
 }
-exports.getPublisher = getPublisher;
-function getSubscriber() {
-    return subscriber;
-}
-exports.getSubscriber = getSubscriber;
+exports.getRedis = getRedis;
 /**
  *
  * Ensure the connection to the Redis instance.

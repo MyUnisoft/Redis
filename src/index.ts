@@ -9,13 +9,10 @@ export { Redis } from "ioredis";
 let publisher: Redis;
 let subscriber: Redis;
 
-export function getPublisher() {
-  return publisher;
+export function getRedis(subscriberInstance: boolean = false) {
+  return subscriberInstance ? subscriber : publisher;
 }
 
-export function getSubscriber() {
-  return subscriber;
-}
 
 /**
  *

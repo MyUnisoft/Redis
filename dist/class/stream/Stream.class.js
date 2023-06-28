@@ -51,7 +51,7 @@ class Stream extends events_1.EventEmitter {
         this.redis = extInstance;
     }
     get redis() {
-        return (0, index_1.getPublisher)();
+        return (0, index_1.getRedis)();
     }
     async streamExist() {
         try {

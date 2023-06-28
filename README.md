@@ -52,17 +52,12 @@ await closeAllRedis();
 
 ## 📜 API
 
-### getPublisher(): Redis;
+### getRedis(subscriberInstance: boolean = false): Redis;
 
-> This function return the Redis publisher instance.
-
----
-
-### getSubscriber(): Redis;
-
-> This function return the Redis subscriber instance.
+> This function return either the publisher instance, either the subscriber instance.
 
 ---
+
 
 ### initRedis(redisOptions: Partial<RedisOptions> & { port?: number; host?: string; } = {}, initSubscriber?: boolean): Promise<Redis>
 

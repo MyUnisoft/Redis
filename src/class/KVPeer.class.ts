@@ -5,7 +5,7 @@ import { EventEmitter } from "events";
 import { Redis } from "ioredis";
 
 // Import Internal Dependencies
-import { getPublisher } from "..";
+import { getRedis } from "..";
 import { KeyType } from "../types/index";
 
 // CONSTANTS
@@ -77,7 +77,7 @@ export class KVPeer<T extends StringOrObject = StringOrObject, K extends Record<
   }
 
   get redis() {
-    return getPublisher();
+    return getRedis();
   }
 
   async setValue(options: SetValueOptions<T>): Promise<KeyType> {
