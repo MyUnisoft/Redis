@@ -58,8 +58,7 @@ export declare class Stream extends EventEmitter {
     protected streamName: string;
     protected frequency: number;
     protected count?: number;
-    constructor(options: StreamOptions, redis?: Redis);
-    set redis(extInstance: Redis);
+    constructor(options: StreamOptions);
     get redis(): Redis;
     streamExist(): Promise<boolean>;
     /**

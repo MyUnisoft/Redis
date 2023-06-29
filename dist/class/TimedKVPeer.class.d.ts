@@ -1,5 +1,4 @@
 /// <reference types="node" />
-import { Redis } from "ioredis";
 import { KVPeer, KVOptions, SetValueOptions } from "./KVPeer.class";
 import { KeyType } from "../types/index";
 export interface TimedKVPeerOptions<T extends object, K extends Record<string, any> | null = null> extends Omit<KVOptions<T, K>, "type"> {
@@ -18,7 +17,7 @@ interface TimedSetValueOptions<T> extends Omit<SetValueOptions<T>, "expiresIn" |
 export declare class TimedKVPeer<T extends object, K extends Record<string, any> | null = null> extends KVPeer<T, K> {
     protected randomKeyGenerator: () => string;
     private ttl;
-    constructor(options?: TimedKVPeerOptions<T, K>, redis?: Redis);
+    constructor(options?: TimedKVPeerOptions<T, K>);
     setValue(options: TimedSetValueOptions<T>): Promise<KeyType>;
 }
 export {};

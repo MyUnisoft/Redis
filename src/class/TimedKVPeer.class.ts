@@ -27,8 +27,8 @@ export class TimedKVPeer<T extends object, K extends Record<string, any> | null 
   protected randomKeyGenerator: () => string;
   private ttl: number;
 
-  constructor(options: TimedKVPeerOptions<T, K> = {}, redis?: Redis) {
-    super({ ...options, type: "object" }, redis);
+  constructor(options: TimedKVPeerOptions<T, K> = {}) {
+    super({ ...options, type: "object" });
 
     this.ttl = options.ttl ?? kDefaultTtl;
     this.randomKeyGenerator = options.randomKeyCallback ?? kDefaultRandomKeyGenerator;

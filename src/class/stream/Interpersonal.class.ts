@@ -38,7 +38,7 @@ export class Interpersonal extends Stream {
 
   private claimOptions?: ClaimOptions;
 
-  constructor(options: InterpersonalOptions, redis?: Redis) {
+  constructor(options: InterpersonalOptions) {
     const {
       groupName,
       consumerName,
@@ -46,7 +46,7 @@ export class Interpersonal extends Stream {
       ...StreamOptions
     } = options;
 
-    super(StreamOptions, redis);
+    super(StreamOptions);
 
     this.groupName = groupName;
     this.consumerName = consumerName;

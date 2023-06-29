@@ -6,20 +6,24 @@ import { performance } from "perf_hooks";
 import Redis, { RedisOptions } from "ioredis";
 export { Redis } from "ioredis";
 
-let localRedis: Redis;
+// CONSTANTS
+const isPublisherInstance = (instance: Instance) => instance === "publisher";
+let publisher: Redis;
+let subscriber: Redis;
 
-export function getRedis() {
-  return localRedis;
+export type Instance = "subscriber" | "publisher";
+
+export function getRedis(instance: Instance = "publisher") {
+  return isPublisherInstance(instance) ? publisher : subscriber;
 }
 
 /**
  *
- * Use to ensure the connection to the Redis instance.
+ * Ensure the connection to the Redis instance.
  * @param {Redis} instance
  * @param {number} [attempt=4]
- * @returns
  */
-async function assertConnection(instance: Redis, attempt = 4) {
+async function assertConnection(instance: Instance, attempt = 4) {
   if (attempt <= 0) {
     throw new Error("Failed at initializing a Redis connection.");
   }
@@ -32,54 +36,37 @@ async function assertConnection(instance: Redis, attempt = 4) {
 }
 
 /**
-* this function init the store & wait if process exit for closing the store
+* Init a redis connection.
 * @param {object} redisOptions - represent object who contains all connections options
 *
 */
 export async function initRedis(
-  redisOptions: Partial<RedisOptions> & { port: number; host: string; },
-  extInstance?: boolean
+  redisOptions: Partial<RedisOptions> & { port?: number; host?: string; } = {},
+  instance: Instance = "publisher"
 ): Promise<Redis> {
   const { port, host, password } = redisOptions;
 
-  const redis = new Redis(port, host, { password });
+  const redis = typeof port !== "undefined" && typeof host !== "undefined" ?
+    new Redis(port, host, { password }) :
+    new Redis({ password });
 
-  await assertConnection(redis);
-
-  if (!extInstance) {
-    localRedis = redis;
+  if (isPublisherInstance(instance)) {
+    publisher = redis;
   }
+  else {
+    subscriber = redis;
+  }
+
+  await assertConnection(instance);
 
   return redis;
 }
 
 /**
-  * this function is used to close the store
-  * @returns void
-  */
-export async function closeRedis(extInstance?: Redis): Promise<void> {
-  const redis = extInstance || localRedis;
-
-  const { isAlive } = await getConnectionPerf(redis);
-
-  if (!isAlive) {
-    return;
-  }
-
-  setImmediate(() => {
-    redis.quit();
-  });
-
-  await once(redis, "end");
-}
-
-export interface GetConnectionPerfResponse {
-  isAlive: boolean;
-  perf?: number;
-}
-
-export async function getConnectionPerf(extInstance?: Redis): Promise<GetConnectionPerfResponse> {
-  const redis = extInstance || localRedis;
+ * Check Redis connection state.
+ */
+export async function getConnectionPerf(instance: Instance = "publisher"): Promise<GetConnectionPerfResponse> {
+  const redis = isPublisherInstance(instance) ? publisher : subscriber;
 
   const start = performance.now();
 
@@ -93,11 +80,59 @@ export async function getConnectionPerf(extInstance?: Redis): Promise<GetConnect
   return { isAlive: true, perf: performance.now() - start };
 }
 
+
 /**
-  * this function is used to clear all keys from redis
+  * Close a single local connection.
   */
-export async function clearAllKeys(extInstance?: Redis): Promise<void> {
-  const redis = extInstance || localRedis;
+export async function closeRedis(instance: Instance = "publisher"): Promise<void> {
+  const redis = isPublisherInstance(instance) ? publisher : subscriber;
+
+  const { isAlive } = await getConnectionPerf(instance);
+
+  if (!isAlive) {
+    return;
+  }
+
+  setImmediate(() => {
+    redis.quit();
+  });
+
+  await once(redis, "end");
+}
+
+/**
+ * Close every redis connections.
+ */
+export async function closeAllRedis(): Promise<void> {
+  const instances: [Instance, Instance] = ["publisher", "subscriber"];
+
+  await Promise.all(instances.map(async(instance) => {
+    const redis = getRedis(instance);
+
+    const { isAlive } = await getConnectionPerf(instance);
+
+    if (!isAlive) {
+      return;
+    }
+
+    setImmediate(() => {
+      redis.quit();
+    });
+
+    await once(redis, "end");
+  }));
+}
+
+export interface GetConnectionPerfResponse {
+  isAlive: boolean;
+  perf?: number;
+}
+
+/**
+  * Clear all keys from redis (it doesn't clean up streams or pubsub).
+  */
+export async function clearAllKeys(instance: Instance = "publisher"): Promise<void> {
+  const redis = isPublisherInstance(instance) ? publisher : subscriber;
 
   await redis.flushdb();
 }

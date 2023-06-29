@@ -40,13 +40,13 @@ export class RestrictedKV extends KVPeer<Partial<Attempt>> {
     return { failure: 0, lastTry: Date.now(), locked: false };
   }
 
-  constructor(options: RestrictedKVOptions = {}, redis?: Redis) {
+  constructor(options: RestrictedKVOptions = {}) {
     const { prefix, autoClearExpired, allowedAttempt, banTimeInSecond } = options;
 
     super({
       prefix: prefix ?? "limited-",
       type: "object"
-    }, redis);
+    });
 
     this.allowedAttempt = allowedAttempt ?? kDefaultAllowedAttempt;
     this.banTimeInSecond = banTimeInSecond ?? kDefaultBanTime;
@@ -54,7 +54,7 @@ export class RestrictedKV extends KVPeer<Partial<Attempt>> {
     if (autoClearExpired) {
       this.autoClearInterval = setInterval(async() => {
         try {
-          const connectionPerf = await getConnectionPerf(this.redis);
+          const connectionPerf = await getConnectionPerf("publisher");
 
           if (connectionPerf.isAlive) {
             await this.clearExpired();

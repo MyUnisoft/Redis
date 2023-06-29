@@ -38,19 +38,41 @@ import assert from "assert";
 import {
   initRedis,
   getRedis,
-  closeRedis
+  closeAllRedis
 } from "@myunisoft/redis";
 
-const redis = await initRedis();
+const publisher = await initRedis();
+const subscriber = await initRedis({}, "subscriber");
 
-assert.strictEqual(redis, getRedis());
+assert.strictEqual(publisher, getRedis());
+assert.strictEqual(subscriber, getRedis("subscriber"));
 
-await closeRedis();
+await closeAllRedis();
 ```
 
 ## 📜 API
 
-### getConnectionPerf(extInstance?: Redis): Promise<GetConnectionPerfResponse>
+export type Instance = "subscriber" | "publisher";
+
+type CustomRedisOptions: Partial<RedisOptions> & {
+  port?: number;
+  host?: string;
+};
+
+### getRedis(instance: Instance = "publisher"): Redis;
+
+> This function return either the publisher instance, either the subscriber instance.
+
+---
+
+
+### initRedis(redisOptions: CustomRedisOptions = {}, instance: Instance = "publisher"): Promise<Redis>
+
+> This function is used to init redis connections. Passing instance with "subscriber" value, it init the local  subscriber Redis instance. Otherwise, it init the local publisher Redis instance.
+
+---
+
+### getConnectionPerf(instance: Instance = "publisher"): Promise<GetConnectionPerfResponse>
 
 ```ts
 export interface GetConnectionPerfResponse {
@@ -58,16 +80,29 @@ export interface GetConnectionPerfResponse {
   perf?: number;
 }
 ```
-
-> This method is used to check Redis connection state.
+> This function is used to check Redis connection state.
 
 ```ts
 const { isAlive } = await getConnectionPerf(); // true
 ```
 
-### clearAllKeys(extInstance?: Redis): Promise<void>
+---
 
-> This function is used to clear all keys from redis.
+### closeRedis(instance: Instance = "publisher"): Promise<void>
+
+> This function is used to close a single local instance.
+
+---
+
+### closeAllRedis(): Promise<void>
+
+> This function is used to close every local instances.
+
+---
+
+### clearAllKeys(instance: Instance = "publisher"): Promise<void>
+
+> This function is used to clear all keys from redis db (it doesn't clean up streams or pubsub !).
 
 ```ts
 await clearAllKeys();

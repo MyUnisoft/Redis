@@ -1,4 +1,3 @@
-import { Redis } from "ioredis";
 import { KVPeer, KVOptions } from "./KVPeer.class";
 import { KeyType } from "../types/index";
 export declare type RestrictedKVOptions = Pick<KVOptions<Attempt>, "prefix"> & {
@@ -25,7 +24,7 @@ export declare class RestrictedKV extends KVPeer<Partial<Attempt>> {
         lastTry: number;
         locked: boolean;
     };
-    constructor(options?: RestrictedKVOptions, redis?: Redis);
+    constructor(options?: RestrictedKVOptions);
     private parseRawAttempt;
     clearAutoClearInterval(): void;
     /**

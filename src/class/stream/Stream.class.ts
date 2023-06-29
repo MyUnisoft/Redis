@@ -81,20 +81,13 @@ export class Stream extends EventEmitter {
   protected frequency: number;
   protected count?: number;
 
-  constructor(options: StreamOptions, redis?: Redis) {
+  constructor(options: StreamOptions) {
     super();
 
-    if (redis) {
-      this.redis = redis;
-    }
     this.streamName = options.streamName;
     this.frequency = options.frequency;
     this.count = options.count;
     this.lastId = options.lastId ?? kMinId;
-  }
-
-  set redis(extInstance: Redis) {
-    this.redis = extInstance;
   }
 
   get redis() {

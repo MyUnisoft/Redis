@@ -1,4 +1,3 @@
-import { Redis } from "ioredis";
 import { Stream, StreamOptions, ConsumeOptions } from "./Stream.class";
 import * as utils from "../../utils/stream/index";
 import { Entry } from "../../types/index";
@@ -22,7 +21,7 @@ export declare class Interpersonal extends Stream {
     consumerName: string;
     groupName: string;
     private claimOptions?;
-    constructor(options: InterpersonalOptions, redis?: Redis);
+    constructor(options: InterpersonalOptions);
     [Symbol.asyncIterator](): AsyncGenerator<Entry[], void, unknown>;
     init(): Promise<void>;
     consume(options?: ConsumeOptions): Promise<Entry[]>;

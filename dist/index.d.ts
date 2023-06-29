@@ -1,29 +1,36 @@
 import Redis, { RedisOptions } from "ioredis";
 export { Redis } from "ioredis";
-export declare function getRedis(): Redis;
+declare type Instance = "subscriber" | "publisher";
+export declare function getRedis(instance?: Instance): Redis;
 /**
-* this function init the store & wait if process exit for closing the store
+* Init a redis connection.
 * @param {object} redisOptions - represent object who contains all connections options
 *
 */
-export declare function initRedis(redisOptions: Partial<RedisOptions> & {
-    port: number;
-    host: string;
-}, extInstance?: boolean): Promise<Redis>;
+export declare function initRedis(redisOptions?: Partial<RedisOptions> & {
+    port?: number;
+    host?: string;
+}, instance?: Instance): Promise<Redis>;
 /**
-  * this function is used to close the store
-  * @returns void
+ * Check Redis connection state.
+ */
+export declare function getConnectionPerf(instance?: Instance): Promise<GetConnectionPerfResponse>;
+/**
+  * Close a single local connection.
   */
-export declare function closeRedis(extInstance?: Redis): Promise<void>;
+export declare function closeRedis(instance?: Instance): Promise<void>;
+/**
+ * Close every redis connections.
+ */
+export declare function closeAllRedis(): Promise<void>;
 export interface GetConnectionPerfResponse {
     isAlive: boolean;
     perf?: number;
 }
-export declare function getConnectionPerf(extInstance?: Redis): Promise<GetConnectionPerfResponse>;
 /**
-  * this function is used to clear all keys from redis
+  * Clear all keys from redis (it doesn't clean up streams or pubsub).
   */
-export declare function clearAllKeys(extInstance?: Redis): Promise<void>;
+export declare function clearAllKeys(instance?: Instance): Promise<void>;
 export * from "./class/stream/index";
 export * from "./class/pubSub/Channel.class";
 export * from "./class/KVPeer.class";
