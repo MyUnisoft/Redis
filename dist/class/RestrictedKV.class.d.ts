@@ -32,7 +32,10 @@ export declare class RestrictedKV extends KVPeer<Partial<Attempt>> {
      *
      * @param key - key WITHOUT PREFIX
      *
-     * @example handler.getAttempt("myKey")
+     * @example
+     * ```ts
+     * handler.getAttempt("myKey")
+     * ```
      */
     getAttempt(key: KeyType): Promise<Attempt>;
     /**
@@ -41,7 +44,10 @@ export declare class RestrictedKV extends KVPeer<Partial<Attempt>> {
     *
     * @param key - key WITHOUT PREFIX
     *
-    * @example handler.fail("myKey")
+    * @example
+    * ```ts
+    * handler.fail("myKey")
+    * ```
     */
     fail(key: KeyType): Promise<Attempt>;
     /**
@@ -49,13 +55,19 @@ export declare class RestrictedKV extends KVPeer<Partial<Attempt>> {
     *
     * @param key - WITHOUT PREFIX
     *
-    * @example handler.success("email@domain.com")
+    * @example
+    * ```ts
+    * handler.success("email@domain.com")
+    * ```
     */
     success(key: KeyType): Promise<void>;
     /**
     * @description Searches for all keys where the last attempt exceeds an allocated lifetime and clear (delete) them.
     *
-    * @example handler.clearExpired()
+    * @example
+    * ```ts
+    * handler.clearExpired()
+    * ```
     */
     clearExpired(): Promise<void>;
     private isKeyExpired;

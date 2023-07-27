@@ -77,13 +77,17 @@ export declare class Stream extends EventEmitter {
      * @param {data: { key: string; value: string | Buffer | number }, options: { id?: string; metadata?: string }} [options]
      * @returns {Promise<string>}
      * @example
+     * ```ts
      * // Push an Entry with a custom ID
      * const entryId = await push({ foo: "bar" }, { id: "any-custom-id" });
      * console.log(entryId) // "any-custom-string"
+     * ```
      * @example
+     * ```ts
      * // Push an Entry without a custom ID
      * const entryId = await push({ foo: "bar" }, { metadata: "" });
      * console.log(entryId) // 1526985685298-0
+     * ```
      */
     push(data: Data, options: PushOptions): Promise<string>;
     delEntry(entryId: string): Promise<void>;
@@ -93,19 +97,27 @@ export declare class Stream extends EventEmitter {
      * @param {{ min: string; max: string; count?: number; }} [options={ min: "-", max: "+" }]
      * @returns {Promise<Entry[]>}
      * @example
+     * ```ts
      * // Return all entries
      * await getRange({ min: "-", max: "+" })
+     * ```
      * @example
+     * ```ts
      * // Return single Entry
      * await getRange({ min: "1526985685298-0", max: "1526985685298-0" })
+     * ```
      * @example
+     * ```ts
      * // Return entries between those timestamp (inclusive)
      * await getRange({ min: "1526985054069", max: "1526985055069"})
+     * ```
      * @example
+     * ```ts
      * // Return Entry with id 1526985676425-0 & 1526985685298-0
      * await getRange({ min: "-", max: "+", count: 2})
      * // Return two next Entry, "(" exluding the given id
      * await getRange({ min: "(1526985685298-0", max: "+", count: 2 })
+     * ```
      */
     getRange(options?: GetRangeOptions): Promise<Entry[]>;
     getRevRange(options?: GetRangeOptions): Promise<Entry[]>;
@@ -116,10 +128,12 @@ export declare class Stream extends EventEmitter {
      * @param {(number | string)} treshold
      * @returns {Promise<number>}
      * @example
+     * ```ts
      * // Given a number, it acts like a maxlen
      * for (let index = 0; index < 1000; index++) await push({ data: { key: "foo", value: "bar" }})
      * const nbEvictedEntry = await trim(900)
      * console.log(nbEvictedEntry) // 100
+     * ```
      */
     trim(treshold: number | string): Promise<number>;
 }

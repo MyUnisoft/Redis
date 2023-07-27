@@ -1,9 +1,6 @@
 // Import Node.js Dependencies
 import { EventEmitter } from "events";
 
-// Import Third-party Dependencies
-import { Redis } from "ioredis";
-
 // Import Internal Dependencies
 import { getRedis } from "..";
 import { KeyType } from "../types/index";
@@ -45,8 +42,10 @@ export interface SetValueOptions<T> {
 * @property {string} [prefix = ""] - prefix for keys
 *
 * @example
+* ```ts
 * new KVPeer();
 * new KVPeer({ prefix: "myPrefix" });
+* ```
 */
 export class KVPeer<T extends StringOrObject = StringOrObject, K extends Record<string, any> | null = null> extends EventEmitter {
   protected prefix: string;

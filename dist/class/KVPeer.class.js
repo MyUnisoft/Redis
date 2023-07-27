@@ -16,8 +16,10 @@ const kDefaultKVType = "raw";
 * @property {string} [prefix = ""] - prefix for keys
 *
 * @example
+* ```ts
 * new KVPeer();
 * new KVPeer({ prefix: "myPrefix" });
+* ```
 */
 class KVPeer extends events_1.EventEmitter {
     constructor(options = {}) {

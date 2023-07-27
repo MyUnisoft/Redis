@@ -1,6 +1,5 @@
 /// <reference types="node" />
 import { EventEmitter } from "events";
-import { Redis } from "ioredis";
 import { KeyType } from "../types/index";
 export declare type KVType = "raw" | "object";
 export declare type StringOrObject = string | Record<string, any>;
@@ -28,8 +27,10 @@ export interface SetValueOptions<T> {
 * @property {string} [prefix = ""] - prefix for keys
 *
 * @example
+* ```ts
 * new KVPeer();
 * new KVPeer({ prefix: "myPrefix" });
+* ```
 */
 export declare class KVPeer<T extends StringOrObject = StringOrObject, K extends Record<string, any> | null = null> extends EventEmitter {
     protected prefix: string;
@@ -38,7 +39,7 @@ export declare class KVPeer<T extends StringOrObject = StringOrObject, K extends
     protected mapValue: KVMapper<T, K>;
     constructor(options?: KVOptions<T, K>);
     private defaultMapValue;
-    get redis(): Redis;
+    get redis(): import("ioredis/built/Redis").default;
     setValue(options: SetValueOptions<T>): Promise<KeyType>;
     getValue(key: KeyType): Promise<MappedValue<T, K> | null>;
     deleteValue(key: KeyType): Promise<number>;

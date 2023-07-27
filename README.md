@@ -113,6 +113,7 @@ The package also exports many classes listed below.
 - [KVPeer](./docs/KVPeer.md)
 - [TimedKVPeer](./docs/TimedKVPeer.md)
 - [RestrictedKV](./docs/RestrictedKV.md)
+- [StoreContext](./docs/StoreContext.md)
 - [PubSub](./docs/pubsub/Channel.md)
 - [Stream](./docs/stream/Stream.md)
   - [Intrapersonal](./docs/stream/Intrapersonal.md)
