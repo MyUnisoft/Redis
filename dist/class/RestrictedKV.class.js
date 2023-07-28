@@ -60,7 +60,10 @@ class RestrictedKV extends KVPeer_class_1.KVPeer {
      *
      * @param key - key WITHOUT PREFIX
      *
-     * @example handler.getAttempt("myKey")
+     * @example
+     * ```ts
+     * handler.getAttempt("myKey")
+     * ```
      */
     async getAttempt(key) {
         const data = await this.getValue(key);
@@ -72,7 +75,10 @@ class RestrictedKV extends KVPeer_class_1.KVPeer {
     *
     * @param key - key WITHOUT PREFIX
     *
-    * @example handler.fail("myKey")
+    * @example
+    * ```ts
+    * handler.fail("myKey")
+    * ```
     */
     async fail(key) {
         const stored = await this.getAttempt(key);
@@ -94,7 +100,10 @@ class RestrictedKV extends KVPeer_class_1.KVPeer {
     *
     * @param key - WITHOUT PREFIX
     *
-    * @example handler.success("email@domain.com")
+    * @example
+    * ```ts
+    * handler.success("email@domain.com")
+    * ```
     */
     async success(key) {
         const rawStored = await this.getValue(key);
@@ -105,7 +114,10 @@ class RestrictedKV extends KVPeer_class_1.KVPeer {
     /**
     * @description Searches for all keys where the last attempt exceeds an allocated lifetime and clear (delete) them.
     *
-    * @example handler.clearExpired()
+    * @example
+    * ```ts
+    * handler.clearExpired()
+    * ```
     */
     async clearExpired() {
         const promises = [this.redis.keysBuffer(`${this.prefix}*`), this.redis.keys(`${this.prefix}*`)];

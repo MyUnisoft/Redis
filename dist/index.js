@@ -139,5 +139,6 @@ __exportStar(require("./class/pubSub/Channel.class"), exports);
 __exportStar(require("./class/KVPeer.class"), exports);
 __exportStar(require("./class/TimedKVPeer.class"), exports);
 __exportStar(require("./class/RestrictedKV.class"), exports);
+__exportStar(require("./class/StoreContext.class"), exports);
 exports.Types = __importStar(require("./types/index"));
 //# sourceMappingURL=index.js.map

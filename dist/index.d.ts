@@ -1,6 +1,6 @@
 import Redis, { RedisOptions } from "ioredis";
 export { Redis } from "ioredis";
-declare type Instance = "subscriber" | "publisher";
+export declare type Instance = "subscriber" | "publisher";
 export declare function getRedis(instance?: Instance): Redis;
 /**
 * Init a redis connection.
@@ -36,4 +36,5 @@ export * from "./class/pubSub/Channel.class";
 export * from "./class/KVPeer.class";
 export * from "./class/TimedKVPeer.class";
 export * from "./class/RestrictedKV.class";
+export * from "./class/StoreContext.class";
 export * as Types from "./types/index";

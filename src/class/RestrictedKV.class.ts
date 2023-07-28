@@ -87,7 +87,10 @@ export class RestrictedKV extends KVPeer<Partial<Attempt>> {
    *
    * @param key - key WITHOUT PREFIX
    *
-   * @example handler.getAttempt("myKey")
+   * @example
+   * ```ts
+   * handler.getAttempt("myKey")
+   * ```
    */
   async getAttempt(key: KeyType): Promise<Attempt> {
     const data = await this.getValue(key) as RawAttempt | null;
@@ -101,7 +104,10 @@ export class RestrictedKV extends KVPeer<Partial<Attempt>> {
   *
   * @param key - key WITHOUT PREFIX
   *
-  * @example handler.fail("myKey")
+  * @example
+  * ```ts
+  * handler.fail("myKey")
+  * ```
   */
   async fail(key: KeyType): Promise<Attempt> {
     const stored = await this.getAttempt(key);
@@ -127,7 +133,10 @@ export class RestrictedKV extends KVPeer<Partial<Attempt>> {
   *
   * @param key - WITHOUT PREFIX
   *
-  * @example handler.success("email@domain.com")
+  * @example
+  * ```ts
+  * handler.success("email@domain.com")
+  * ```
   */
   async success(key: KeyType) {
     const rawStored = await this.getValue(key);
@@ -139,7 +148,10 @@ export class RestrictedKV extends KVPeer<Partial<Attempt>> {
   /**
   * @description Searches for all keys where the last attempt exceeds an allocated lifetime and clear (delete) them.
   *
-  * @example handler.clearExpired()
+  * @example
+  * ```ts
+  * handler.clearExpired()
+  * ```
   */
   async clearExpired(): Promise<void> {
     const promises = [this.redis.keysBuffer(`${this.prefix}*`), this.redis.keys(`${this.prefix}*`)];
