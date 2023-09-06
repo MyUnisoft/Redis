@@ -72,7 +72,7 @@ type CustomRedisOptions: Partial<RedisOptions> & {
 
 ---
 
-### getConnectionPerf(instance: Instance = "publisher"): Promise<GetConnectionPerfResponse>
+### getConnectionPerf(instance: Instance = "publisher", redisInstance?: Redis): Promise<GetConnectionPerfResponse>
 
 ```ts
 export interface GetConnectionPerfResponse {
@@ -88,13 +88,13 @@ const { isAlive } = await getConnectionPerf(); // true
 
 ---
 
-### closeRedis(instance: Instance = "publisher"): Promise<void>
+### closeRedis(instance: Instance = "publisher", redisInstance?: Redis): Promise<void>
 
 > This function is used to close a single local instance.
 
 ---
 
-### closeAllRedis(): Promise<void>
+### closeAllRedis(redisInstance?: [Redis, Redis]): Promise<void>
 
 > This function is used to close every local instances.
 

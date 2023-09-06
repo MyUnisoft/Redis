@@ -14,21 +14,21 @@ export declare function initRedis(redisOptions?: Partial<RedisOptions> & {
 /**
  * Check Redis connection state.
  */
-export declare function getConnectionPerf(instance?: Instance): Promise<GetConnectionPerfResponse>;
+export declare function getConnectionPerf(instance?: Instance, redisInstance?: Redis): Promise<GetConnectionPerfResponse>;
 /**
   * Close a single local connection.
   */
-export declare function closeRedis(instance?: Instance): Promise<void>;
+export declare function closeRedis(instance?: Instance, redisInstance?: Redis): Promise<void>;
 /**
  * Close every redis connections.
  */
-export declare function closeAllRedis(): Promise<void>;
+export declare function closeAllRedis(redisInstance?: [Redis, Redis]): Promise<void>;
 export interface GetConnectionPerfResponse {
     isAlive: boolean;
     perf?: number;
 }
 /**
-  * Clear all keys from redis (it doesn't clean up streams or pubsub).
+  * Clear all keys from redis (it doesn't clean up streams).
   */
 export declare function clearAllKeys(instance?: Instance): Promise<void>;
 export * from "./class/stream/index";
