@@ -1,7 +1,7 @@
 import Redis, { RedisOptions } from "ioredis";
 export { Redis } from "ioredis";
 export declare type Instance = "subscriber" | "publisher";
-export declare function getRedis(instance?: Instance): Redis;
+export declare function getRedis(instance?: Instance): Redis | undefined;
 /**
 * Init a redis connection.
 * @param {object} redisOptions - represent object who contains all connections options

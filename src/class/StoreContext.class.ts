@@ -75,7 +75,13 @@ export class StoreContext<T extends Store = Store> extends TimedKVPeer<T> {
   }
 
   get redis() {
-    return getRedis();
+    const redis = getRedis();
+
+    if (!redis) {
+      throw new Error("Redis must be init");
+    }
+
+    return redis;
   }
 
   /**

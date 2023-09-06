@@ -9,7 +9,11 @@ class Channel {
         this.name = `${prefix ? `${prefix}-` : ""}` + name;
     }
     get redis() {
-        return (0, __1.getRedis)();
+        const redis = (0, __1.getRedis)();
+        if (!redis) {
+            throw new Error("Redis must be init");
+        }
+        return redis;
     }
     async publish(options) {
         await this.redis.publish(this.name, JSON.stringify(options));

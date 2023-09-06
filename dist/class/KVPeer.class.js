@@ -33,7 +33,11 @@ class KVPeer extends events_1.EventEmitter {
         return value;
     }
     get redis() {
-        return (0, __1.getRedis)();
+        const redis = (0, __1.getRedis)();
+        if (!redis) {
+            throw new Error("Redis must be init");
+        }
+        return redis;
     }
     async setValue(options) {
         const { key, value, expiresIn } = options;
