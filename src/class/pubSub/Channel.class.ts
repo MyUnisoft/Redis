@@ -31,7 +31,13 @@ export class Channel<
   }
 
   get redis() {
-    return getRedis();
+    const redis = getRedis();
+
+    if (!redis) {
+      throw new Error("Redis must be init");
+    }
+
+    return redis;
   }
 
   public async publish(options: PublishOptions<T, K>) {

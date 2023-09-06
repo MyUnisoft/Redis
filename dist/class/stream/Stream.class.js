@@ -45,7 +45,11 @@ class Stream extends events_1.EventEmitter {
         this.lastId = options.lastId ?? kMinId;
     }
     get redis() {
-        return (0, index_1.getRedis)();
+        const redis = (0, index_1.getRedis)();
+        if (!redis) {
+            throw new Error("Redis must be init");
+        }
+        return redis;
     }
     async streamExist() {
         try {

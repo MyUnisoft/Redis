@@ -41,9 +41,6 @@ let publisher;
 let subscriber;
 function getRedis(instance = "publisher") {
     const redis = isPublisherInstance(instance) ? publisher : subscriber;
-    if (!redis) {
-        throw new Error("No available local instance");
-    }
     return redis;
 }
 exports.getRedis = getRedis;

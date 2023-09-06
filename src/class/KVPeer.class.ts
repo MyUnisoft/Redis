@@ -68,7 +68,13 @@ export class KVPeer<T extends StringOrObject = StringOrObject, K extends Record<
   }
 
   get redis() {
-    return getRedis();
+    const redis = getRedis();
+
+    if (!redis) {
+      throw new Error("Redis must be init");
+    }
+
+    return redis;
   }
 
   async setValue(options: SetValueOptions<T>): Promise<KeyType> {
