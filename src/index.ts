@@ -8,13 +8,19 @@ export { Redis } from "ioredis";
 
 // CONSTANTS
 const isPublisherInstance = (instance: Instance) => instance === "publisher";
-let publisher: Redis;
-let subscriber: Redis;
+let publisher: Redis | undefined;
+let subscriber: Redis | undefined;
 
 export type Instance = "subscriber" | "publisher";
 
 export function getRedis(instance: Instance = "publisher") {
-  return isPublisherInstance(instance) ? publisher : subscriber;
+  const redis = isPublisherInstance(instance) ? publisher : subscriber;
+
+  if (!redis) {
+    throw new Error("No available local instance");
+  }
+
+  return redis;
 }
 
 /**
@@ -50,11 +56,14 @@ export async function initRedis(
     new Redis(port, host, { password }) :
     new Redis({ password });
 
-  if (isPublisherInstance(instance)) {
+  if (isPublisherInstance(instance) && !publisher) {
     publisher = redis;
   }
-  else {
+  else if (!isPublisherInstance(instance) && !subscriber) {
     subscriber = redis;
+  }
+  else {
+    return isPublisherInstance(instance) ? publisher! : subscriber!;
   }
 
   await assertConnection(instance);
@@ -65,8 +74,12 @@ export async function initRedis(
 /**
  * Check Redis connection state.
  */
-export async function getConnectionPerf(instance: Instance = "publisher"): Promise<GetConnectionPerfResponse> {
-  const redis = isPublisherInstance(instance) ? publisher : subscriber;
+export async function getConnectionPerf(instance: Instance = "publisher", redisInstance?: Redis): Promise<GetConnectionPerfResponse> {
+  const redis = redisInstance ?? isPublisherInstance(instance) ? publisher : subscriber;
+
+  if (!redis) {
+    return { isAlive: false };
+  }
 
   const start = performance.now();
 
@@ -84,7 +97,23 @@ export async function getConnectionPerf(instance: Instance = "publisher"): Promi
 /**
   * Close a single local connection.
   */
-export async function closeRedis(instance: Instance = "publisher"): Promise<void> {
+export async function closeRedis(instance: Instance = "publisher", redisInstance?: Redis): Promise<void> {
+  if (redisInstance) {
+    const { isAlive } = await getConnectionPerf(instance, redisInstance);
+
+    if (!isAlive) {
+      return;
+    }
+
+    setImmediate(() => {
+      redisInstance.quit();
+    });
+
+    await once(redisInstance, "end");
+
+    return;
+  }
+
   const redis = isPublisherInstance(instance) ? publisher : subscriber;
 
   const { isAlive } = await getConnectionPerf(instance);
@@ -94,32 +123,41 @@ export async function closeRedis(instance: Instance = "publisher"): Promise<void
   }
 
   setImmediate(() => {
-    redis.quit();
+    redis!.quit();
   });
 
-  await once(redis, "end");
+  await once(redis!, "end");
+
+  if (instance === "publisher") {
+    publisher = undefined;
+  }
+  else {
+    subscriber = undefined;
+  }
 }
 
 /**
  * Close every redis connections.
  */
-export async function closeAllRedis(): Promise<void> {
-  const instances: [Instance, Instance] = ["publisher", "subscriber"];
+export async function closeAllRedis(redisInstance?: [Redis, Redis]): Promise<void> {
+  const instances: [Redis | undefined, Redis | undefined] = typeof redisInstance === "undefined" ? [getRedis(), getRedis("subscriber")] : redisInstance;
 
   await Promise.all(instances.map(async(instance) => {
-    const redis = getRedis(instance);
+    if (!instance) {
+      return;
+    }
 
-    const { isAlive } = await getConnectionPerf(instance);
+    const { isAlive } = await getConnectionPerf("publisher", instance);
 
     if (!isAlive) {
       return;
     }
 
     setImmediate(() => {
-      redis.quit();
+      instance.quit();
     });
 
-    await once(redis, "end");
+    await once(instance, "end");
   }));
 }
 
@@ -129,10 +167,14 @@ export interface GetConnectionPerfResponse {
 }
 
 /**
-  * Clear all keys from redis (it doesn't clean up streams or pubsub).
+  * Clear all keys from redis (it doesn't clean up streams).
   */
 export async function clearAllKeys(instance: Instance = "publisher"): Promise<void> {
   const redis = isPublisherInstance(instance) ? publisher : subscriber;
+
+  if (!redis) {
+    throw new Error("No available local instance");
+  }
 
   await redis.flushdb();
 }

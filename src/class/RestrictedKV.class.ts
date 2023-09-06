@@ -1,6 +1,5 @@
 // Import Third-party requirement
 import dayjs from "dayjs";
-import { Redis } from "ioredis";
 
 // Import Internal dependencies
 import { KVPeer, KVOptions } from "./KVPeer.class";
