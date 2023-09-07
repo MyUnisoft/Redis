@@ -58,9 +58,6 @@ export async function initRedis(
   else if (!isPublisherInstance(instance) && !subscriber) {
     subscriber = redis;
   }
-  else {
-    return isPublisherInstance(instance) ? publisher! : subscriber!;
-  }
 
   await assertConnection(instance);
 
