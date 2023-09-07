@@ -37,6 +37,7 @@ const perf_hooks_1 = require("perf_hooks");
 const ioredis_1 = __importDefault(require("ioredis"));
 // CONSTANTS
 const isPublisherInstance = (instance) => instance === "publisher";
+const kDefaultAttempt = 4;
 let publisher;
 let subscriber;
 function getRedis(instance = "publisher") {
@@ -50,13 +51,13 @@ exports.getRedis = getRedis;
  * @param {Redis} instance
  * @param {number} [attempt=4]
  */
-async function assertConnection(instance, attempt = 4) {
+async function assertConnection(instance, attempt = kDefaultAttempt, redis) {
     if (attempt <= 0) {
         throw new Error("Failed at initializing a Redis connection.");
     }
-    const { isAlive } = await getConnectionPerf(instance);
+    const { isAlive } = await getConnectionPerf(instance, redis);
     if (!isAlive) {
-        await assertConnection(instance, attempt - 1);
+        await assertConnection(instance, attempt - 1, redis);
     }
 }
 /**
@@ -64,12 +65,16 @@ async function assertConnection(instance, attempt = 4) {
 * @param {object} redisOptions - represent object who contains all connections options
 *
 */
-async function initRedis(redisOptions = {}, instance = "publisher") {
+async function initRedis(redisOptions = {}, instance = "publisher", external) {
     const { port, host, password } = redisOptions;
     const redis = typeof port !== "undefined" && typeof host !== "undefined" ?
         new ioredis_1.default(port, host, { password }) :
         new ioredis_1.default({ password });
-    if (isPublisherInstance(instance) && !publisher) {
+    if (external) {
+        await assertConnection(instance, kDefaultAttempt, redis);
+        return redis;
+    }
+    else if (isPublisherInstance(instance) && !publisher) {
         publisher = redis;
     }
     else if (!isPublisherInstance(instance) && !subscriber) {
@@ -83,7 +88,7 @@ exports.initRedis = initRedis;
  * Check Redis connection state.
  */
 async function getConnectionPerf(instance = "publisher", redisInstance) {
-    const redis = redisInstance ?? isPublisherInstance(instance) ? publisher : subscriber;
+    const redis = typeof redisInstance !== "undefined" ? redisInstance : isPublisherInstance(instance) ? publisher : subscriber;
     if (!redis) {
         return { isAlive: false };
     }
@@ -152,12 +157,12 @@ exports.closeAllRedis = closeAllRedis;
 /**
   * Clear all keys from redis (it doesn't clean up streams).
   */
-async function clearAllKeys(instance = "publisher") {
-    const redis = isPublisherInstance(instance) ? publisher : subscriber;
-    if (!redis) {
+async function clearAllKeys(instance = "publisher", redis) {
+    const redisInstance = typeof redis !== "undefined" ? redis : isPublisherInstance(instance) ? publisher : subscriber;
+    if (!redisInstance) {
         throw new Error("No available local instance");
     }
-    await redis.flushdb();
+    await redisInstance.flushdb();
 }
 exports.clearAllKeys = clearAllKeys;
 __exportStar(require("./class/stream/index"), exports);
