@@ -10,7 +10,7 @@ export declare function getRedis(instance?: Instance): Redis | undefined;
 export declare function initRedis(redisOptions?: Partial<RedisOptions> & {
     port?: number;
     host?: string;
-}, instance?: Instance): Promise<Redis>;
+}, instance?: Instance, external?: boolean): Promise<Redis>;
 /**
  * Check Redis connection state.
  */
@@ -30,7 +30,7 @@ export interface GetConnectionPerfResponse {
 /**
   * Clear all keys from redis (it doesn't clean up streams).
   */
-export declare function clearAllKeys(instance?: Instance): Promise<void>;
+export declare function clearAllKeys(instance?: Instance, redis?: Redis): Promise<void>;
 export * from "./class/stream/index";
 export * from "./class/pubSub/Channel.class";
 export * from "./class/KVPeer.class";

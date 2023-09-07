@@ -66,7 +66,7 @@ type CustomRedisOptions: Partial<RedisOptions> & {
 ---
 
 
-### initRedis(redisOptions: CustomRedisOptions = {}, instance: Instance = "publisher"): Promise<Redis>
+### initRedis(redisOptions: CustomRedisOptions = {}, instance: Instance = "publisher", external?: boolean): Promise<Redis>
 
 > This function is used to init redis connections. Passing instance with "subscriber" value, it init the local  subscriber Redis instance. Otherwise, it init the local publisher Redis instance.
 
@@ -100,7 +100,7 @@ const { isAlive } = await getConnectionPerf(); // true
 
 ---
 
-### clearAllKeys(instance: Instance = "publisher"): Promise<void>
+### clearAllKeys(instance: Instance = "publisher", redis?: Redis): Promise<void>
 
 > This function is used to clear all keys from redis db (it doesn't clean up streams or pubsub !).
 
