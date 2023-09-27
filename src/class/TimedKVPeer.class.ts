@@ -1,6 +1,5 @@
 // Import Node.js Dependencies
-import { randomBytes } from "crypto";
-import { Redis } from "ioredis";
+import { randomBytes } from "node:crypto";
 
 // Import Internal Dependencies
 import { KVPeer, KVOptions, SetValueOptions } from "./KVPeer.class";

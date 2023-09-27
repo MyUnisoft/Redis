@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.KVPeer = void 0;
 // Import Node.js Dependencies
-const events_1 = require("events");
+const node_events_1 = require("node:events");
 // Import Internal Dependencies
 const __1 = require("..");
 // CONSTANTS
@@ -21,7 +21,7 @@ const kDefaultKVType = "raw";
 * new KVPeer({ prefix: "myPrefix" });
 * ```
 */
-class KVPeer extends events_1.EventEmitter {
+class KVPeer extends node_events_1.EventEmitter {
     constructor(options = {}) {
         super();
         const { prefix, type, mapValue } = options;

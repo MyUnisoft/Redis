@@ -1,6 +1,7 @@
 // Import Node.js Dependencies
-import { Readable } from "stream";
-import { once } from "events";
+import timers from "node:timers/promises";
+import { Readable } from "node:stream";
+import { once } from "node:events";
 
 // Import Internal Dependencies
 import { initRedis, closeRedis, Interpersonal } from "../../../src/index";
@@ -149,7 +150,7 @@ describe("Consumer", () => {
         WHEN consuming data on the same stream
         THEN they should not deal with the same data`,
   async() => {
-    await new Promise((resolve) => setTimeout(resolve, kTimer + 400));
+    await timers.setTimeout(kTimer + 400);
 
     expect(mockedEvents).toHaveBeenCalledTimes(4);
     expect(mockedClaimEntry).toHaveBeenCalledTimes(4);
@@ -164,7 +165,7 @@ describe("Consumer", () => {
         THEN the second Consumer should deal with the data
         that the first Consumer was working on and that he didn't claim`,
   async() => {
-    await new Promise((resolve) => setTimeout(resolve, kDiff));
+    await timers.setTimeout(kDiff);
 
     expect(mockedEvents).toHaveBeenCalledTimes(9);
     expect(mockedClaimEntry).toHaveBeenCalledTimes(4);
@@ -172,7 +173,7 @@ describe("Consumer", () => {
 
     expect(entries.length).toBe(5);
 
-    await new Promise((resolve) => setTimeout(resolve, kDiff));
+    await timers.setTimeout(kDiff);
 
     expect(mockedEvents).toHaveBeenCalledTimes(13);
     expect(mockedClaimEntry).toHaveBeenCalledTimes(8);

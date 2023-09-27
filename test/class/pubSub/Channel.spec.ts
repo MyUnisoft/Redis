@@ -1,3 +1,6 @@
+// Import Node.js Dependencies
+import timers from "node:timers/promises";
+
 // Import Third-party Dependencies
 import { Redis } from "ioredis";
 
@@ -69,7 +72,7 @@ describe("Channel", () => {
 
         await channel.publish(options);
 
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        await timers.setTimeout(1_000);
 
         expect(mockedEvents).toHaveBeenCalledWith(name, JSON.stringify(options));
       });
@@ -113,7 +116,7 @@ describe("Channel", () => {
 
         await channel.publish(options);
 
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        await timers.setTimeout(1_000);
 
         expect(mockedEvents).toHaveBeenCalledWith(prefixedName, JSON.stringify(options));
       });
@@ -162,7 +165,7 @@ describe("Channel", () => {
 
         await channel.publish(options);
 
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        await timers.setTimeout(1_000);
 
         expect(mockedEvents).toHaveBeenCalledWith(name, JSON.stringify(options));
       });

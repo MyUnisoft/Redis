@@ -1,6 +1,6 @@
 // Import Node.js Dependencies
-import { once } from "events";
-import { performance } from "perf_hooks";
+import { once } from "node:events";
+import { performance } from "node:perf_hooks";
 
 // Import Third-party Dependencies
 import Redis, { RedisOptions } from "ioredis";
@@ -94,6 +94,18 @@ export async function getConnectionPerf(instance: Instance = "publisher", redisI
 }
 
 
+async function assertDisconnection(instance: Instance, attempt = kDefaultAttempt, redis?: Redis) {
+  if (attempt <= 0) {
+    throw new Error("Failed at closing a Redis connection.");
+  }
+
+  const { isAlive } = await getConnectionPerf(instance, redis);
+
+  if (isAlive) {
+    await assertDisconnection(instance, attempt - 1, redis);
+  }
+}
+
 /**
   * Close a single local connection.
   */
@@ -111,6 +123,8 @@ export async function closeRedis(instance: Instance = "publisher", redisInstance
 
     await once(redisInstance, "end");
 
+    await assertDisconnection("publisher", undefined, redisInstance);
+
     return;
   }
 
@@ -127,6 +141,8 @@ export async function closeRedis(instance: Instance = "publisher", redisInstance
   });
 
   await once(redis!, "end");
+
+  await assertDisconnection(instance);
 
   if (instance === "publisher") {
     publisher = undefined;
@@ -158,6 +174,8 @@ export async function closeAllRedis(redisInstance?: [Redis, Redis]): Promise<voi
     });
 
     await once(instance, "end");
+
+    await assertDisconnection("publisher", undefined, instance);
   }));
 }
 

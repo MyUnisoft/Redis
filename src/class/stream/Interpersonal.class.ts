@@ -1,5 +1,8 @@
+// Import Node.js Dependencies
+import timers from "node:timers/promises";
+
 // Import Third-party Dependencies
-import { Redis, RedisKey, RedisValue } from "ioredis";
+import { RedisKey, RedisValue } from "ioredis";
 
 // Import Internal Depencencies
 import {
@@ -57,7 +60,7 @@ export class Interpersonal extends Stream {
     while (true) {
       let entries: Entry[] = [];
 
-      await new Promise((resolve) => setTimeout(resolve, this.frequency));
+      await timers.setTimeout(this.frequency);
 
       if (this.claimOptions) {
         entries = await this.claim(this.claimOptions);

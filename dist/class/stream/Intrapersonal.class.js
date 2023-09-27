@@ -1,6 +1,11 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Intrapersonal = void 0;
+// Import Node.js Dependencies
+const promises_1 = __importDefault(require("node:timers/promises"));
 // Import Internal Depencencies
 const Stream_class_1 = require("./Stream.class");
 const index_1 = require("../../utils/stream/index");
@@ -11,7 +16,7 @@ const index_1 = require("../../utils/stream/index");
 class Intrapersonal extends Stream_class_1.Stream {
     async *[Symbol.asyncIterator]() {
         while (true) {
-            await new Promise((resolve) => setTimeout(resolve, this.frequency));
+            await promises_1.default.setTimeout(this.frequency);
             yield await this.consume();
         }
     }

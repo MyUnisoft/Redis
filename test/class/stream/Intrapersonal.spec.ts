@@ -1,6 +1,7 @@
 // Import Node.js Dependencies
-import { once } from "events";
-import { Readable } from "stream";
+import timers from "node:timers/promises";
+import { once } from "node:events";
+import { Readable } from "node:stream";
 
 // Import Internal Dependencies
 import { initRedis, closeRedis, Intrapersonal } from "../../../src";
@@ -50,7 +51,7 @@ describe("basicStream instance", () => {
   });
 
   test("reading data", async() => {
-    await new Promise((resolve) => setTimeout(resolve, kFrequency + 1000));
+    await timers.setTimeout(kFrequency + 1_000);
 
     expect(mockedHandleEntries).toHaveBeenCalledTimes(1);
     expect(mockedEvents).toHaveBeenCalledTimes(3);
@@ -59,12 +60,12 @@ describe("basicStream instance", () => {
       entries.push(await intrapersonalStream.push({ foo: "bar" }, {}));
     }
 
-    await new Promise((resolve) => setTimeout(resolve, kFrequency));
+    await timers.setTimeout(kFrequency);
 
     expect(mockedHandleEntries).toHaveBeenCalledTimes(2);
     expect(mockedEvents).toHaveBeenCalledTimes(6);
 
-    await new Promise((resolve) => setTimeout(resolve, kFrequency));
+    await timers.setTimeout(kFrequency);
 
     expect(mockedHandleEntries).toHaveBeenCalledTimes(2);
     expect(mockedEvents).toHaveBeenCalledTimes(6);
@@ -73,7 +74,7 @@ describe("basicStream instance", () => {
       entries.push(await intrapersonalStream.push({ foo: "bar" }, {}));
     }
 
-    await new Promise((resolve) => setTimeout(resolve, kFrequency));
+    await timers.setTimeout(kFrequency);
 
     expect(mockedHandleEntries).toHaveBeenCalledTimes(3);
     expect(mockedEvents).toHaveBeenCalledTimes(9);
