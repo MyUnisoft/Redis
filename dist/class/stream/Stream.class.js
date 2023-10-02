@@ -25,7 +25,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Stream = void 0;
 // Import Node.js Dependencies
-const events_1 = require("events");
+const node_events_1 = require("node:events");
 // Import Internal Depencencies
 const index_1 = require("../../index");
 const utils = __importStar(require("../../utils/stream/index"));
@@ -36,7 +36,7 @@ const kMinId = "0-0";
  *
  * @description Shared method used to work on a Redis Stream
  */
-class Stream extends events_1.EventEmitter {
+class Stream extends node_events_1.EventEmitter {
     constructor(options) {
         super();
         this.streamName = options.streamName;

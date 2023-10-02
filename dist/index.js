@@ -31,8 +31,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Types = exports.clearAllKeys = exports.closeAllRedis = exports.closeRedis = exports.getConnectionPerf = exports.initRedis = exports.getRedis = void 0;
 // Import Node.js Dependencies
-const events_1 = require("events");
-const perf_hooks_1 = require("perf_hooks");
+const node_events_1 = require("node:events");
+const node_perf_hooks_1 = require("node:perf_hooks");
 // Import Third-party Dependencies
 const ioredis_1 = __importDefault(require("ioredis"));
 // CONSTANTS
@@ -92,40 +92,38 @@ async function getConnectionPerf(instance = "publisher", redisInstance) {
     if (!redis) {
         return { isAlive: false };
     }
-    const start = perf_hooks_1.performance.now();
+    const start = node_perf_hooks_1.performance.now();
     try {
         await redis.ping();
     }
     catch {
         return { isAlive: false };
     }
-    return { isAlive: true, perf: perf_hooks_1.performance.now() - start };
+    return { isAlive: true, perf: node_perf_hooks_1.performance.now() - start };
 }
 exports.getConnectionPerf = getConnectionPerf;
+async function assertDisconnection(instance, attempt = kDefaultAttempt, redis) {
+    if (attempt <= 0) {
+        throw new Error("Failed at closing a Redis connection.");
+    }
+    const { isAlive } = await getConnectionPerf(instance, redis);
+    if (isAlive) {
+        await assertDisconnection(instance, attempt - 1, redis);
+    }
+}
 /**
   * Close a single local connection.
   */
-async function closeRedis(instance = "publisher", redisInstance) {
+async function closeRedis(instance = "publisher", redisInstance, forceExit = false) {
     if (redisInstance) {
-        const { isAlive } = await getConnectionPerf(instance, redisInstance);
-        if (!isAlive) {
-            return;
-        }
-        setImmediate(() => {
-            redisInstance.quit();
-        });
-        await (0, events_1.once)(redisInstance, "end");
+        await closeConnection(instance, redisInstance, forceExit);
         return;
     }
     const redis = isPublisherInstance(instance) ? publisher : subscriber;
-    const { isAlive } = await getConnectionPerf(instance);
-    if (!isAlive) {
-        return;
+    if (!redis) {
+        throw new Error("Unavailable redis instance");
     }
-    setImmediate(() => {
-        redis.quit();
-    });
-    await (0, events_1.once)(redis, "end");
+    await closeConnection(instance, redis, forceExit);
     if (instance === "publisher") {
         publisher = undefined;
     }
@@ -137,20 +135,13 @@ exports.closeRedis = closeRedis;
 /**
  * Close every redis connections.
  */
-async function closeAllRedis(redisInstance) {
+async function closeAllRedis(redisInstance, forceExit = false) {
     const instances = typeof redisInstance === "undefined" ? [getRedis(), getRedis("subscriber")] : redisInstance;
     await Promise.all(instances.map(async (instance) => {
         if (!instance) {
             return;
         }
-        const { isAlive } = await getConnectionPerf("publisher", instance);
-        if (!isAlive) {
-            return;
-        }
-        setImmediate(() => {
-            instance.quit();
-        });
-        await (0, events_1.once)(instance, "end");
+        await closeConnection("publisher", instance, forceExit);
     }));
 }
 exports.closeAllRedis = closeAllRedis;
@@ -165,6 +156,15 @@ async function clearAllKeys(instance = "publisher", redis) {
     await redisInstance.flushdb();
 }
 exports.clearAllKeys = clearAllKeys;
+async function closeConnection(instance = "publisher", redis, forceExit = false) {
+    const { isAlive } = await getConnectionPerf(instance);
+    if (!isAlive) {
+        return;
+    }
+    setImmediate(() => forceExit ? redis.disconnect() : redis.quit());
+    await (0, node_events_1.once)(redis, "end");
+    await assertDisconnection(instance);
+}
 __exportStar(require("./class/stream/index"), exports);
 __exportStar(require("./class/pubSub/Channel.class"), exports);
 __exportStar(require("./class/KVPeer.class"), exports);

@@ -1,6 +1,5 @@
 /// <reference types="node" />
-import { EventEmitter } from "events";
-import { Redis } from "ioredis";
+import { EventEmitter } from "node:events";
 import * as utils from "../../utils/stream/index";
 import { Data, Entry, Group } from "../../types/index";
 export interface StreamOptions {
@@ -59,7 +58,7 @@ export declare class Stream extends EventEmitter {
     protected frequency: number;
     protected count?: number;
     constructor(options: StreamOptions);
-    get redis(): Redis;
+    get redis(): import("ioredis/built/Redis").default;
     streamExist(): Promise<boolean>;
     /**
      *

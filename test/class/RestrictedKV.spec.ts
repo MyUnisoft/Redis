@@ -1,5 +1,6 @@
 // Import Node.js Dependencies
-import { EventEmitter } from "events";
+import timers from "node:timers/promises";
+import { EventEmitter } from "node:events";
 
 // Import Internal Dependencies
 import { initRedis, closeRedis, clearAllKeys, RestrictedKV } from "../../src";
@@ -240,7 +241,7 @@ describe("RestrictedKV", () => {
     });
 
     test("should unlock the key after the given banTime", async() => {
-      await new Promise((resolve) => setTimeout(resolve, 3_600));
+      await timers.setTimeout(3_600);
 
       const attempt = await restrictedKV.getValue(key);
       expect(attempt).toHaveProperty("failure", payload.failure);
@@ -270,7 +271,7 @@ describe("autoClearInterval database suite", () => {
 
     await restrictedKV.setValue({ key, value: payload });
 
-    await new Promise((resolve) => setTimeout(resolve, 5000));
+    await timers.setTimeout(5_000);
 
     expect(restrictedKV.getAttempt(key)).resolves.toMatchObject({
       failure: 0,

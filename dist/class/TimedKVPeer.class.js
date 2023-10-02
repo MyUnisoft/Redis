@@ -2,12 +2,12 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TimedKVPeer = void 0;
 // Import Node.js Dependencies
-const crypto_1 = require("crypto");
+const node_crypto_1 = require("node:crypto");
 // Import Internal Dependencies
 const KVPeer_class_1 = require("./KVPeer.class");
 // CONSTANTS
 const kDefaultTtl = 1000 * 60 * 10;
-const kDefaultRandomKeyGenerator = () => (0, crypto_1.randomBytes)(6).toString("hex");
+const kDefaultRandomKeyGenerator = () => (0, node_crypto_1.randomBytes)(6).toString("hex");
 ;
 /**
 * @class TimedKVPeer

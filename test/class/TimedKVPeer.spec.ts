@@ -1,3 +1,6 @@
+// Import Node.js Dependencies
+import timers from "node:timers/promises";
+
 // Import Internal Dependencies
 import {
   initRedis,
@@ -37,7 +40,7 @@ describe("TimedKVPeer", () => {
     });
 
     it("Given an expired key, it should return null", async() => {
-      await new Promise((resolve) => setTimeout(resolve, 3600));
+      await timers.setTimeout(3_600);
 
       expect(await timedKVPeer.getValue("key")).toBe(null);
     });
@@ -55,7 +58,7 @@ describe("TimedKVPeer", () => {
     it("Given a expired key", async () => {
       const key = await timedKVPeer.setValue({ key: "foo", value: { mail: "bar" } });
 
-      await new Promise((resolve) => setTimeout(resolve, 3600));
+      await timers.setTimeout(3_600);
 
       const deletedValues = await timedKVPeer.deleteValue(key);
 

@@ -22,8 +22,13 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Interpersonal = void 0;
+// Import Node.js Dependencies
+const promises_1 = __importDefault(require("node:timers/promises"));
 // Import Internal Depencencies
 const Stream_class_1 = require("./Stream.class");
 const utils = __importStar(require("../../utils/stream/index"));
@@ -43,7 +48,7 @@ class Interpersonal extends Stream_class_1.Stream {
     async *[Symbol.asyncIterator]() {
         while (true) {
             let entries = [];
-            await new Promise((resolve) => setTimeout(resolve, this.frequency));
+            await promises_1.default.setTimeout(this.frequency);
             if (this.claimOptions) {
                 entries = await this.claim(this.claimOptions);
             }

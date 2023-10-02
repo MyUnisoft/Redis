@@ -1,5 +1,5 @@
 // Import Node.js Dependencies
-import { EventEmitter } from "events";
+import { EventEmitter } from "node:events";
 
 // Import Internal Dependencies
 import { getRedis } from "..";

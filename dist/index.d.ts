@@ -18,11 +18,11 @@ export declare function getConnectionPerf(instance?: Instance, redisInstance?: R
 /**
   * Close a single local connection.
   */
-export declare function closeRedis(instance?: Instance, redisInstance?: Redis): Promise<void>;
+export declare function closeRedis(instance?: Instance, redisInstance?: Redis, forceExit?: boolean): Promise<void>;
 /**
  * Close every redis connections.
  */
-export declare function closeAllRedis(redisInstance?: [Redis, Redis]): Promise<void>;
+export declare function closeAllRedis(redisInstance?: [Redis, Redis], forceExit?: boolean): Promise<void>;
 export interface GetConnectionPerfResponse {
     isAlive: boolean;
     perf?: number;

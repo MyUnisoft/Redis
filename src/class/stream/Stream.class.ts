@@ -1,8 +1,8 @@
 // Import Node.js Dependencies
-import { EventEmitter } from "events";
+import { EventEmitter } from "node:events";
 
 // Import Third-party Dependencies
-import { Redis, RedisValue } from "ioredis";
+import { RedisValue } from "ioredis";
 
 // Import Internal Depencencies
 import { getRedis } from "../../index";

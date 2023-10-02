@@ -1,5 +1,5 @@
 /// <reference types="node" />
-import { EventEmitter } from "events";
+import { EventEmitter } from "node:events";
 import { KeyType } from "../types/index";
 export declare type KVType = "raw" | "object";
 export declare type StringOrObject = string | Record<string, any>;

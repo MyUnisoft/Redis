@@ -1,3 +1,6 @@
+// Import Node.js Dependencies
+import timers from "node:timers/promises";
+
 // Import Third-party Dependencies
 import { RedisValue } from "ioredis";
 
@@ -15,7 +18,7 @@ import { Entry } from "../../types/index";
 export class Intrapersonal extends Stream {
   async *[Symbol.asyncIterator]() {
     while (true) {
-      await new Promise((resolve) => setTimeout(resolve, this.frequency));
+      await timers.setTimeout(this.frequency);
 
       yield await this.consume();
     }
