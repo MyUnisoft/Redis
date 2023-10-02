@@ -3,17 +3,12 @@ import {
   initRedis,
   closeRedis,
   getConnectionPerf,
-  getRedis,
   closeAllRedis
 } from "../src/index";
 
 describe("getConnectionPerf", () => {
   beforeAll(async() => {
     await initRedis();
-  });
-
-  afterAll(async() => {
-    await closeRedis();
   });
 
   test(`WHEN calling getConnectionPerf
