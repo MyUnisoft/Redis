@@ -114,29 +114,16 @@ async function assertDisconnection(instance, attempt = kDefaultAttempt, redis) {
 /**
   * Close a single local connection.
   */
-async function closeRedis(instance = "publisher", redisInstance) {
+async function closeRedis(instance = "publisher", redisInstance, forceExit = false) {
     if (redisInstance) {
-        const { isAlive } = await getConnectionPerf(instance, redisInstance);
-        if (!isAlive) {
-            return;
-        }
-        setImmediate(() => {
-            redisInstance.quit();
-        });
-        await (0, node_events_1.once)(redisInstance, "end");
-        await assertDisconnection("publisher", undefined, redisInstance);
+        await closeConnection(instance, redisInstance, forceExit);
         return;
     }
     const redis = isPublisherInstance(instance) ? publisher : subscriber;
-    const { isAlive } = await getConnectionPerf(instance);
-    if (!isAlive) {
-        return;
+    if (!redis) {
+        throw new Error("Unavailable redis instance");
     }
-    setImmediate(() => {
-        redis.quit();
-    });
-    await (0, node_events_1.once)(redis, "end");
-    await assertDisconnection(instance);
+    await closeConnection(instance, redis, forceExit);
     if (instance === "publisher") {
         publisher = undefined;
     }
@@ -148,21 +135,13 @@ exports.closeRedis = closeRedis;
 /**
  * Close every redis connections.
  */
-async function closeAllRedis(redisInstance) {
+async function closeAllRedis(redisInstance, forceExit = false) {
     const instances = typeof redisInstance === "undefined" ? [getRedis(), getRedis("subscriber")] : redisInstance;
     await Promise.all(instances.map(async (instance) => {
         if (!instance) {
             return;
         }
-        const { isAlive } = await getConnectionPerf("publisher", instance);
-        if (!isAlive) {
-            return;
-        }
-        setImmediate(() => {
-            instance.quit();
-        });
-        await (0, node_events_1.once)(instance, "end");
-        await assertDisconnection("publisher", undefined, instance);
+        await closeConnection("publisher", instance, forceExit);
     }));
 }
 exports.closeAllRedis = closeAllRedis;
@@ -177,6 +156,15 @@ async function clearAllKeys(instance = "publisher", redis) {
     await redisInstance.flushdb();
 }
 exports.clearAllKeys = clearAllKeys;
+async function closeConnection(instance = "publisher", redis, forceExit = false) {
+    const { isAlive } = await getConnectionPerf(instance);
+    if (!isAlive) {
+        return;
+    }
+    setImmediate(() => forceExit ? redis.disconnect() : redis.quit());
+    await (0, node_events_1.once)(redis, "end");
+    await assertDisconnection(instance);
+}
 __exportStar(require("./class/stream/index"), exports);
 __exportStar(require("./class/pubSub/Channel.class"), exports);
 __exportStar(require("./class/KVPeer.class"), exports);
