@@ -172,15 +172,7 @@ async function closeConnection(instance: Instance = "publisher", redis: Redis, f
     return;
   }
 
-  setImmediate(() => {
-    if (!forceExit) {
-      redis!.quit();
-
-      return
-    }
-
-    redis!.disconnect();
-  });
+  setImmediate(() => forceExit  ? redis.disconnect() : redis.quit());
 
   await once(redis!, "end");
 
