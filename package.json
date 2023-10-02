@@ -37,7 +37,7 @@
   "devDependencies": {
     "@types/jest": "^27.0.2",
     "@types/node": "^16.10.2",
-    "dotenv": "^10.0.0",
+    "dotenv": "^16.3.1",
     "jest": "^27.2.4",
     "testcontainers": "^7.22.0",
     "ts-jest": "^27.0.5",
