@@ -88,13 +88,13 @@ const { isAlive } = await getConnectionPerf(); // true
 
 ---
 
-### closeRedis(instance: Instance = "publisher", redisInstance?: Redis): Promise<void>
+### closeRedis(instance: Instance = "publisher", redisInstance?: Redis, forceExit: boolean = false): Promise<void>
 
 > This function is used to close a single local instance.
 
 ---
 
-### closeAllRedis(redisInstance?: [Redis, Redis]): Promise<void>
+### closeAllRedis(redisInstance?: [Redis, Redis], forceExit: boolean = false): Promise<void>
 
 > This function is used to close every local instances.
 
