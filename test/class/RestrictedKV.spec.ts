@@ -5,10 +5,13 @@ import { EventEmitter } from "node:events";
 // Import Internal Dependencies
 import { initRedis, clearAllKeys, RestrictedKV, closeAllRedis } from "../../src";
 import { randomValue } from "../fixtures/utils/randomValue";
+import MockDate from "mockdate";
 
 // Internal Dependencies Mock
 const mockedDeleteValue = jest.spyOn(RestrictedKV.prototype as any, "deleteValue");
 const doNothing = jest.fn();
+
+MockDate.set(Date.now());
 
 beforeAll(async() => {
   await initRedis({ port: Number(process.env.REDIS_PORT), host: process.env.REDIS_HOST });
