@@ -4,7 +4,7 @@ import { Readable } from "node:stream";
 import { once } from "node:events";
 
 // Import Internal Dependencies
-import { initRedis, closeRedis, Interpersonal } from "../../../src/index";
+import { initRedis, closeAllRedis, Interpersonal } from "../../../src/index";
 import { randomValue } from "../../fixtures/utils/randomValue";
 
 // Import Types
@@ -43,7 +43,7 @@ const kCount = 2;
 
 describe("Consumer", () => {
   beforeAll(async() => {
-    await initRedis({ port: process.env.REDIS_PORT, host: process.env.REDIS_HOST } as any);
+    await initRedis({ port: Number(process.env.REDIS_PORT), host: process.env.REDIS_HOST });
 
     firstConsumer = new Interpersonal({
       streamName: kStreamName,
@@ -212,7 +212,7 @@ describe("Consumer", () => {
     const promises = [once(secondConsumerReadable, "close"), once(thirdConsumerReadable, "close")];
     await Promise.all(promises);
 
-    await closeRedis();
+    await closeAllRedis();
   });
 });
 

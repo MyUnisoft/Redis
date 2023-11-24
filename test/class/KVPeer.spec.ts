@@ -4,18 +4,18 @@ import EventEmitter from "node:events";
 // Import Internal Dependencies
 import {
   initRedis,
-  closeRedis,
-  clearAllKeys
+  clearAllKeys,
+  closeAllRedis
 } from "../../src";
 import { KVPeer } from "../../src/index";
 
 beforeAll(async() => {
-  await initRedis();
+  await initRedis({ port: Number(process.env.REDIS_PORT), host: process.env.REDIS_HOST });
   await clearAllKeys();
 });
 
 afterAll(async() => {
-  await closeRedis();
+  await closeAllRedis();
 });
 
 // KVPeer Instance

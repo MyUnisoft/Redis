@@ -2,7 +2,7 @@
 import EventEmitter from "node:events";
 
 // Import Internal Dependencies
-import { initRedis, closeRedis, Stream } from "../../../src";
+import { initRedis, Stream, closeAllRedis } from "../../../src";
 import { randomValue } from "../../fixtures/utils/randomValue";
 
 // Import Types
@@ -18,7 +18,7 @@ const kFrequency = 3000;
 
 describe("RedisStream instance", () => {
   beforeAll(async() => {
-    await initRedis({ port: process.env.REDIS_PORT, host: process.env.REDIS_HOST } as any);
+    await initRedis({ port: Number(process.env.REDIS_PORT), host: process.env.REDIS_HOST });
     stream = new Stream({ streamName: kStreamName, lastId: "0-0", frequency: kFrequency });
 
     const streamExist = await stream.streamExist();
@@ -347,7 +347,7 @@ describe("RedisStream instance", () => {
       await stream.delEntry(entryId);
     }
 
-    await closeRedis();
+    await closeAllRedis();
   });
 });
 

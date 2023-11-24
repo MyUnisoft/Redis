@@ -8,7 +8,7 @@ import {
 
 describe("getConnectionPerf", () => {
   beforeAll(async() => {
-    await initRedis();
+    await initRedis({ port: Number(process.env.REDIS_PORT), host: process.env.REDIS_HOST });
   });
 
   test(`WHEN calling getConnectionPerf
@@ -34,7 +34,7 @@ describe("getConnectionPerf", () => {
 
 describe("closeAllRedis", () => {
   beforeAll(async() => {
-    await initRedis();
+    await initRedis({ port: Number(process.env.REDIS_PORT), host: process.env.REDIS_HOST });
 
     await initRedis({
       port: Number(process.env.REDIS_PORT),

@@ -2,6 +2,7 @@ module.exports = {
   preset: "ts-jest",
   testEnvironment: "node",
   maxWorkers: 1,
+  maxConcurrency: 1,
   moduleNameMapper: {
     "^#src/(.*)$": "<rootDir>/src/$1"
   },

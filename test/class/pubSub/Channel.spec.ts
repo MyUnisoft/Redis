@@ -5,17 +5,23 @@ import timers from "node:timers/promises";
 import { Redis } from "ioredis";
 
 // Import Internal Dependencies
-import { initRedis, closeRedis, Channel, PublishOptions } from "../../../src/index";
+import {
+  initRedis,
+  closeAllRedis,
+  Channel,
+  PublishOptions,
+  closeRedis
+} from "../../../src/index";
 
 // Mocks
 const mockedEvents = jest.fn();
 
 beforeAll(async() => {
-  await initRedis();
+  await initRedis({ port: Number(process.env.REDIS_PORT), host: process.env.REDIS_HOST });
 });
 
 afterAll(async() => {
-  await closeRedis();
+  await closeAllRedis();
 });
 
 describe("Channel", () => {
@@ -46,7 +52,7 @@ describe("Channel", () => {
       beforeAll(async() => {
         channel = new Channel({ name });
 
-        subscriber = await initRedis({}, "subscriber");
+        subscriber = await initRedis({ port: Number(process.env.REDIS_PORT), host: process.env.REDIS_HOST }, "subscriber");
 
         await subscriber.subscribe(name);
         subscriber.on("message", (channel, message) => mockedEvents(channel, message));
@@ -90,7 +96,7 @@ describe("Channel", () => {
       beforeAll(async() => {
         channel = new Channel({ name, prefix });
 
-        subscriber = await initRedis({}, "subscriber");
+        subscriber = await initRedis({ port: Number(process.env.REDIS_PORT), host: process.env.REDIS_HOST }, "subscriber");
 
         await subscriber.subscribe(prefixedName);
         subscriber.on("message", (channel, message) => mockedEvents(channel, message));
@@ -136,7 +142,7 @@ describe("Channel", () => {
       beforeAll(async() => {
         channel = new Channel<Record<string, any>, Metadata>({ name });
 
-        subscriber = await initRedis({}, "subscriber");
+        subscriber = await initRedis({ port: Number(process.env.REDIS_PORT), host: process.env.REDIS_HOST }, "subscriber");
 
         await subscriber.subscribe(name);
         subscriber.on("message", (channel, message) => mockedEvents(channel, message));

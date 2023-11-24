@@ -29,12 +29,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Types = exports.clearAllKeys = exports.closeAllRedis = exports.closeRedis = exports.getConnectionPerf = exports.initRedis = exports.getRedis = void 0;
+exports.Types = exports.clearAllKeys = exports.closeAllRedis = exports.closeRedis = exports.getConnectionPerf = exports.initRedis = exports.getRedis = exports.Redis = void 0;
 // Import Node.js Dependencies
 const node_events_1 = require("node:events");
 const node_perf_hooks_1 = require("node:perf_hooks");
 // Import Third-party Dependencies
 const ioredis_1 = __importDefault(require("ioredis"));
+var ioredis_2 = require("ioredis");
+Object.defineProperty(exports, "Redis", { enumerable: true, get: function () { return ioredis_2.Redis; } });
 // CONSTANTS
 const isPublisherInstance = (instance) => instance === "publisher";
 const kDefaultAttempt = 4;
