@@ -1,4 +1,6 @@
 // Import Node.js Dependencies
+import assert from "node:assert";
+import { describe, before, after, it, mock } from "node:test";
 import EventEmitter from "node:events";
 
 // Import Internal Dependencies
@@ -7,7 +9,6 @@ import { randomValue } from "../fixtures/utils/randomValue";
 import { StoreContext, Store } from "../../src/index";
 
 // Constants & variables
-let sessionContext: StoreContext;
 const kDefaultCookieOptions = { sameSite: "none", secure: true };
 
 // type Definition
@@ -15,218 +16,225 @@ interface CustomStore extends Store {
   mail?: string;
 }
 
-beforeAll(async() => {
-  await initRedis({ port: Number(process.env.REDIS_PORT), host: process.env.REDIS_HOST });
-  await clearAllKeys();
-});
+describe("StoreContext", () => {
+  before(async () => {
+    await initRedis({ port: Number(process.env.REDIS_PORT), host: process.env.REDIS_HOST });
+    await clearAllKeys();
+  });
 
-afterAll(async() => {
-  await closeAllRedis();
-});
+  after(async () => {
+    await closeAllRedis();
+  });
 
-// instace suite
-describe("Store Context initialization's suite", () => {
-  it("should be instance of EventEmitter & StoreContext", () => {
-    sessionContext = new StoreContext<CustomStore>({
-      authentificationField: "mail",
-      ttl: 3600,
-      randomKeyCallback: () => "randomKey"
+  describe("Store Context initialization's suite", () => {
+    let sessionContext: StoreContext;
+
+    it("should be instance of EventEmitter & StoreContext", () => {
+      sessionContext = new StoreContext<CustomStore>({
+        authentificationField: "mail",
+        ttl: 3600,
+        randomKeyCallback: () => "randomKey"
+      });
+
+      assert.ok(sessionContext instanceof StoreContext);
+      assert.ok(sessionContext instanceof EventEmitter);
+    });
+  });
+
+  function createFrameworkCtx(): any {
+    return {
+      getCookie: () => void 0,
+      setCookie: () => void 0
+    };
+  }
+
+  // initSession SUITE
+  describe("Store Context initSession suite", () => {
+    let sessionContext: StoreContext;
+
+    before(() => {
+      sessionContext = new StoreContext<CustomStore>({ authentificationField: "mail", prefix: "store-context-" });
     });
 
-    expect(sessionContext).toBeInstanceOf(StoreContext);
-    expect(sessionContext).toBeInstanceOf(EventEmitter);
-  });
-});
+    it("should throw an error if id is an empty string", async () => {
+      const ctx = createFrameworkCtx();
+      const payload = { returnTo: "http://localhost/" };
 
-function createFrameworkCtx() {
-  return {
-    getCookie: jest.fn(),
-    setCookie: jest.fn()
-  };
-}
+      await assert.rejects(async () => sessionContext.initSession("", ctx, payload), {
+        name: "Error",
+        message: "id must not be an empty string"
+      });
+    });
 
-// initSession SUITE
-describe("Store Context initSession suite", () => {
-  beforeAll(() => {
-    sessionContext = new StoreContext<CustomStore>({ authentificationField: "mail", prefix: "store-context-" });
-  });
+    it("should return the final key when init success", async () => {
+      const key = randomValue();
+      const ctx = createFrameworkCtx();
 
-  it("should throw an error if id is an empty string", async() => {
-    expect.assertions(1);
+      assert.equal(await sessionContext.initSession(key, ctx, {}), key);
+    });
 
-    const ctx = createFrameworkCtx();
-    const payload = { returnTo: "http://localhost/" };
+    it("should set a cookie when initSession() has been call", async () => {
+      const ctx = createFrameworkCtx();
+      const payload = { returnTo: "http://localhost/" };
+      const sessionId = "A";
 
-    try {
-      await sessionContext.initSession("", ctx, payload);
-    }
-    catch (error) {
-      expect(error.message).toBe("id must not be an empty string");
-    }
+      const mockSetCookie = mock.method(ctx, "setCookie", ctx.setCookie);
+      await sessionContext.initSession(sessionId, ctx, payload);
+
+      assert.equal(mockSetCookie.mock.calls.length, 1);
+      assert.deepEqual(mockSetCookie.mock.calls[0].arguments, ["session-id", sessionId, kDefaultCookieOptions]);
+    });
   });
 
-  it("should return the final key when init success", async() => {
-    const key = randomValue();
-    const ctx = createFrameworkCtx();
+  // destroySession Suite
+  describe("Store Context destroySession suite", () => {
+    let sessionContext: StoreContext;
 
-    expect(await sessionContext.initSession(key, ctx, {})).toBe(key);
-  });
+    before(() => {
+      sessionContext = new StoreContext<CustomStore>({ authentificationField: "mail" });
+    });
 
-  it("should set a cookie when initSession() has been call", async() => {
-    const ctx = createFrameworkCtx();
-    const payload = { returnTo: "http://localhost/" };
-    const sessionId = "A";
+    it("should throw error if there is no cookie `session-id`", async () => {
+      const ctx = createFrameworkCtx();
 
-    await sessionContext.initSession(sessionId, ctx, payload);
+      await assert.rejects(async () => sessionContext.destroySession(ctx), {
+        name: "TypeError",
+        message: "Unable to found any cookie session-id. Your session is probably expired!"
+      });
+    });
 
-    expect(ctx.setCookie).toHaveBeenCalledTimes(1);
-    expect(ctx.setCookie).toHaveBeenCalledWith("session-id", sessionId, kDefaultCookieOptions);
-  });
-});
+    it("should correctly destroy session", async () => {
+      const ctx = createFrameworkCtx();
+      const payload = { returnTo: "http://localhost/" };
+      const sessionId = "A";
 
-// destroySession Suite
-describe("Store Context destroySession suite", () => {
-  beforeAll(() => {
-    sessionContext = new StoreContext<CustomStore>({ authentificationField: "mail" });
-  });
-
-  it("should throw error if there is no cookie `session-id`", async() => {
-    expect.assertions(1);
-
-    const ctx = createFrameworkCtx();
-
-    try {
+      const mockSetCookie = mock.method(ctx, "setCookie", ctx.setCookie);
+      await sessionContext.initSession(sessionId, ctx, payload);
+      ctx.getCookie = () => sessionId;
+      ctx["session-id"] = sessionId;
       await sessionContext.destroySession(ctx);
-    }
-    catch (error) {
-      expect(error.message).toBe("Unable to found any cookie session-id. Your session is probably expired!");
-    }
+
+      assert.equal(mockSetCookie.mock.calls.length, 2);
+    });
   });
 
-  it("should correctly destroy session", async() => {
-    const ctx = createFrameworkCtx();
-    const payload = { returnTo: "http://localhost/" };
+  // getSession SUITE
+  describe("Store Context getSession suite", () => {
+    let sessionContext: StoreContext;
+
+    before(() => {
+      sessionContext = new StoreContext<CustomStore>({ authentificationField: "mail" });
+    });
+
+    it("should return the session if available", async () => {
+      const ctx = createFrameworkCtx();
+      const payload = { returnTo: "false" };
+      const sessionId = "A";
+
+      await sessionContext.initSession(sessionId, ctx, payload);
+      ctx.getCookie = () => sessionId;
+      ctx["session-id"] = sessionId;
+
+      assert.equal((await sessionContext.getSession(ctx))!.returnTo, false);
+    });
+  });
+
+
+  // isAuthenticated SUITE
+  describe("Store Context isUserAuthenticated suite", () => {
+    let sessionContext: StoreContext;
+
+    before(() => {
+      sessionContext = new StoreContext<CustomStore>({ authentificationField: "mail" });
+    });
+
+    it("should return false for an undefined `session-id` cookie", async () => {
+      const ctx = createFrameworkCtx();
+
+      assert.equal(await sessionContext.isUserAuthenticated(ctx), false);
+    });
+
+    it("should return false if there is no data stored for the `session-id` cookie", async () => {
+      const ctx = createFrameworkCtx();
+
+      sessionContext.initSession("non-null", ctx, {});
+      ctx["session-id"] = "non-null";
+      ctx.getCookie = () => "session-id";
+      sessionContext.destroySession(ctx);
+
+      assert.equal(await sessionContext.isUserAuthenticated(ctx), false);
+    });
+
+    it("should return true for a `session-id` cookie having data stored", async () => {
+      const noAuthOptionsContext = new StoreContext();
+      const ctx = createFrameworkCtx();
+
+      await sessionContext.initSession("user", ctx, {});
+
+      assert.ok(() => sessionContext.isUserAuthenticated(ctx));
+      assert.ok(() => noAuthOptionsContext.isUserAuthenticated(ctx));
+    });
+  });
+
+  describe("StoreContext useContext suite", () => {
+    let sessionWithCtx;
     const sessionId = "A";
 
-    await sessionContext.initSession(sessionId, ctx, payload);
-    ctx.getCookie.mockImplementation(jest.fn(() => sessionId));
-    ctx["session-id"] = sessionId;
-    await sessionContext.destroySession(ctx);
+    before(() => {
+      const ctx = createFrameworkCtx();
+      ctx.getCookie = () => sessionId;
+      ctx["session-id"] = sessionId;
 
-    expect(ctx.setCookie).toHaveBeenCalledTimes(2);
-  });
-});
+      sessionWithCtx = new StoreContext<any>({ authentificationField: "mail" }).useContext(ctx);
+    });
 
-// getSession SUITE
-describe("Store Context getSession suite", () => {
-  beforeAll(() => {
-    sessionContext = new StoreContext<CustomStore>({ authentificationField: "mail" });
-  });
+    it("should return the final key when init success", async () => {
+      const key = randomValue();
 
-  it("should return the session if available", async() => {
-    const ctx = createFrameworkCtx();
-    const payload = { returnTo: "false" };
-    const sessionId = "A";
+      assert.equal(await sessionWithCtx.initSession(key, {}), key);
+    });
 
-    await sessionContext.initSession(sessionId, ctx, payload);
-    ctx.getCookie.mockImplementation(jest.fn(() => sessionId));
-    ctx["session-id"] = sessionId;
+    it("should set a cookie when initSession() has been call", async () => {
+      const payload = { returnTo: "http://localhost/" };
 
-    expect(await sessionContext.getSession(ctx)).toHaveProperty("returnTo", false);
-  });
-});
+      assert.equal(await sessionWithCtx.initSession(sessionId, payload), sessionId);
+    });
 
+    it("should return the session if available", async () => {
+      const payload = { returnTo: "false" };
 
-// isAuthenticated SUITE
-describe("Store Context isUserAuthenticated suite", () => {
-  beforeAll(() => {
-    sessionContext = new StoreContext<CustomStore>({ authentificationField: "mail" });
+      await sessionWithCtx.initSession(sessionId, payload);
+
+      assert.equal((await sessionWithCtx.getSession()).returnTo, false);
+    });
   });
 
-  it("should return false for an undefined `session-id` cookie", async() => {
-    const ctx = createFrameworkCtx();
+  // SessionStore SUITE via super()
+  describe("Store Context SessionStore suite", () => {
+    let sessionContext: StoreContext;
 
-    expect(await sessionContext.isUserAuthenticated(ctx)).toBeFalsy();
-  });
+    before(() => {
+      sessionContext = new StoreContext<any>({ authentificationField: "mail" });
+    });
 
-  it("should return false if there is no data stored for the `session-id` cookie", async() => {
-    const ctx = createFrameworkCtx();
+    it("should return the key for the stored value", async () => {
+      const value = await sessionContext.setValue({ value: { mail: "value" } as Partial<Store> });
 
-    sessionContext.initSession("non-null", ctx, {});
-    ctx["session-id"] = "non-null";
-    ctx.getCookie.mockImplementation(jest.fn(() => "session-id"));
-    sessionContext.destroySession(ctx);
+      assert.ok(value);
+    });
 
-    expect(await sessionContext.isUserAuthenticated(ctx)).toBeFalsy();
-  });
+    it("should delete the value for the according given key", async () => {
+      await sessionContext.setValue({ key: "key", value: "value" as Partial<Store> });
 
-  it("should return true for a `session-id` cookie having data stored", async() => {
-    const noAuthOptionsContext = new StoreContext();
-    const ctx = createFrameworkCtx();
+      const nbDeletedValue = await sessionContext.deleteValue("key");
 
-    await sessionContext.initSession("user", ctx, {});
+      assert.equal(nbDeletedValue, 1);
+    });
 
-    expect(() => sessionContext.isUserAuthenticated(ctx)).toBeTruthy();
-    expect(() => noAuthOptionsContext.isUserAuthenticated(ctx)).toBeTruthy();
-  });
-});
+    it("should not delete a non-existing existing key", async () => {
+      const nbDeletedValue = await sessionContext.deleteValue("non-existing");
 
-describe("StoreContext useContext suite", () => {
-  let sessionWithCtx;
-  const sessionId = "A";
-
-  beforeAll(() => {
-    const ctx = createFrameworkCtx();
-    ctx.getCookie.mockImplementation(jest.fn(() => sessionId));
-    ctx["session-id"] = sessionId;
-
-    sessionWithCtx = new StoreContext<any>({ authentificationField: "mail" }).useContext(ctx);
-  });
-
-  it("should return the final key when init success", async() => {
-    const key = randomValue();
-
-    expect(await sessionWithCtx.initSession(key, {})).toBe(key);
-  });
-
-  it("should set a cookie when initSession() has been call", async() => {
-    const payload = { returnTo: "http://localhost/" };
-
-    expect(await sessionWithCtx.initSession(sessionId, payload)).toBe(sessionId);
-  });
-
-  it("should return the session if available", async() => {
-    const payload = { returnTo: "false" };
-
-    await sessionWithCtx.initSession(sessionId, payload);
-
-    expect(await sessionWithCtx.getSession()).toHaveProperty("returnTo", false);
-  });
-});
-
-// SessionStore SUITE via super()
-describe("Store Context SessionStore suite", () => {
-  beforeAll(() => {
-    sessionContext = new StoreContext<any>({ authentificationField: "mail" });
-  });
-
-  it("should return the key for the stored value", async() => {
-    const value = await sessionContext.setValue({ value: { mail: "value" } as Partial<Store> });
-
-    expect(value).toBeDefined();
-  });
-
-  it("should delete the value for the according given key", async() => {
-    await sessionContext.setValue({ key: "key", value: "value" as Partial<Store> });
-
-    const nbDeletedValue = await sessionContext.deleteValue("key");
-
-    expect(nbDeletedValue).toBe(1);
-  });
-
-  it("should not delete a non-existing existing key", async() => {
-    const nbDeletedValue = await sessionContext.deleteValue("non-existing");
-
-    expect(nbDeletedValue).toBe(0);
+      assert.equal(nbDeletedValue, 0);
+    });
   });
 });
