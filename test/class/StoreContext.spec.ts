@@ -2,7 +2,7 @@
 import EventEmitter from "node:events";
 
 // Import Internal Dependencies
-import { initRedis, closeRedis, clearAllKeys } from "../../src/index";
+import { initRedis, closeAllRedis, clearAllKeys } from "../../src/index";
 import { randomValue } from "../fixtures/utils/randomValue";
 import { StoreContext, Store } from "../../src/index";
 
@@ -16,12 +16,12 @@ interface CustomStore extends Store {
 }
 
 beforeAll(async() => {
-  await initRedis({ port: process.env.REDIS_PORT, host: process.env.REDIS_HOST } as any);
+  await initRedis({ port: Number(process.env.REDIS_PORT), host: process.env.REDIS_HOST });
   await clearAllKeys();
 });
 
 afterAll(async() => {
-  await closeRedis();
+  await closeAllRedis();
 });
 
 // instace suite

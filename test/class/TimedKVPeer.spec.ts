@@ -4,7 +4,7 @@ import timers from "node:timers/promises";
 // Import Internal Dependencies
 import {
   initRedis,
-  closeRedis,
+  closeAllRedis,
   clearAllKeys,
   TimedKVPeer
 } from "../../src";
@@ -17,12 +17,12 @@ interface CustomStore {
 }
 
 beforeAll(async() => {
-  await initRedis({ port: process.env.REDIS_PORT, host: process.env.REDIS_HOST } as any);
+  await initRedis({ port: Number(process.env.REDIS_PORT), host: process.env.REDIS_HOST });
   await clearAllKeys();
 });
 
 afterAll(async() => {
-  await closeRedis();
+  await closeAllRedis();
 });
 
 describe("TimedKVPeer", () => {

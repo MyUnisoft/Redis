@@ -3,7 +3,7 @@ import timers from "node:timers/promises";
 import { EventEmitter } from "node:events";
 
 // Import Internal Dependencies
-import { initRedis, closeRedis, clearAllKeys, RestrictedKV } from "../../src";
+import { initRedis, clearAllKeys, RestrictedKV, closeAllRedis } from "../../src";
 import { randomValue } from "../fixtures/utils/randomValue";
 
 // Internal Dependencies Mock
@@ -11,12 +11,12 @@ const mockedDeleteValue = jest.spyOn(RestrictedKV.prototype as any, "deleteValue
 const doNothing = jest.fn();
 
 beforeAll(async() => {
-  await initRedis({ port: process.env.REDIS_PORT, host: process.env.REDIS_HOST } as any);
+  await initRedis({ port: Number(process.env.REDIS_PORT), host: process.env.REDIS_HOST });
   await clearAllKeys();
 });
 
 afterAll(async() => {
-  await closeRedis();
+  await closeAllRedis();
 });
 
 describe("RestrictedKV", () => {
