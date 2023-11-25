@@ -1,3 +1,7 @@
+// Import Node.js Dependencies
+import assert from "node:assert";
+import { describe, before, test } from "node:test";
+
 // Import Internal Dependencies
 import {
   initRedis,
@@ -7,7 +11,7 @@ import {
 } from "../src/index";
 
 describe("getConnectionPerf", () => {
-  beforeAll(async() => {
+  before(async() => {
     await initRedis({ port: Number(process.env.REDIS_PORT), host: process.env.REDIS_HOST });
   });
 
@@ -16,8 +20,8 @@ describe("getConnectionPerf", () => {
   async() => {
     const { isAlive, perf } = await getConnectionPerf();
 
-    expect(isAlive).toBe(true);
-    expect(perf).toBeGreaterThan(0);
+    assert.ok(isAlive);
+    assert.ok(perf! > 0);
   });
 
   test(`WHEN calling getConnectionPerf
@@ -28,12 +32,12 @@ describe("getConnectionPerf", () => {
 
     const { isAlive } = await getConnectionPerf();
 
-    expect(isAlive).toBe(false);
+    assert.equal(isAlive, false);
   });
 });
 
 describe("closeAllRedis", () => {
-  beforeAll(async() => {
+  before(async() => {
     await initRedis({ port: Number(process.env.REDIS_PORT), host: process.env.REDIS_HOST });
 
     await initRedis({
@@ -43,15 +47,13 @@ describe("closeAllRedis", () => {
   });
 
   test("given multiple redis instance, it must close every connections", async() => {
-    expect.assertions(4);
-
     let perfs = await Promise.all([
       getConnectionPerf(),
       getConnectionPerf("subscriber")
     ]);
 
     for (const perf of perfs) {
-      expect(perf.isAlive).toBe(true);
+      assert.equal(perf.isAlive, true);
     }
 
     await closeAllRedis();
@@ -62,7 +64,7 @@ describe("closeAllRedis", () => {
     ]);
 
     for (const perf of perfs) {
-      expect(perf.isAlive).toBe(false);
+      assert.equal(perf.isAlive, false);
     }
   });
 });

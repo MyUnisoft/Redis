@@ -1,5 +1,7 @@
 // Import Node.js Dependencies
 import EventEmitter from "node:events";
+import assert from "node:assert/strict";
+import { describe, before, after, test } from "node:test";
 
 // Import Internal Dependencies
 import {
@@ -9,17 +11,18 @@ import {
 } from "../../src";
 import { KVPeer } from "../../src/index";
 
-beforeAll(async() => {
-  await initRedis({ port: Number(process.env.REDIS_PORT), host: process.env.REDIS_HOST });
-  await clearAllKeys();
-});
-
-afterAll(async() => {
-  await closeAllRedis();
-});
 
 // KVPeer Instance
 describe("KVPeer instance", () => {
+  before(async() => {
+    await initRedis({ port: Number(process.env.REDIS_PORT), host: process.env.REDIS_HOST });
+    await clearAllKeys();
+  });
+  
+  after(async() => {
+    await closeAllRedis();
+  });
+
   describe("Default instantiation", () => {
     let kvPeer: KVPeer;
 
@@ -28,13 +31,13 @@ describe("KVPeer instance", () => {
     const [objectRelatedKey, objectValue] = ["bar", { foo: "bar" }];
     const fakeKey = "my-fake-key";
 
-    beforeAll(() => {
+    before(() => {
       kvPeer = new KVPeer();
     });
 
-    it("should be well instantiated", () => {
-      expect(kvPeer).toBeInstanceOf(KVPeer);
-      expect(kvPeer).toBeInstanceOf(EventEmitter);
+    test("should be well instantiated", () => {
+      assert.ok(kvPeer instanceof KVPeer);
+      assert.ok(kvPeer instanceof EventEmitter);
     });
 
     test(`Given a valid value
@@ -42,10 +45,10 @@ describe("KVPeer instance", () => {
           THEN it should return the initial key`,
     async() => {
       const finalStringRelatedKey = await kvPeer.setValue({ key: stringRelatedKey, value: stringValue });
-      expect(finalStringRelatedKey).toBe(stringRelatedKey);
+      assert.equal(finalStringRelatedKey, stringRelatedKey);
 
       const finalObjectRelatedKey = await kvPeer.setValue({ key: objectRelatedKey, value: objectValue });
-      expect(finalObjectRelatedKey).toBe(objectRelatedKey);
+      assert.equal(finalObjectRelatedKey, objectRelatedKey);
     });
 
     test(`Given an invalid key
@@ -53,7 +56,7 @@ describe("KVPeer instance", () => {
           THEN it should return null`,
     async() => {
       const value = await kvPeer.getValue(fakeKey);
-      expect(value).toBe(null);
+      assert.equal(value, null);
     });
 
     test(`Given a valid key
@@ -61,10 +64,10 @@ describe("KVPeer instance", () => {
           THEN it should return the associated value`,
     async() => {
       const stringRelatedValue = await kvPeer.getValue(stringRelatedKey);
-      expect(stringRelatedValue).toBe(stringValue);
+      assert.equal(stringRelatedValue, stringValue);
 
       const objectRelatedValue = await kvPeer.getValue(objectRelatedKey);
-      expect(objectRelatedValue).toBe(JSON.stringify(objectValue));
+      assert.equal(objectRelatedValue, JSON.stringify(objectValue));
     });
 
     test(`Given an invalid key
@@ -73,7 +76,7 @@ describe("KVPeer instance", () => {
     async() => {
       const deletedEntries = await kvPeer.deleteValue(fakeKey);
 
-      expect(deletedEntries).toBe(0);
+      assert.equal(deletedEntries, 0);
     });
 
     test(`Given an valid key
@@ -82,7 +85,7 @@ describe("KVPeer instance", () => {
     async() => {
       const deletedEntries = await kvPeer.deleteValue(stringRelatedKey);
 
-      expect(deletedEntries).toBe(1);
+      assert.equal(deletedEntries, 1);
     });
   });
 
@@ -91,18 +94,18 @@ describe("KVPeer instance", () => {
 
     // CONSTANTS
     const [key, value] = ["foo", "bar"];
-    const prefix = "jest";
+    const prefix = "test_runner";
     const prefixedKey = `${prefix}-${key}`;
 
-    beforeAll(() => {
+    before(() => {
       kvPeer = new KVPeer({
         prefix
       });
     });
 
-    it("should be well instantiated", () => {
-      expect(kvPeer).toBeInstanceOf(KVPeer);
-      expect(kvPeer).toBeInstanceOf(EventEmitter);
+    test("should be well instantiated", () => {
+      assert.ok(kvPeer instanceof KVPeer);
+      assert.ok(kvPeer instanceof EventEmitter);
     });
 
     test(`Given a valid value
@@ -110,7 +113,7 @@ describe("KVPeer instance", () => {
           THEN it should return the final key`,
     async() => {
       const finalKey = await kvPeer.setValue({ key, value });
-      expect(finalKey).toBe(prefixedKey);
+      assert.equal(finalKey, prefixedKey);
     });
 
     test(`Given a valid key
@@ -118,7 +121,7 @@ describe("KVPeer instance", () => {
           THEN it should return the associated value`,
     async() => {
       const relatedValue = await kvPeer.getValue(key);
-      expect(relatedValue).toBe(value);
+      assert.equal(relatedValue, value);
     });
 
     test(`Given an valid key
@@ -127,7 +130,7 @@ describe("KVPeer instance", () => {
     async() => {
       const deletedEntries = await kvPeer.deleteValue(key);
 
-      expect(deletedEntries).toBe(1);
+      assert.equal(deletedEntries, 1);
     });
   });
 
@@ -149,15 +152,15 @@ describe("KVPeer instance", () => {
       ]
     }];
 
-    beforeAll(() => {
+    before(() => {
       kvPeer = new KVPeer({
         type: "object"
       });
     });
 
-    it("should be well instantiated", () => {
-      expect(kvPeer).toBeInstanceOf(KVPeer);
-      expect(kvPeer).toBeInstanceOf(EventEmitter);
+    test("should be well instantiated", () => {
+      assert.ok(kvPeer instanceof KVPeer);
+      assert.ok(kvPeer instanceof EventEmitter);
     });
 
     test(`Given a valid value
@@ -165,7 +168,7 @@ describe("KVPeer instance", () => {
           THEN it should return the final key`,
     async() => {
       const finalKey = await kvPeer.setValue({ key, value });
-      expect(finalKey).toBe(key);
+      assert.equal(finalKey, key);
     });
 
     test(`Given a valid key
@@ -173,7 +176,7 @@ describe("KVPeer instance", () => {
           THEN it should return the associated value`,
     async() => {
       const relatedValue = await kvPeer.getValue(key);
-      expect(relatedValue).toStrictEqual(value);
+      assert.deepStrictEqual(relatedValue, value);
     });
   });
 
@@ -191,7 +194,7 @@ describe("KVPeer instance", () => {
         return value;
       };
 
-      beforeAll(async() => {
+      before(async() => {
         kvPeer = new KVPeer({
           type: "object",
           mapValue
@@ -205,7 +208,7 @@ describe("KVPeer instance", () => {
             THEN it should return a mapped object according to the mapValue fn`,
       async() => {
         const finalValue = await kvPeer.getValue(key);
-        expect(finalValue).toStrictEqual({ ...value, mapped: true });
+        assert.deepStrictEqual(finalValue, { ...value, mapped: true });
       });
     });
 
@@ -232,7 +235,7 @@ describe("KVPeer instance", () => {
         return Object.assign({}, value, { customData: metadata });
       }
 
-      beforeAll(async() => {
+      before(async() => {
         kvPeer = new KVPeer<MyCustomObject, Metadata>({
           type: "object",
           mapValue
@@ -247,7 +250,7 @@ describe("KVPeer instance", () => {
       async() => {
         const value = await kvPeer.getValue(key);
 
-        expect(value).toEqual({ ...value, customData: { meta: "foo" }});
+        assert.deepStrictEqual(value, { ...value, customData: { meta: "foo" }});
       });
     });
 
@@ -262,7 +265,7 @@ describe("KVPeer instance", () => {
         return value;
       };
 
-      beforeAll(async() => {
+      before(async() => {
         kvPeer = new KVPeer({
           type: "raw",
           mapValue
@@ -276,7 +279,7 @@ describe("KVPeer instance", () => {
             THEN it should return a mapped object according to the mapValue fn`,
       async() => {
         const finalValue = await kvPeer.getValue(key);
-        expect(finalValue).toEqual(`foo-${value}`);
+        assert.equal(finalValue, `foo-${value}`);
       });
     });
   });

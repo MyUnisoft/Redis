@@ -1,4 +1,6 @@
 // Import Node.js Dependencies
+import assert from "node:assert";
+import { describe, before, after, test, mock } from "node:test";
 import timers from "node:timers/promises";
 import { once } from "node:events";
 import { Readable } from "node:stream";
@@ -11,32 +13,36 @@ import { randomValue } from "../../fixtures/utils/randomValue";
 import { Entry } from "../../../src/types/index";
 
 // Internal Dependencies Mock
-const mockedHandleEntries = jest.spyOn(Intrapersonal.prototype as any, "handleEntries");
-const mockedEvents = jest.fn((entry) => {
-  expect(typeof entry.id).toBe("string"); // Entry ID
-});
+const mockedHandleEntries = mock.method(Intrapersonal.prototype as any, "handleEntries", Intrapersonal.prototype.handleEntries);
 
+let assertEntryIdCalls = 0;
+function assertEntryId(entry: Partial<Entry>) {
+  assert.equal(typeof entry.id, "string");
+
+  assertEntryIdCalls++;
+}
 
 // CONSTANTS
-let intrapersonalStream: Intrapersonal;
-let readable: Readable;
-const entries: string[] = [];
+const kEntries: string[] = [];
 const kStreamName = randomValue();
 const kLastId = "0-0";
 const kCount = 3;
-const kFrequency = 3000;
+const kFrequency = 300;
 
 describe("basicStream instance", () => {
-  beforeAll(async() => {
+  let intrapersonalStream: Intrapersonal;
+  let readable: Readable;
+
+  before(async() => {
     await initRedis({ port: Number(process.env.REDIS_PORT), host: process.env.REDIS_HOST });
     intrapersonalStream = new Intrapersonal({ streamName: kStreamName, lastId: kLastId, count: kCount, frequency: kFrequency });
 
     await intrapersonalStream.init();
 
-    expect(await intrapersonalStream.streamExist()).toBe(true);
+    assert.ok(await intrapersonalStream.streamExist());
 
     for (let index = 0; index < kCount; index++) {
-      entries.push(await intrapersonalStream.push({ foo: "bar" }, {}));
+      kEntries.push(await intrapersonalStream.push({ foo: "bar" }, {}));
     }
 
     readable = Readable.from(intrapersonalStream[Symbol.asyncIterator]());
@@ -44,48 +50,55 @@ describe("basicStream instance", () => {
       const chunk: Entry[] = readable.read();
 
       for (const entry of chunk) {
-        mockedEvents(entry);
-        entries.splice(entries.indexOf(entry.id), 1);
+        assertEntryId(entry);
+        kEntries.splice(kEntries.indexOf(entry.id), 1);
       }
     });
   });
 
+  after(async() => {
+    readable.destroy();
+
+    await once(readable, "close");
+    await closeAllRedis();
+  });
+
   test("reading data", async() => {
-    await timers.setTimeout(kFrequency + 1_000);
+    await timers.setTimeout(kFrequency + 100);
 
-    expect(mockedHandleEntries).toHaveBeenCalledTimes(1);
-    expect(mockedEvents).toHaveBeenCalledTimes(3);
+    assert.equal(mockedHandleEntries.mock.calls.length, 1)
+    assert.equal(assertEntryIdCalls, 3);
 
     for (let index = 0; index < kCount; index++) {
-      entries.push(await intrapersonalStream.push({ foo: "bar" }, {}));
+      kEntries.push(await intrapersonalStream.push({ foo: "bar" }, {}));
     }
 
     await timers.setTimeout(kFrequency);
 
-    expect(mockedHandleEntries).toHaveBeenCalledTimes(2);
-    expect(mockedEvents).toHaveBeenCalledTimes(6);
+    assert.equal(mockedHandleEntries.mock.calls.length, 2)
+    assert.equal(assertEntryIdCalls, 6);
 
     await timers.setTimeout(kFrequency);
 
-    expect(mockedHandleEntries).toHaveBeenCalledTimes(2);
-    expect(mockedEvents).toHaveBeenCalledTimes(6);
+    assert.equal(mockedHandleEntries.mock.calls.length, 2)
+    assert.equal(assertEntryIdCalls, 6);
 
     for (let index = 0; index < kCount; index++) {
-      entries.push(await intrapersonalStream.push({ foo: "bar" }, {}));
+      kEntries.push(await intrapersonalStream.push({ foo: "bar" }, {}));
     }
 
     await timers.setTimeout(kFrequency);
 
-    expect(mockedHandleEntries).toHaveBeenCalledTimes(3);
-    expect(mockedEvents).toHaveBeenCalledTimes(9);
+    assert.equal(mockedHandleEntries.mock.calls.length, 3)
+    assert.equal(assertEntryIdCalls, 9);
   });
 
   describe("consume", () => {
-    beforeAll(async() => {
+    before(async() => {
       for (let index = 0; index < 10; index++) {
         const entryId = await intrapersonalStream.push({ foo: "bar" }, {});
 
-        entries.push(entryId);
+        kEntries.push(entryId);
       }
     });
 
@@ -97,10 +110,13 @@ describe("basicStream instance", () => {
       const resolvedEntries = await intrapersonalStream.consume({ count, lastId: intrapersonalStream.lastId });
 
       if (resolvedEntries) {
-        expect(resolvedEntries.length).toBe(count);
-        expect(resolvedEntries[0].id).toBe(entries[0]);
+        assert.equal(resolvedEntries.length, count);
+        assert.equal(resolvedEntries[0].id, kEntries[0]);
 
-        entries.splice(entries.indexOf(resolvedEntries[0].id), 1);
+        kEntries.splice(kEntries.indexOf(resolvedEntries[0].id), 1);
+      }
+      else {
+        throw new Error("Unresolved entries");
       }
     });
 
@@ -111,12 +127,14 @@ describe("basicStream instance", () => {
       const resolvedEntries = await intrapersonalStream.consume();
 
       if (resolvedEntries) {
-        expect(resolvedEntries.length).toBe(kCount);
-        expect(resolvedEntries[0].id).toBe(entries[0]);
+        assert.equal(resolvedEntries.length, kCount);
+        assert.equal(resolvedEntries[0].id, kEntries[0]);
 
         for (const entry of resolvedEntries) {
-          entries.splice(entries.indexOf(entry.id), 1);
+          kEntries.splice(kEntries.indexOf(entry.id), 1);
         }
+      } else {
+        throw new Error("Unresolved entries");
       }
     });
 
@@ -128,39 +146,33 @@ describe("basicStream instance", () => {
 
       if (resolvedEntries) {
         for (const entry of resolvedEntries) {
-          entries.splice(entries.indexOf(entry.id), 1);
+          kEntries.splice(kEntries.indexOf(entry.id), 1);
         }
       }
 
-      expect(await intrapersonalStream.consume()).toStrictEqual([]);
+      assert.deepEqual(await intrapersonalStream.consume(), []);
     });
   });
 
   describe("cleanStream", () => {
-    beforeAll(async() => {
+    before(async() => {
       for (let index = 0; index < 10; index++) {
         const entryId = await intrapersonalStream.push({ foo: "bar" }, {});
 
-        entries.push(entryId);
+        kEntries.push(entryId);
       }
     });
 
     test(`WHEN calling cleanStream
           THEN it should deal with the rest of entries`,
     async() => {
-      expect.assertions(1);
-
       const cleanedEntries = await intrapersonalStream.cleanStream();
       if (cleanedEntries) {
-        expect(cleanedEntries.length).toBe(entries.length);
+        assert.equal(cleanedEntries.length, kEntries.length);
+      } 
+      else {
+        throw new Error("No cleaned entries");
       }
     });
-  });
-
-  afterAll(async() => {
-    readable.destroy();
-
-    await once(readable, "close");
-    await closeAllRedis();
   });
 });

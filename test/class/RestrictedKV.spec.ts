@@ -1,48 +1,51 @@
 // Import Node.js Dependencies
+import assert from "node:assert";
+import { describe, before, after, test, it, beforeEach, mock, Mock } from "node:test";
 import timers from "node:timers/promises";
 import { EventEmitter } from "node:events";
+
+// Import Third-party Dependencies
+import MockDate from "mockdate";
 
 // Import Internal Dependencies
 import { initRedis, clearAllKeys, RestrictedKV, closeAllRedis } from "../../src";
 import { randomValue } from "../fixtures/utils/randomValue";
-import MockDate from "mockdate";
 
 // Internal Dependencies Mock
-const mockedDeleteValue = jest.spyOn(RestrictedKV.prototype as any, "deleteValue");
-const doNothing = jest.fn();
+mock.method(RestrictedKV.prototype, "deleteValue", async() => "deleteValue");
 
 MockDate.set(Date.now());
 
-beforeAll(async() => {
-  await initRedis({ port: Number(process.env.REDIS_PORT), host: process.env.REDIS_HOST });
-  await clearAllKeys();
-});
-
-afterAll(async() => {
-  await closeAllRedis();
-});
-
 describe("RestrictedKV", () => {
+  before(async() => {
+    await initRedis({ port: Number(process.env.REDIS_PORT), host: process.env.REDIS_HOST });
+    await clearAllKeys();
+  });
+  
+  after(async() => {
+    await closeAllRedis();
+  });
+
   describe("Instantiated with default options", () => {
     let restrictedKV: RestrictedKV;
 
-    beforeAll(() => {
+    before(() => {
       restrictedKV = new RestrictedKV();
     });
 
     it("should be instantiated", () => {
-      expect(restrictedKV).toBeInstanceOf(RestrictedKV);
-      expect(restrictedKV).toBeInstanceOf(EventEmitter);
+      assert.ok(restrictedKV instanceof RestrictedKV);
+      assert.ok(restrictedKV instanceof EventEmitter);
     });
 
     test(`WHEN calling getDefaultAttempt
           THEN it should return a default default attempt object`, () => {
       const defaultAttempt = RestrictedKV.getDefaultAttempt();
-      expect(defaultAttempt).toMatchObject({
+      assert.deepStrictEqual(defaultAttempt, {
         failure: 0,
-        locked: false
+        locked: false,
+        lastTry: Date.now()
       });
-      expect(typeof defaultAttempt.lastTry).toStrictEqual("number");
     });
 
     describe("getAttempt", () => {
@@ -56,7 +59,7 @@ describe("RestrictedKV", () => {
         const payload = { failure: 0, lastTry, locked: false };
 
         await restrictedKV.setValue({ key, value: payload });
-        await expect(restrictedKV.getAttempt(key)).resolves.toEqual(payload);
+        assert.deepEqual(await restrictedKV.getAttempt(key), payload);
       });
 
       test(`Given a partial of Attempt object
@@ -70,10 +73,10 @@ describe("RestrictedKV", () => {
 
         await restrictedKV.setValue(optionsWithLocked);
         const attemptWithLocked = await restrictedKV.getAttempt(optionsWithLocked.key);
-        expect(attemptWithLocked).toEqual(expect.objectContaining(Object.assign({},
+        assert.deepEqual(attemptWithLocked, Object.assign({},
           { lastTry: Date.now(), failure: 0 },
           optionsWithLocked.value
-        )));
+        ));
 
         const optionsWithFailure = {
           key: randomValue(),
@@ -82,10 +85,10 @@ describe("RestrictedKV", () => {
 
         await restrictedKV.setValue(optionsWithFailure);
         const attemptWithFailure = await restrictedKV.getAttempt(optionsWithFailure.key);
-        expect(attemptWithFailure).toEqual(expect.objectContaining(Object.assign({},
+        assert.deepEqual(attemptWithFailure, Object.assign({},
           { lastTry: Date.now(), locked: false },
           optionsWithFailure.value
-        )));
+        ));
       });
     });
 
@@ -95,7 +98,7 @@ describe("RestrictedKV", () => {
             THEN it should return a new Attempt object with failure property init at 1`,
       async() => {
         const attempt = await restrictedKV.fail("my-fake-key");
-        expect(attempt).toHaveProperty("failure", 1);
+        assert.equal(attempt.failure, 1);
       });
 
       test(`Given a valid key
@@ -109,7 +112,7 @@ describe("RestrictedKV", () => {
         await restrictedKV.setValue({ key, value: payload });
 
         const attempt = await restrictedKV.fail(key);
-        expect(attempt).toHaveProperty("failure", payload.failure + 1);
+        assert.equal(attempt.failure, payload.failure + 1);
       });
     });
 
@@ -123,9 +126,10 @@ describe("RestrictedKV", () => {
         await restrictedKV.success(key);
 
         const attempt = await restrictedKV.getAttempt(key);
-        expect(attempt).toMatchObject({
+        assert.deepEqual(attempt, {
           failure: 0,
-          locked: false
+          locked: false,
+          lastTry: Date.now()
         });
       });
 
@@ -140,7 +144,7 @@ describe("RestrictedKV", () => {
         await restrictedKV.setValue({ key, value: payload });
         await restrictedKV.success(key);
 
-        expect(mockedDeleteValue).toHaveBeenCalled();
+        assert.equal((RestrictedKV.prototype.deleteValue as any).mock.calls.length, 1)
       });
     });
 
@@ -152,7 +156,7 @@ describe("RestrictedKV", () => {
         await restrictedKV.setValue({ key, value: payload });
         await restrictedKV.clearExpired();
 
-        expect(restrictedKV.getAttempt(key)).resolves.toEqual(payload);
+        assert.deepEqual(await restrictedKV.getAttempt(key), payload);
       });
 
       test("should clear all keys from the database when invoked", async() => {
@@ -164,21 +168,20 @@ describe("RestrictedKV", () => {
         await restrictedKV.clearExpired();
 
         const attempt = await restrictedKV.getAttempt(key);
-        expect(attempt).toEqual(expect.objectContaining({
-          failure: 0,
-          locked: false
-        }));
+        assert.equal(attempt.failure, 0);
+        assert.equal(attempt.locked, false);
       });
 
       describe("expiredKeys event", () => {
-        beforeAll(() => {
-          restrictedKV.on("expiredKeys", doNothing);
+        let emitMock: Mock<any>;
+        before(() => {
+          emitMock = mock.method(RestrictedKV.prototype, "emit", () => void 0);
         });
 
         test("should not send an event when no cleared key", async() => {
           await restrictedKV.clearExpired();
 
-          expect(doNothing).not.toHaveBeenCalled();
+          assert.equal(emitMock.mock.calls.length, 0);
         });
 
         test("should send an event with expiredKeys", async() => {
@@ -189,7 +192,7 @@ describe("RestrictedKV", () => {
           await restrictedKV.setValue({ key, value: payload });
 
           await restrictedKV.clearExpired();
-          expect(doNothing).toHaveBeenCalledTimes(1);
+          assert.equal(emitMock.mock.calls.length, 1);
         });
       });
     });
@@ -200,13 +203,13 @@ describe("RestrictedKV", () => {
 
     let restrictedKV: RestrictedKV;
 
-    beforeAll(() => {
+    before(() => {
       restrictedKV = new RestrictedKV({ prefix: "auth-", allowedAttempt });
     });
 
     it("should be instantiated", () => {
-      expect(restrictedKV).toBeInstanceOf(RestrictedKV);
-      expect(restrictedKV).toBeInstanceOf(EventEmitter);
+      assert.ok(restrictedKV instanceof RestrictedKV);
+      assert.ok(restrictedKV instanceof EventEmitter);
     });
 
     test("should lock the key after allowedAttempt fail instead of 3", async() => {
@@ -217,8 +220,8 @@ describe("RestrictedKV", () => {
       await restrictedKV.setValue({ key, value: payload });
 
       const attempt = await restrictedKV.fail(key);
-      expect(attempt).toHaveProperty("failure", payload.failure + 1);
-      expect(attempt).toHaveProperty("locked", true);
+      assert.equal(attempt.failure, payload.failure + 1);
+      assert.equal(attempt.locked, true);
     });
   });
 
@@ -232,53 +235,54 @@ describe("RestrictedKV", () => {
 
     let restrictedKV: RestrictedKV;
 
-    beforeAll(async() => {
+    before(async() => {
       restrictedKV = new RestrictedKV({ prefix: "auth-", allowedAttempt, banTimeInSecond: banTime });
 
       await restrictedKV.setValue({ key, value: payload });
     });
 
     it("should be instantiated", () => {
-      expect(restrictedKV).toBeInstanceOf(RestrictedKV);
-      expect(restrictedKV).toBeInstanceOf(EventEmitter);
+      assert.ok(restrictedKV instanceof RestrictedKV);
+      assert.ok(restrictedKV instanceof EventEmitter);
     });
 
     test("should unlock the key after the given banTime", async() => {
-      await timers.setTimeout(3_600);
+      await timers.setTimeout(140);
 
       const attempt = await restrictedKV.getValue(key);
-      expect(attempt).toHaveProperty("failure", payload.failure);
+      assert.equal(attempt?.failure, payload.failure);
     });
   });
-});
 
-describe("autoClearInterval database suite", () => {
-  let restrictedKV: RestrictedKV;
-
-  beforeAll(() => {
-    restrictedKV = new RestrictedKV({ prefix: "auth-", autoClearExpired: 3000 });
-  });
-
-  beforeEach(async() => {
-    await clearAllKeys();
-  });
-
-  afterAll(() => {
-    restrictedKV.clearAutoClearInterval();
-  });
-
-  it("should clear all keys from the database when invoked", async() => {
-    const lastTry = Date.now() - (90 * 1_000 * 60);
-    const payload = { failure: 3, lastTry, locked: true };
-    const key = randomValue();
-
-    await restrictedKV.setValue({ key, value: payload });
-
-    await timers.setTimeout(5_000);
-
-    expect(restrictedKV.getAttempt(key)).resolves.toMatchObject({
-      failure: 0,
-      locked: false
+  describe("autoClearInterval database suite", () => {
+    let restrictedKV: RestrictedKV;
+  
+    before(async() => {
+      restrictedKV = new RestrictedKV({ prefix: "auth-", autoClearExpired: 20 });
+    });
+  
+    beforeEach(async() => {
+      await clearAllKeys();
+    });
+  
+    after(async() => {
+      restrictedKV.clearAutoClearInterval();
+    });
+  
+    it("should clear all keys from the database when invoked", async() => {
+      const lastTry = Date.now() - (90 * 1_000 * 60);
+      const payload = { failure: 3, lastTry, locked: true };
+      const key = randomValue();
+  
+      await restrictedKV.setValue({ key, value: payload });
+  
+      await timers.setTimeout(50);
+  
+      assert.deepEqual(await restrictedKV.getAttempt(key), {
+        failure: 0,
+        locked: false,
+        lastTry: Date.now()
+      });
     });
   });
 });

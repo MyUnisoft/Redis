@@ -30,7 +30,7 @@ export type RawAttempt = Record<keyof Attempt, string>;
 * @classdesc Implementation to prevent brute force attacks.
 */
 export class RestrictedKV extends KVPeer<Partial<Attempt>> {
-  private autoClearInterval: NodeJS.Timer | null;
+  private autoClearInterval: NodeJS.Timeout | null;
 
   protected allowedAttempt: number;
   protected banTimeInSecond: number;

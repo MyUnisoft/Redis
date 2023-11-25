@@ -1,4 +1,6 @@
 // Import Node.js Dependencies
+import assert from "node:assert";
+import { describe, before, after, test } from "node:test";
 import EventEmitter from "node:events";
 
 // Import Internal Dependencies
@@ -9,7 +11,6 @@ import { randomValue } from "../../fixtures/utils/randomValue";
 import { Entry } from "../../../src/types/index";
 
 // CONSTANTS
-let stream: Stream;
 const kStreamName = randomValue();
 const entries: string[] = [];
 const kLength = 10;
@@ -17,7 +18,9 @@ const kParseRegex = new RegExp("-([0-9])");
 const kFrequency = 3000;
 
 describe("RedisStream instance", () => {
-  beforeAll(async() => {
+  let stream: Stream;
+
+  before(async() => {
     await initRedis({ port: Number(process.env.REDIS_PORT), host: process.env.REDIS_HOST });
     stream = new Stream({ streamName: kStreamName, lastId: "0-0", frequency: kFrequency });
 
@@ -27,7 +30,7 @@ describe("RedisStream instance", () => {
       await stream.init();
     }
 
-    expect(await stream.streamExist()).toBe(true);
+    assert.ok(await stream.streamExist());
 
 
     for (let index = 0; index < kLength; index++) {
@@ -39,9 +42,17 @@ describe("RedisStream instance", () => {
     }
   });
 
+  after(async() => {
+    for (const entryId of entries) {
+      await stream.delEntry(entryId);
+    }
+
+    await closeAllRedis();
+  });
+
   test("should instantiate with differents options in constructor", () => {
-    expect(stream).toBeInstanceOf(Stream);
-    expect(stream).toBeInstanceOf(EventEmitter);
+    assert.ok(stream instanceof Stream);
+    assert.ok(stream instanceof EventEmitter);
   });
 
   describe("Push", () => {
@@ -53,7 +64,7 @@ describe("RedisStream instance", () => {
 
       await stream.delEntry(entryId);
 
-      expect(typeof entryId).toStrictEqual("string");
+      assert.equal(typeof entryId, "string");
     });
 
     test(`GIVEN a Buffer for value
@@ -72,7 +83,7 @@ describe("RedisStream instance", () => {
 
       await stream.delEntry(entryId);
 
-      expect(typeof entryId).toStrictEqual("string");
+      assert.equal(typeof entryId, "string");
     });
 
     test(`GIVEN a Number for value
@@ -83,7 +94,7 @@ describe("RedisStream instance", () => {
 
       await stream.delEntry(entryId);
 
-      expect(typeof entryId).toStrictEqual("string");
+      assert.equal(typeof entryId, "string");
     });
 
     test(`GIVEN a custom ID
@@ -94,7 +105,7 @@ describe("RedisStream instance", () => {
 
       await stream.delEntry(entryId);
 
-      expect(typeof entryId).toStrictEqual("string");
+      assert.equal(typeof entryId, "string");
     });
 
     test(`GIVEN a custom ID already used/smaller than the last entry
@@ -103,13 +114,10 @@ describe("RedisStream instance", () => {
     async() => {
       const alreadyUsedId = entries[0];
 
-      try {
-        await stream.push({ foo: "bar" }, { id: alreadyUsedId });
-      }
-      catch (error) {
-        expect(error.message)
-        .toBe("ERR The ID specified in XADD is equal or smaller than the target stream top item");
-      }
+      await assert.rejects(async() => await stream.push({ foo: "bar" }, { id: alreadyUsedId }), {
+        name: "ReplyError",
+        message: "ERR The ID specified in XADD is equal or smaller than the target stream top item"
+      });
     });
   });
 
@@ -120,12 +128,10 @@ describe("RedisStream instance", () => {
     async() => {
       const id = "00";
 
-      try {
-        await stream.delEntry(id);
-      }
-      catch (error) {
-        expect(error.message).toStrictEqual(`Failed entry deletion for ${id}`);
-      }
+      await assert.rejects(async() => stream.delEntry(id), {
+        name: "Error",
+        message: `Failed entry deletion for ${id}`
+      });
     });
   });
 
@@ -136,7 +142,7 @@ describe("RedisStream instance", () => {
     async() => {
       const foundEntries = await stream.getRange();
 
-      expect(foundEntries.length).toBe(kLength);
+      assert.equal(foundEntries.length, kLength);
     });
 
     test(`GIVEN X as a number for count option
@@ -152,11 +158,11 @@ describe("RedisStream instance", () => {
       let foundEntries: Entry[] = [];
 
       foundEntries = await stream.getRange(options);
-      expect(foundEntries.length).toBeLessThanOrEqual(options.count);
+      assert.ok(foundEntries.length <= options.count);
 
       options.count = 12;
       foundEntries = await stream.getRange(options);
-      expect(foundEntries.length).toBeLessThanOrEqual(options.count);
+      assert.ok(foundEntries.length <= options.count);
     });
 
     test(`GIVEN the same id for min & max options
@@ -169,7 +175,7 @@ describe("RedisStream instance", () => {
       };
 
       const entry = await stream.getRange(options);
-      expect(entry[0].id).toBe(entries[0]);
+      assert.equal(entry[0].id, entries[0]);
     });
 
     test(`GIVEN a timestamp for min or max options
@@ -185,11 +191,11 @@ describe("RedisStream instance", () => {
 
       const foundEntries = await stream.getRange(options);
 
-      expect(
+      assert.ok(
         Number(foundEntries[0].id.replace(
           (foundEntries[0].id.match(kParseRegex))![0], ""
-        ))
-      ).toBeGreaterThanOrEqual(Number(options.min));
+        )) >= Number(options.min)
+      );
     });
 
     test(`GIVEN a timestamp/id with "(" symbol for min
@@ -206,11 +212,11 @@ describe("RedisStream instance", () => {
 
       const foundEntries = await stream.getRange(options);
 
-      expect(
-        Number(foundEntries[0].id.replace(
+      assert.ok(
+        foundEntries[0].id.replace(
           (foundEntries[0].id.match(kParseRegex))![0], ""
-        ))
-      ).not.toBe(`${timeStamp}-0`);
+        ) !== `${timeStamp}-0`
+      );
     });
   });
 
@@ -221,8 +227,8 @@ describe("RedisStream instance", () => {
     async() => {
       const foundEntries = await stream.getRevRange();
 
-      expect(foundEntries.length).toBe(kLength);
-      expect(foundEntries[0].id).toBe(entries[9]);
+      assert.equal(foundEntries.length, kLength);
+      assert.equal(foundEntries[0].id, entries[9]);
     });
 
     test(`GIVEN X as a number for count option
@@ -238,11 +244,11 @@ describe("RedisStream instance", () => {
       let foundEntries: Entry[] = [];
 
       foundEntries = await stream.getRevRange(options);
-      expect(foundEntries.length).toBeLessThanOrEqual(options.count);
+      assert.ok(foundEntries.length <= options.count);
 
       options.count = 12;
       foundEntries = await stream.getRevRange(options);
-      expect(foundEntries.length).toBeLessThanOrEqual(options.count);
+      assert.ok(foundEntries.length <= options.count);
     });
 
     test(`GIVEN the same id for min & max options
@@ -255,7 +261,7 @@ describe("RedisStream instance", () => {
       };
 
       const entry = await stream.getRevRange(options);
-      expect(entry[0].id).toBe(entries[0]);
+      assert.equal(entry[0].id, entries[0]);
     });
 
     test(`GIVEN a timestamp for min or max options
@@ -271,11 +277,11 @@ describe("RedisStream instance", () => {
 
       const foundEntries = await stream.getRevRange(options);
 
-      expect(
+      assert.ok(
         Number(foundEntries[0].id.replace(
           (foundEntries[0].id.match(kParseRegex))![0], ""
-        ))
-      ).toBeGreaterThanOrEqual(Number(options.min));
+        )) >= Number(options.min)
+      );
     });
 
     test(`GIVEN a timestamp/id with "(" symbol for min
@@ -292,11 +298,11 @@ describe("RedisStream instance", () => {
 
       const foundEntries = await stream.getRevRange(options);
 
-      expect(
-        Number(foundEntries[0].id.replace(
+      assert.ok(
+        foundEntries[0].id.replace(
           (foundEntries[0].id.match(kParseRegex))![0], ""
-        ))
-      ).not.toBe(`${timeStamp}-0`);
+        ) !== `${timeStamp}-0`
+      );
     });
   });
 
@@ -304,7 +310,7 @@ describe("RedisStream instance", () => {
     test("should return the stream length", async() => {
       const length = await stream.getLength();
 
-      expect(length).toBe(kLength);
+      assert.equal(length, kLength);
     });
   });
 
@@ -314,11 +320,11 @@ describe("RedisStream instance", () => {
           THEN it should return the number of deleted entries`,
     async() => {
       let length = 10;
-      expect(await stream.trim(length)).toBe(0);
+      assert.equal(await stream.trim(length), 0);
 
       length = 9;
       const nbDeletedEntries = await stream.trim(length);
-      expect(nbDeletedEntries).toBe(kLength - length);
+      assert.equal(nbDeletedEntries, kLength - length);
       entries.splice(0, nbDeletedEntries);
     });
 
@@ -327,11 +333,11 @@ describe("RedisStream instance", () => {
           THEN it should return the number of deleted entries`,
     async() => {
       let entryId = entries[0];
-      expect(await stream.trim(entryId)).toBe(0);
+      assert.equal(await stream.trim(entryId), 0);
 
       entryId = entries[1];
       const nbDeletedEntries = await stream.trim(entryId);
-      expect(nbDeletedEntries).toBe(1);
+      assert.equal(nbDeletedEntries, 1);
       entries.splice(0, nbDeletedEntries);
     });
   });
@@ -339,15 +345,7 @@ describe("RedisStream instance", () => {
   test(`WHEN calling getInfo
         THEN it should return data about the current Stream`,
   async() => {
-    expect(await stream.getInfo()).toBeDefined();
-  });
-
-  afterAll(async() => {
-    for (const entryId of entries) {
-      await stream.delEntry(entryId);
-    }
-
-    await closeAllRedis();
+    assert.ok(await stream.getInfo());
   });
 });
 

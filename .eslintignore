@@ -1,4 +1,3 @@
 temp/
 test/stream/
 start-container.js
-jest.setup.js
