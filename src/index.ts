@@ -166,7 +166,7 @@ export async function clearAllKeys(instance: Instance = "publisher", redis?: Red
 }
 
 async function closeConnection(instance: Instance = "publisher", redis: Redis, forceExit: boolean = false) {
-  const { isAlive } = await getConnectionPerf(instance);
+  const { isAlive } = await getConnectionPerf(instance, redis);
 
   if (!isAlive) {
     return;

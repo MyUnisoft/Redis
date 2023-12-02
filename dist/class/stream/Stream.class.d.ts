@@ -72,7 +72,7 @@ export declare class Stream extends EventEmitter {
      *
      * @description Push a new entry on the stream, if no ID provided, use the special ID "*".
      * Using the special ID "*", Redis generate IDs as follow 1526985685298-0, the first part
-     * being a timestamp, and the second an incremente.
+     * being a timestamp, and the second an increment.
      * @param {data: { key: string; value: string | Buffer | number }, options: { id?: string; metadata?: string }} [options]
      * @returns {Promise<string>}
      * @example
