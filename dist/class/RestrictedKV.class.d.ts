@@ -1,6 +1,6 @@
 import { KVPeer, KVOptions } from "./KVPeer.class";
 import { KeyType } from "../types/index";
-export declare type RestrictedKVOptions = Pick<KVOptions<Attempt>, "prefix"> & {
+export type RestrictedKVOptions = Pick<KVOptions<Attempt>, "prefix"> & {
     autoClearExpired?: number;
     allowedAttempt?: number;
     banTimeInSecond?: number;
@@ -10,7 +10,7 @@ export interface Attempt {
     lastTry: number;
     locked: boolean;
 }
-export declare type RawAttempt = Record<keyof Attempt, string>;
+export type RawAttempt = Record<keyof Attempt, string>;
 /**
 * @class RestrictedKV
 * @classdesc Implementation to prevent brute force attacks.

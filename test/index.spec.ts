@@ -36,6 +36,22 @@ describe("getConnectionPerf", () => {
   });
 });
 
+describe("closeRedis", () => {
+  test("given an external instance", async() => {
+    const redis = await initRedis({ port: Number(process.env.REDIS_PORT), host: process.env.REDIS_HOST }, undefined, true);
+
+    let perf = await getConnectionPerf(undefined, redis);
+
+    assert.equal(perf.isAlive, true);
+
+    await closeRedis(undefined, redis);
+
+    perf = await getConnectionPerf(undefined, redis);
+
+    assert.equal(perf.isAlive, false);
+  });
+});
+
 describe("closeAllRedis", () => {
   before(async() => {
     await initRedis({ port: Number(process.env.REDIS_PORT), host: process.env.REDIS_HOST });
@@ -68,3 +84,4 @@ describe("closeAllRedis", () => {
     }
   });
 });
+
