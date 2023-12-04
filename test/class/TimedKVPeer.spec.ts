@@ -53,7 +53,7 @@ describe("TimedKVPeer", () => {
       assert.equal(deletedValues, 1);
     });
 
-    it("Given a expired key", async () => {
+    it("Given a expired key", async() => {
       const key = await timedKVPeer.setValue({ key: "foo", value: { mail: "bar" } });
 
       await timers.setTimeout(3_600);
@@ -63,5 +63,4 @@ describe("TimedKVPeer", () => {
       assert.equal(deletedValues, 0);
     });
   });
-
 });

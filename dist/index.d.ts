@@ -1,6 +1,6 @@
 import Redis, { RedisOptions } from "ioredis";
 export { Redis } from "ioredis";
-export declare type Instance = "subscriber" | "publisher";
+export type Instance = "subscriber" | "publisher";
 export declare function getRedis(instance?: Instance): Redis | undefined;
 /**
 * Init a redis connection.
@@ -18,11 +18,11 @@ export declare function getConnectionPerf(instance?: Instance, redisInstance?: R
 /**
   * Close a single local connection.
   */
-export declare function closeRedis(instance?: Instance, redisInstance?: Redis, forceExit?: boolean): Promise<void>;
+export declare function closeRedis(instance?: Instance, redisInstance?: Redis, forceExit?: boolean, timeout?: number): Promise<void>;
 /**
  * Close every redis connections.
  */
-export declare function closeAllRedis(redisInstance?: [Redis, Redis], forceExit?: boolean): Promise<void>;
+export declare function closeAllRedis(redisInstance?: Redis[], forceExit?: boolean, timeout?: number): Promise<void>;
 export interface GetConnectionPerfResponse {
     isAlive: boolean;
     perf?: number;

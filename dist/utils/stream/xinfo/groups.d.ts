@@ -1,4 +1,4 @@
-export declare type XINFOGroups = (string | number)[][];
+export type XINFOGroups = (string | number)[][];
 export interface XINFOGroupData {
     name: string;
     consumers: number;

@@ -17,6 +17,9 @@ const kDefaultBanTime = 60 * 5;
 * @classdesc Implementation to prevent brute force attacks.
 */
 class RestrictedKV extends KVPeer_class_1.KVPeer {
+    static getDefaultAttempt() {
+        return { failure: 0, lastTry: Date.now(), locked: false };
+    }
     constructor(options = {}) {
         const { prefix, autoClearExpired, allowedAttempt, banTimeInSecond } = options;
         super({
@@ -38,9 +41,6 @@ class RestrictedKV extends KVPeer_class_1.KVPeer {
                 }
             }, autoClearExpired).unref();
         }
-    }
-    static getDefaultAttempt() {
-        return { failure: 0, lastTry: Date.now(), locked: false };
     }
     parseRawAttempt(data) {
         return {

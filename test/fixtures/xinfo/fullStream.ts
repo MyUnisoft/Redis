@@ -1,6 +1,5 @@
 import { XGroups, XRedisData } from "../../../src/utils/stream";
 
-
 export const pendings = [
   ["id", "consumerName", 20000, 1],
   ["id", "consumerName", 20000, 1],

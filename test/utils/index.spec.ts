@@ -1,6 +1,6 @@
 // Import Node.js Dependencies
 import assert from "node:assert/strict";
-import { describe, before, it } from "node:test";
+import { describe, it } from "node:test";
 
 // Import Internal Dependencies
 import * as utils from "../../src/utils/stream/index";

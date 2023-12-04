@@ -1,3 +1,4 @@
+/* eslint-disable func-style */
 // Import Node.js Dependencies
 import EventEmitter from "node:events";
 import assert from "node:assert/strict";
@@ -18,7 +19,7 @@ describe("KVPeer instance", () => {
     await initRedis({ port: Number(process.env.REDIS_PORT), host: process.env.REDIS_HOST });
     await clearAllKeys();
   });
-  
+
   after(async() => {
     await closeAllRedis();
   });
@@ -186,9 +187,12 @@ describe("KVPeer instance", () => {
 
       // CONSTANTS
       const [key, value] = ["foo", {
-        bar: [ { foo: "bar" }, { bar: "foo" } ]
+        bar: [
+          { foo: "bar" }, { bar: "foo" }
+        ]
       }];
       const mapValue = (value: object) => {
+        // eslint-disable-next-line dot-notation
         value["mapped"] = true;
 
         return value;
@@ -225,15 +229,17 @@ describe("KVPeer instance", () => {
 
       // CONSTANTS
       const [key, value] = ["foo", {
-        bar: [ { foo: "bar" }, { key: "value" } ]
+        bar: [
+          { foo: "bar" }, { key: "value" }
+        ]
       }];
       const mapValue = (value: MyCustomObject) => {
         const metadata: Metadata = {
-            meta: "foo"
+          meta: "foo"
         };
 
         return Object.assign({}, value, { customData: metadata });
-      }
+      };
 
       before(async() => {
         kvPeer = new KVPeer<MyCustomObject, Metadata>({
@@ -242,7 +248,7 @@ describe("KVPeer instance", () => {
         });
 
         await kvPeer.setValue({ key, value });
-      })
+      });
 
       test(`GIVEN a valid key
             WHEN calling getValue
@@ -250,7 +256,7 @@ describe("KVPeer instance", () => {
       async() => {
         const value = await kvPeer.getValue(key);
 
-        assert.deepStrictEqual(value, { ...value, customData: { meta: "foo" }});
+        assert.deepStrictEqual(value, { ...value, customData: { meta: "foo" } });
       });
     });
 
@@ -260,9 +266,9 @@ describe("KVPeer instance", () => {
       // CONSTANTS
       const [key, value] = ["foo", "bar"];
       const mapValue = (value: string) => {
-        value = `foo-${value}`;
+        const formatted = `foo-${value}`;
 
-        return value;
+        return formatted;
       };
 
       before(async() => {

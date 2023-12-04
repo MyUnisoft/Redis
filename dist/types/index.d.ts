@@ -1,7 +1,7 @@
 /// <reference types="node" />
-export declare type KeyType = string | Buffer;
-export declare type Value = string | Buffer | number;
-export declare type Data = Record<string, Value>;
+export type KeyType = string | Buffer;
+export type Value = string | Buffer | number;
+export type Data = Record<string, Value>;
 export interface Entry {
     id: string;
     data: Data;

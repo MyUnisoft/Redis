@@ -1,6 +1,3 @@
-// Import Third-party Dependencies
-import { Redis } from "ioredis";
-
 // Import Internal Dependencies
 import { getRedis } from "../..";
 
@@ -20,14 +17,13 @@ export type PublishOptions<
 
 export class Channel<
   T extends Record<string, any> = Record<string, any>,
-  K extends Record<string, any> | null = null>
-{
+  K extends Record<string, any> | null = null> {
   readonly name: string;
 
   constructor(options: ChannelOptions) {
     const { name, prefix } = options;
 
-    this.name = `${prefix ? `${prefix}-` : ""}` + name
+    this.name = `${prefix ? `${prefix}-` : ""}` + name;
   }
 
   get redis() {

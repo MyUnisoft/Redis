@@ -1,13 +1,13 @@
 /// <reference types="node" />
 import { EventEmitter } from "node:events";
 import { KeyType } from "../types/index";
-export declare type KVType = "raw" | "object";
-export declare type StringOrObject = string | Record<string, any>;
-declare type IsMetadataDefined<T extends Record<string, any>, K extends Record<string, any> | null = null> = K extends Record<string, any> ? T & {
+export type KVType = "raw" | "object";
+export type StringOrObject = string | Record<string, any>;
+type IsMetadataDefined<T extends Record<string, any>, K extends Record<string, any> | null = null> = K extends Record<string, any> ? T & {
     customData: K;
 } : T;
-declare type MappedValue<T extends StringOrObject, K extends Record<string, any> | null = null> = T extends Record<string, any> ? IsMetadataDefined<T, K> : T;
-export declare type KVMapper<T extends StringOrObject, K extends Record<string, any> | null = null> = (value: T) => MappedValue<T, K>;
+type MappedValue<T extends StringOrObject, K extends Record<string, any> | null = null> = T extends Record<string, any> ? IsMetadataDefined<T, K> : T;
+export type KVMapper<T extends StringOrObject, K extends Record<string, any> | null = null> = (value: T) => MappedValue<T, K>;
 export interface KVOptions<T extends StringOrObject = Record<string, any>, K extends Record<string, any> | null = null> {
     prefix?: string;
     type?: KVType;

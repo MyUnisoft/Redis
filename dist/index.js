@@ -30,6 +30,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Types = exports.clearAllKeys = exports.closeAllRedis = exports.closeRedis = exports.getConnectionPerf = exports.initRedis = exports.getRedis = exports.Redis = void 0;
+/* eslint-disable max-params */
 // Import Node.js Dependencies
 const node_events_1 = require("node:events");
 const node_perf_hooks_1 = require("node:perf_hooks");
@@ -38,12 +39,12 @@ const ioredis_1 = __importDefault(require("ioredis"));
 var ioredis_2 = require("ioredis");
 Object.defineProperty(exports, "Redis", { enumerable: true, get: function () { return ioredis_2.Redis; } });
 // CONSTANTS
-const isPublisherInstance = (instance) => instance === "publisher";
 const kDefaultAttempt = 4;
+const kDefaultTimeout = 500;
 let publisher;
 let subscriber;
 function getRedis(instance = "publisher") {
-    const redis = isPublisherInstance(instance) ? publisher : subscriber;
+    const redis = instance === "publisher" ? publisher : subscriber;
     return redis;
 }
 exports.getRedis = getRedis;
@@ -76,10 +77,10 @@ async function initRedis(redisOptions = {}, instance = "publisher", external) {
         await assertConnection(instance, kDefaultAttempt, redis);
         return redis;
     }
-    else if (isPublisherInstance(instance) && !publisher) {
+    else if (instance === "publisher" && !publisher) {
         publisher = redis;
     }
-    else if (!isPublisherInstance(instance) && !subscriber) {
+    else if (instance === "subscriber" && !subscriber) {
         subscriber = redis;
     }
     await assertConnection(instance);
@@ -90,7 +91,7 @@ exports.initRedis = initRedis;
  * Check Redis connection state.
  */
 async function getConnectionPerf(instance = "publisher", redisInstance) {
-    const redis = typeof redisInstance !== "undefined" ? redisInstance : isPublisherInstance(instance) ? publisher : subscriber;
+    const redis = typeof redisInstance === "undefined" ? getRedis(instance) : redisInstance;
     if (!redis) {
         return { isAlive: false };
     }
@@ -104,28 +105,54 @@ async function getConnectionPerf(instance = "publisher", redisInstance) {
     return { isAlive: true, perf: node_perf_hooks_1.performance.now() - start };
 }
 exports.getConnectionPerf = getConnectionPerf;
-async function assertDisconnection(instance, attempt = kDefaultAttempt, redis) {
+async function assertDisconnection(options) {
+    const { redis, instance, attempt, forceExit, timeout } = {
+        ...options,
+        instance: undefined,
+        attempt: options.attempt ?? kDefaultAttempt,
+        forceExit: options.forceExit ?? false,
+        timeout: options.timeout ?? kDefaultTimeout
+    };
     if (attempt <= 0) {
         throw new Error("Failed at closing a Redis connection.");
     }
+    setImmediate(() => {
+        if (!forceExit) {
+            redis.quit();
+            return;
+        }
+        redis.disconnect();
+    });
+    try {
+        await (0, node_events_1.once)(redis, "end", { signal: AbortSignal.timeout(timeout) });
+    }
+    catch {
+        await assertDisconnection({
+            redis,
+            attempt: attempt - 1,
+            forceExit,
+            timeout
+        });
+    }
     const { isAlive } = await getConnectionPerf(instance, redis);
     if (isAlive) {
-        await assertDisconnection(instance, attempt - 1, redis);
+        await assertDisconnection({
+            redis,
+            attempt: attempt - 1,
+            forceExit,
+            timeout
+        });
     }
 }
 /**
   * Close a single local connection.
   */
-async function closeRedis(instance = "publisher", redisInstance, forceExit = false) {
-    if (redisInstance) {
-        await closeConnection(instance, redisInstance, forceExit);
-        return;
-    }
-    const redis = isPublisherInstance(instance) ? publisher : subscriber;
+async function closeRedis(instance = "publisher", redisInstance, forceExit = false, timeout) {
+    const redis = typeof redisInstance === "undefined" ? getRedis(instance) : redisInstance;
     if (!redis) {
         throw new Error("Unavailable redis instance");
     }
-    await closeConnection(instance, redis, forceExit);
+    await closeConnection(instance, redis, forceExit, timeout);
     if (instance === "publisher") {
         publisher = undefined;
     }
@@ -137,13 +164,13 @@ exports.closeRedis = closeRedis;
 /**
  * Close every redis connections.
  */
-async function closeAllRedis(redisInstance, forceExit = false) {
-    const instances = typeof redisInstance === "undefined" ? [getRedis(), getRedis("subscriber")] : redisInstance;
+async function closeAllRedis(redisInstance, forceExit = false, timeout) {
+    const instances = [...(typeof redisInstance === "undefined" ? [] : redisInstance), getRedis(), getRedis("subscriber")];
     await Promise.all(instances.map(async (instance) => {
         if (!instance) {
             return;
         }
-        await closeConnection("publisher", instance, forceExit);
+        await closeConnection("publisher", instance, forceExit, timeout);
     }));
 }
 exports.closeAllRedis = closeAllRedis;
@@ -151,21 +178,23 @@ exports.closeAllRedis = closeAllRedis;
   * Clear all keys from redis (it doesn't clean up streams).
   */
 async function clearAllKeys(instance = "publisher", redis) {
-    const redisInstance = typeof redis !== "undefined" ? redis : isPublisherInstance(instance) ? publisher : subscriber;
+    const redisInstance = typeof redis === "undefined" ? getRedis(instance) : redis;
     if (!redisInstance) {
         throw new Error("No available local instance");
     }
     await redisInstance.flushdb();
 }
 exports.clearAllKeys = clearAllKeys;
-async function closeConnection(instance = "publisher", redis, forceExit = false) {
+async function closeConnection(instance = "publisher", redis, forceExit = false, timeout) {
     const { isAlive } = await getConnectionPerf(instance, redis);
     if (!isAlive) {
         return;
     }
-    setImmediate(() => forceExit ? redis.disconnect() : redis.quit());
-    await (0, node_events_1.once)(redis, "end");
-    await assertDisconnection(instance);
+    await assertDisconnection({
+        redis,
+        forceExit,
+        timeout
+    });
 }
 __exportStar(require("./class/stream/index"), exports);
 __exportStar(require("./class/pubSub/Channel.class"), exports);

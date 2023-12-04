@@ -14,7 +14,8 @@ export type KVType = "raw" | "object";
 
 export type StringOrObject = string | Record<string, any>;
 
-type IsMetadataDefined<T extends Record<string, any>, K extends Record<string, any> | null = null> = K extends Record<string, any> ? T & { customData: K } : T;
+type IsMetadataDefined<T extends Record<string, any>, K extends Record<string, any> | null = null> =
+  K extends Record<string, any> ? T & { customData: K } : T;
 
 type MappedValue<T extends StringOrObject, K extends Record<string, any> | null = null> = T extends Record<string, any> ?
 IsMetadataDefined<T, K> : T;
@@ -51,7 +52,7 @@ export class KVPeer<T extends StringOrObject = StringOrObject, K extends Record<
   protected prefix: string;
   protected prefixedName: string;
   protected type: KVType;
-  protected mapValue: KVMapper<T , K>;
+  protected mapValue: KVMapper<T, K>;
 
   constructor(options: KVOptions<T, K> = {}) {
     super();
@@ -88,9 +89,13 @@ export class KVPeer<T extends StringOrObject = StringOrObject, K extends Record<
       multiRedis.set(finalKey, payload);
     }
     else {
-      const propsMap = new Map(Object.entries(value as Record<string, any>).map(
-        ([key, value]) => typeof value === "object" ? [key, JSON.stringify(value)] : [key, value]
-      )) as Map<string, ValueType>;
+      const propsMap = new Map(Object.entries(value as Record<string, any>).map(([key, value]) => {
+        if (typeof value === "object") {
+          return [key, JSON.stringify(value)];
+        }
+
+        return [key, value];
+      })) as Map<string, ValueType>;
 
       multiRedis.hmset(finalKey, propsMap);
     }

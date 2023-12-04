@@ -1,4 +1,4 @@
-export declare type XINFOConsumers = (string | number)[][];
+export type XINFOConsumers = (string | number)[][];
 export interface XINFOConsumerData {
     name: string;
     pending: number;

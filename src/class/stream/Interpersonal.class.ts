@@ -56,7 +56,7 @@ export class Interpersonal extends Stream {
     this.claimOptions = claimOptions;
   }
 
-  async *[Symbol.asyncIterator]() {
+  async* [Symbol.asyncIterator]() {
     while (true) {
       let entries: Entry[] = [];
 

@@ -7,16 +7,18 @@ import { KeyType } from "../types/index";
 
 // CONSTANTS
 const kDefaultTtl = 1_000 * 60 * 10;
+// eslint-disable-next-line func-style
 const kDefaultRandomKeyGenerator = () => randomBytes(6).toString("hex");
 
-export interface TimedKVPeerOptions<T extends object, K extends Record<string, any> | null = null> extends Omit<KVOptions<T, K>, "type"> {
+export interface TimedKVPeerOptions<T extends object, K extends Record<string, any> | null = null>
+  extends Omit<KVOptions<T, K>, "type"> {
   /** How long the keys are kept, by default set to 10 minutes **/
   ttl?: number;
   /** A random key callback generator for setValue() method **/
   randomKeyCallback?: () => string;
 }
 
-interface TimedSetValueOptions<T> extends Omit<SetValueOptions<T>, "expiresIn" | "key"> { key?: string | Buffer };
+interface TimedSetValueOptions<T> extends Omit<SetValueOptions<T>, "expiresIn" | "key"> { key?: string | Buffer }
 
 /**
 * @class TimedKVPeer

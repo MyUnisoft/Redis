@@ -16,7 +16,7 @@ import { Entry } from "../../types/index";
  * @description Handling intrapersonal communication through a redis stream
  */
 export class Intrapersonal extends Stream {
-  async *[Symbol.asyncIterator]() {
+  async* [Symbol.asyncIterator]() {
     while (true) {
       await timers.setTimeout(this.frequency);
 
