@@ -25,7 +25,7 @@ describe("Channel", () => {
   before(async() => {
     await initRedis({ port: Number(process.env.REDIS_PORT), host: process.env.REDIS_HOST });
   });
-  
+
   after(async() => {
     await closeAllRedis();
   });

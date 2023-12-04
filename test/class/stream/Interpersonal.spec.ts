@@ -14,9 +14,13 @@ import { Entry } from "../../../src/types/index";
 
 // Internal Dependencies Mock
 const mockedHandleEntries = mock.method(Interpersonal.prototype as any, "handleEntries", Interpersonal.prototype.handleEntries);
-const mockedCreateGroup = mock.method(Interpersonal.prototype as any, "createGroup", (Interpersonal.prototype as any).createGroup);
-const mockedCreateConsumer = mock.method(Interpersonal.prototype as any, "createConsumer", (Interpersonal.prototype as any).createConsumer);
-const mockedClaimEntry =  mock.method(Interpersonal.prototype as any, "claimEntry", Interpersonal.prototype.claimEntry);
+const mockedCreateGroup = mock.method(
+  Interpersonal.prototype as any, "createGroup", (Interpersonal.prototype as any).createGroup
+);
+const mockedCreateConsumer = mock.method(
+  Interpersonal.prototype as any, "createConsumer", (Interpersonal.prototype as any).createConsumer
+);
+const mockedClaimEntry = mock.method(Interpersonal.prototype as any, "claimEntry", Interpersonal.prototype.claimEntry);
 
 let assertEntryIdCalls = 0;
 function assertEntryId(entry: Partial<Entry>) {
@@ -48,7 +52,7 @@ describe("Consumer", () => {
   // One Consumer reading concurrently on the same stream but without claiming
   let thirdConsumerReadable: Readable;
 
-  before(async () => {
+  before(async() => {
     await initRedis({ port: Number(process.env.REDIS_PORT), host: process.env.REDIS_HOST });
 
     firstConsumer = new Interpersonal({
@@ -94,7 +98,7 @@ describe("Consumer", () => {
     }
 
     firstConsumerReadable = Readable.from(firstConsumer[Symbol.asyncIterator]());
-    firstConsumerReadable.on("readable", async () => {
+    firstConsumerReadable.on("readable", async() => {
       const chunk: Entry[] = firstConsumerReadable.read();
 
       for (const entry of chunk) {
@@ -105,7 +109,7 @@ describe("Consumer", () => {
     });
 
     secondConsumerReadable = Readable.from(secondConsumer[Symbol.asyncIterator]());
-    secondConsumerReadable.on("readable", async () => {
+    secondConsumerReadable.on("readable", async() => {
       const chunk: Entry[] = secondConsumerReadable.read();
 
       for (const entry of chunk) {
@@ -116,7 +120,7 @@ describe("Consumer", () => {
     });
 
     thirdConsumerReadable = Readable.from(thirdConsumer[Symbol.asyncIterator]());
-    thirdConsumerReadable.on("readable", async () => {
+    thirdConsumerReadable.on("readable", async() => {
       const chunk: Entry[] = thirdConsumerReadable.read();
 
       for (const entry of chunk) {
@@ -127,7 +131,7 @@ describe("Consumer", () => {
     });
   });
 
-  after(async () => {
+  after(async() => {
     secondConsumerReadable.destroy();
     thirdConsumerReadable.destroy();
 
@@ -139,84 +143,85 @@ describe("Consumer", () => {
 
   test(`WHEN calling init()
         THEN it should init the stream, create the group & the consumer`,
-    async () => {
-      assert.equal(mockedCreateGroup.mock.calls.length, 3);
-      assert.equal(mockedCreateConsumer.mock.calls.length, 3);
-    });
+  async() => {
+    assert.equal(mockedCreateGroup.mock.calls.length, 3);
+    assert.equal(mockedCreateConsumer.mock.calls.length, 3);
+  });
 
   test(`WHEN calling getConsumersData
         THEN it should return data on every consumer in the same group`,
-    async () => {
-      const consumerData = await firstConsumer.getConsumerData();
+  async() => {
+    const consumerData = await firstConsumer.getConsumerData();
 
-      if (consumerData) {
-        assert.equal(consumerData.name, firstConsumer.consumerName);
-      } else {
-        throw new Error("consumerData is undefined");
-      }
-    });
+    if (consumerData) {
+      assert.equal(consumerData.name, firstConsumer.consumerName);
+    }
+    else {
+      throw new Error("consumerData is undefined");
+    }
+  });
 
   test(`GIVEN two different consumers
         WHEN calling push
         THEN they should have push data on the same stream`,
-    async () => {
-      assert.equal(await firstConsumer.getLength(), kLength);
-    });
+  async() => {
+    assert.equal(await firstConsumer.getLength(), kLength);
+  });
 
   test(`GIVEN multiple Concurrent Consumer
         WHEN consuming data on the same stream
         THEN they should not deal with the same data`,
-    async () => {
-      await timers.setTimeout(kTimer + 400);
+  async() => {
+    await timers.setTimeout(kTimer + 400);
 
-      assert.equal(assertEntryIdCalls, 4);
-      assert.equal(mockedClaimEntry.mock.calls.length, 4);
-      assert.equal(mockedHandleEntries.mock.calls.length, 2);
+    assert.equal(assertEntryIdCalls, 4);
+    assert.equal(mockedClaimEntry.mock.calls.length, 4);
+    assert.equal(mockedHandleEntries.mock.calls.length, 2);
 
-      assert.equal(kEntries.length, 5);
-    });
+    assert.equal(kEntries.length, 5);
+  });
 
   test(`GIVEN a first Consumer that didn't claim an entry he was working on for X milliseconds
         & a second Consumer that auto claim
         WHEN consuming data on the same stream
         THEN the second Consumer should deal with the data
         that the first Consumer was working on and that he didn't claim`,
-    async () => {
-      await timers.setTimeout(kDiff);
+  async() => {
+    await timers.setTimeout(kDiff);
 
-      assert.equal(assertEntryIdCalls, 9);
-      assert.equal(mockedClaimEntry.mock.calls.length, 4);
-      assert.equal(mockedHandleEntries.mock.calls.length, 3);
-      
-      assert.equal(kEntries.length, 5);
+    assert.equal(assertEntryIdCalls, 9);
+    assert.equal(mockedClaimEntry.mock.calls.length, 4);
+    assert.equal(mockedHandleEntries.mock.calls.length, 3);
 
-      await timers.setTimeout(kDiff);
+    assert.equal(kEntries.length, 5);
 
-      assert.equal(assertEntryIdCalls, 13);
-      assert.equal(mockedClaimEntry.mock.calls.length, 8);
-      assert.equal(mockedHandleEntries.mock.calls.length, 5);
+    await timers.setTimeout(kDiff);
 
-      assert.equal(kEntries.length, 1);
-    });
+    assert.equal(assertEntryIdCalls, 13);
+    assert.equal(mockedClaimEntry.mock.calls.length, 8);
+    assert.equal(mockedHandleEntries.mock.calls.length, 5);
+
+    assert.equal(kEntries.length, 1);
+  });
 
   describe("deleteConsumer", () => {
     test(`WHEN calling deleteConsumer for the first time
           THEN it should delete the actual Consumer`,
-      async () => {
-        firstConsumerReadable.destroy();
-        once(firstConsumerReadable, "close");
+    async() => {
+      firstConsumerReadable.destroy();
+      once(firstConsumerReadable, "close");
 
-        await firstConsumer.deleteConsumer();
-      });
+      await firstConsumer.deleteConsumer();
+    });
 
     test(`WHEN calling deleteConsumer consecutively for the same Consumer
           THEN it should throw an Error`,
-      async () => {
-        await assert.rejects(async() => firstConsumer.deleteConsumer(), {
-          name: "Error",
-          message: "Consumer dosn't exist."
-        })
+    async() => {
+      await assert.rejects(async() => firstConsumer.deleteConsumer(), {
+        name: "Error",
+        message: "Consumer dosn't exist."
       });
+    });
   });
 });
 

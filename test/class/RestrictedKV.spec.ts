@@ -21,7 +21,7 @@ describe("RestrictedKV", () => {
     await initRedis({ port: Number(process.env.REDIS_PORT), host: process.env.REDIS_HOST });
     await clearAllKeys();
   });
-  
+
   after(async() => {
     await closeAllRedis();
   });
@@ -69,7 +69,7 @@ describe("RestrictedKV", () => {
         const optionsWithLocked = {
           key: randomValue(),
           value: { locked: false }
-        }
+        };
 
         await restrictedKV.setValue(optionsWithLocked);
         const attemptWithLocked = await restrictedKV.getAttempt(optionsWithLocked.key);
@@ -144,7 +144,7 @@ describe("RestrictedKV", () => {
         await restrictedKV.setValue({ key, value: payload });
         await restrictedKV.success(key);
 
-        assert.equal((RestrictedKV.prototype.deleteValue as any).mock.calls.length, 1)
+        assert.equal((RestrictedKV.prototype.deleteValue as any).mock.calls.length, 1);
       });
     });
 
@@ -175,6 +175,7 @@ describe("RestrictedKV", () => {
       describe("expiredKeys event", () => {
         let emitMock: Mock<any>;
         before(() => {
+          // eslint-disable-next-line max-nested-callbacks
           emitMock = mock.method(RestrictedKV.prototype, "emit", () => void 0);
         });
 
@@ -256,28 +257,28 @@ describe("RestrictedKV", () => {
 
   describe("autoClearInterval database suite", () => {
     let restrictedKV: RestrictedKV;
-  
+
     before(async() => {
       restrictedKV = new RestrictedKV({ prefix: "auth-", autoClearExpired: 20 });
     });
-  
+
     beforeEach(async() => {
       await clearAllKeys();
     });
-  
+
     after(async() => {
       restrictedKV.clearAutoClearInterval();
     });
-  
+
     it("should clear all keys from the database when invoked", async() => {
       const lastTry = Date.now() - (90 * 1_000 * 60);
       const payload = { failure: 3, lastTry, locked: true };
       const key = randomValue();
-  
+
       await restrictedKV.setValue({ key, value: payload });
-  
+
       await timers.setTimeout(50);
-  
+
       assert.deepEqual(await restrictedKV.getAttempt(key), {
         failure: 0,
         locked: false,

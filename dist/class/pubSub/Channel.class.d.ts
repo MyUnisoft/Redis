@@ -1,4 +1,3 @@
-import { Redis } from "ioredis";
 export interface ChannelOptions {
     name: string;
     prefix?: string;
@@ -10,6 +9,6 @@ export type PublishOptions<T extends Record<string, any> = Record<string, any>, 
 export declare class Channel<T extends Record<string, any> = Record<string, any>, K extends Record<string, any> | null = null> {
     readonly name: string;
     constructor(options: ChannelOptions);
-    get redis(): Redis;
+    get redis(): import("ioredis/built/Redis").default;
     publish(options: PublishOptions<T, K>): Promise<void>;
 }

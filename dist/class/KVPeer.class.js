@@ -48,7 +48,12 @@ class KVPeer extends node_events_1.EventEmitter {
             multiRedis.set(finalKey, payload);
         }
         else {
-            const propsMap = new Map(Object.entries(value).map(([key, value]) => typeof value === "object" ? [key, JSON.stringify(value)] : [key, value]));
+            const propsMap = new Map(Object.entries(value).map(([key, value]) => {
+                if (typeof value === "object") {
+                    return [key, JSON.stringify(value)];
+                }
+                return [key, value];
+            }));
             multiRedis.hmset(finalKey, propsMap);
         }
         if (expiresIn) {
