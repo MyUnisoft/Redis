@@ -109,36 +109,42 @@ class Interpersonal extends Stream_class_1.Stream {
     }
     async getConsumerData() {
         const consumers = await this.redis.xinfo("CONSUMERS", this.streamName, this.groupName);
-        const formatedConsumers = utils.parseXINFOConsumers(consumers);
-        return formatedConsumers.find((consumer) => consumer.name === this.consumerName);
+        const formattedConsumers = utils.parseXINFOConsumers(consumers);
+        return formattedConsumers.find((consumer) => consumer.name === this.consumerName);
     }
     async groupExist() {
         const groups = await this.getGroupsData();
         return groups.some((group) => group.name === this.groupName);
     }
     async createGroup() {
-        if (await this.groupExist()) {
+        const exist = await this.groupExist();
+        if (exist) {
             return;
         }
         await this.redis.xgroup("CREATE", this.streamName, this.groupName, "$", "MKSTREAM");
     }
+    async deleteGroup() {
+        const exist = await this.groupExist();
+        if (!exist) {
+            return;
+        }
+        await this.redis.xgroup("DESTROY", this.streamName, this.groupName);
+    }
     async consumerExist() {
         const consumer = await this.getConsumerData();
-        if (!consumer) {
-            return false;
-        }
-        return true;
+        return typeof consumer !== "undefined";
     }
     async createConsumer() {
-        if (await this.consumerExist()) {
+        const exist = await this.consumerExist();
+        if (exist) {
             return;
         }
         await this.redis.xgroup("CREATECONSUMER", this.streamName, this.groupName, this.consumerName);
     }
     async deleteConsumer() {
-        const consumerExist = await this.consumerExist();
-        if (!consumerExist) {
-            throw new Error("Consumer dosn't exist.");
+        const exist = await this.consumerExist();
+        if (!exist) {
+            return;
         }
         await this.redis.xgroup("DELCONSUMER", this.streamName, this.groupName, this.consumerName);
     }

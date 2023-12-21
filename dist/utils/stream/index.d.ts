@@ -16,7 +16,7 @@ type RedisArgs = "stream" | "count" | "streams" | "group";
 type RedisOptions = {
     [P in RedisArgs]?: (string | number) | undefined;
 };
-export type FormatedRedisOptions = [
+export type FormattedRedisOptions = [
     string,
     (string | number),
     (string | number)

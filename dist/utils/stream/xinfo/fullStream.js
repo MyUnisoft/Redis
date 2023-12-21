@@ -36,41 +36,41 @@ function* parseFullStreamData(arr) {
 }
 exports.parseFullStreamData = parseFullStreamData;
 function parsePendings(pendings) {
-    const formatedPendings = [];
+    const formattedPendings = [];
     for (const pending of pendings) {
         if (pending.length === 4) {
-            formatedPendings.push({
+            formattedPendings.push({
                 id: pending[0],
                 consumerName: pending[1],
                 idleTime: pending[2],
-                unknow: pending[3]
+                unknown: pending[3]
             });
         }
         else {
-            formatedPendings.push({
+            formattedPendings.push({
                 id: pending[0],
                 idleTime: pending[1],
-                unknow: pending[2]
+                unknown: pending[2]
             });
         }
     }
-    return formatedPendings;
+    return formattedPendings;
 }
 function parseEntries(entries) {
-    const formatedEntries = [];
+    const formattedEntries = [];
     for (const entry of entries) {
-        const formatedEntry = {
+        const formattedEntry = {
             id: "",
             data: {}
         };
-        formatedEntry.id = entry[0];
+        formattedEntry.id = entry[0];
         entry.splice(0, 1);
         for (const [key, value] of parseEntryData(entry.flat())) {
-            formatedEntry.data[key] = value;
+            formattedEntry.data[key] = value;
         }
-        formatedEntries.push(formatedEntry);
+        formattedEntries.push(formattedEntry);
     }
-    return formatedEntries;
+    return formattedEntries;
 }
 exports.parseEntries = parseEntries;
 function* parseEntryData(entry) {
@@ -82,27 +82,27 @@ function* parseEntryData(entry) {
     }
 }
 function parseConsumers(consumers) {
-    const formatedConsumers = [];
+    const formattedConsumers = [];
     for (const consumer of consumers) {
-        const formatedConsumer = {};
+        const formattedConsumer = {};
         for (const [key, value] of parseFullStreamData(consumer)) {
-            formatedConsumer[key] = value;
+            formattedConsumer[key] = value;
         }
-        formatedConsumers.push(formatedConsumer);
+        formattedConsumers.push(formattedConsumer);
     }
-    return formatedConsumers;
+    return formattedConsumers;
 }
 exports.parseConsumers = parseConsumers;
 function parseGroups(groups) {
-    const formatedGroups = [];
+    const formattedGroups = [];
     for (const group of groups) {
-        const formatedGroup = {};
+        const formattedGroup = {};
         for (const [key, value] of parseFullStreamData(group)) {
-            formatedGroup[key] = value;
+            formattedGroup[key] = value;
         }
-        formatedGroups.push(formatedGroup);
+        formattedGroups.push(formattedGroup);
     }
-    return formatedGroups;
+    return formattedGroups;
 }
 exports.parseGroups = parseGroups;
 //# sourceMappingURL=fullStream.js.map

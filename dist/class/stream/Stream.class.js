@@ -72,12 +72,12 @@ class Stream extends node_events_1.EventEmitter {
         await this.redis.xdel(this.streamName, "0-1");
     }
     async getInfo() {
-        const formatedStreamData = {};
+        const formattedStreamData = {};
         const streamData = await this.redis.xinfo("STREAM", this.streamName, "FULL", "COUNT", 0);
         for (const [key, value] of utils.parseData(streamData)) {
-            formatedStreamData[key] = value;
+            formattedStreamData[key] = value;
         }
-        return formatedStreamData;
+        return formattedStreamData;
     }
     async getLength() {
         return await this.redis.xlen(this.streamName);
@@ -120,8 +120,8 @@ class Stream extends node_events_1.EventEmitter {
         for (const [key, value] of Object.entries(data)) {
             entries.push(key, value);
         }
-        const formatedId = id ?? "*";
-        return await this.redis.xadd(this.streamName, formatedId, ...entries);
+        const formattedId = id ?? "*";
+        return await this.redis.xadd(this.streamName, formattedId, ...entries);
     }
     async delEntry(entryId) {
         const res = await this.redis.xdel(this.streamName, entryId);
@@ -136,6 +136,7 @@ class Stream extends node_events_1.EventEmitter {
     }
     /**
      *
+     * @description Return a range of elements in a stream, with IDs matching the specified IDs interval.
      * @param {{ min: string; max: string; count?: number; }} [options={ min: "-", max: "+" }]
      * @returns {Promise<Entry[]>}
      * @example
@@ -166,6 +167,35 @@ class Stream extends node_events_1.EventEmitter {
         const redisOptions = utils.createRedisOptions(this.streamName, min, max, { count });
         return utils.parseEntries(await this.redis.xrange(...redisOptions));
     }
+    /**
+     *
+     * @description Return a range of elements in a stream, with IDs matching the specified IDs interval,
+     * in reverse order (from greater to smaller IDs).
+     * @param {{ min: string; max: string; count?: number; }} [options={ min: "-", max: "+" }]
+     * @returns {Promise<Entry[]>}
+     * @example
+     * ```ts
+     * // Return all entries
+     * await getRevRange({ min: "-", max: "+" })
+     * ```
+     * @example
+     * ```ts
+     * // Return single Entry
+     * await getRevRange({ min: "1526985685298-0", max: "1526985685298-0" })
+     * ```
+     * @example
+     * ```ts
+     * // Return entries between those timestamp (inclusive)
+     * await getRevRange({ min: "1526985054069", max: "1526985055069"})
+     * ```
+     * @example
+     * ```ts
+     * // Return Entry with id 1526985676425-0 & 1526985685298-0
+     * await getRevRange({ min: "-", max: "+", count: 2})
+     * // Return two next Entry, "(" exluding the given id
+     * await getRevRange({ min: "(1526985685298-0", max: "+", count: 2 })
+     * ```
+     */
     async getRevRange(options = kDefaultRangeOptions) {
         const { min, max, count } = options;
         const redisOptions = utils.createRedisOptions(this.streamName, max, min, { count });
@@ -173,22 +203,105 @@ class Stream extends node_events_1.EventEmitter {
     }
     /**
      *
-     * @description Trim the stream, if the treshold is a number, then it is considered as a maxlength,
-     * if the treshold is a string, then it is considered as a reference to an ID/Timestamp.
-     * @param {(number | string)} treshold
+     * @description Trim the stream, if the threshold is a number, then it is considered as a max-length,
+     * if the threshold is a string, then it is considered as a reference to an ID/Timestamp.
+     * @param {(number | string)} threshold
      * @returns {Promise<number>}
      * @example
      * ```ts
-     * // Given a number, it acts like a maxlen
+     * // Given a number, it acts like a max-lenght
      * for (let index = 0; index < 1000; index++) await push({ data: { key: "foo", value: "bar" }})
      * const nbEvictedEntry = await trim(900)
      * console.log(nbEvictedEntry) // 100
      * ```
      */
-    async trim(treshold) {
-        return typeof treshold === "number" ?
-            await this.redis.xtrim(this.streamName, "MAXLEN", treshold) :
-            await this.redis.xtrim(this.streamName, "MINID", treshold);
+    async trim(threshold) {
+        return typeof threshold === "number" ?
+            await this.redis.xtrim(this.streamName, "MAXLEN", threshold) :
+            await this.redis.xtrim(this.streamName, "MINID", threshold);
+    }
+    /**
+     *
+     * @description Check whenever a given group exist for the initialized Stream.
+     * @param {string} name
+     * @returns {Promise<boolean>}
+     */
+    async groupExist(name) {
+        const groups = await this.getGroupsData();
+        return groups.some((group) => group.name === name);
+    }
+    /**
+     *
+     * @description Create a new group related to the initialized Stream.
+     * @param {string} name
+     */
+    async createGroup(name) {
+        const exist = await this.groupExist(name);
+        if (exist) {
+            return;
+        }
+        await this.redis.xgroup("CREATE", this.streamName, name, "$", "MKSTREAM");
+    }
+    /**
+     *
+     * @description Delete a group related to the initialized Stream.
+     * @param {string} name
+     */
+    async deleteGroup(name) {
+        const exist = await this.groupExist(name);
+        if (!exist) {
+            return;
+        }
+        await this.redis.xgroup("DESTROY", this.streamName, name);
+    }
+    /**
+     *
+     * @description Return Consumer data for a given group related to the initialized Stream.
+     * @param {string} groupName
+     * @param {string} consumerName
+     * @returns {Promise<utils.XINFOConsumerData | undefined>}
+     */
+    async getConsumerData(groupName, consumerName) {
+        const consumers = await this.redis.xinfo("CONSUMERS", this.streamName, groupName);
+        const formattedConsumers = utils.parseXINFOConsumers(consumers);
+        return formattedConsumers.find((consumer) => consumer.name === consumerName);
+    }
+    /**
+     *
+     * @description Check whenever a consumer exist for a given group related to the initialized Stream.
+     * @param {string} groupName
+     * @param {string} consumerName
+     * @returns {Promise<boolean>}
+     */
+    async consumerExist(groupName, consumerName) {
+        const consumer = await this.getConsumerData(groupName, consumerName);
+        return typeof consumer !== "undefined";
+    }
+    /**
+     *
+     * @description Create a new consumer for a given group related to the initialized Stream.
+     * @param {string} groupName
+     * @param {string} consumerName
+     */
+    async createConsumer(groupName, consumerName) {
+        const exist = await this.consumerExist(groupName, consumerName);
+        if (exist) {
+            return;
+        }
+        await this.redis.xgroup("CREATECONSUMER", this.streamName, groupName, consumerName);
+    }
+    /**
+     *
+     * @description Delete a consumer for a given group related to the initialized Stream.
+     * @param {string} groupName
+     * @param {string} consumerName
+     */
+    async deleteConsumer(groupName, consumerName) {
+        const exist = await this.consumerExist(groupName, consumerName);
+        if (!exist) {
+            return;
+        }
+        await this.redis.xgroup("DELCONSUMER", this.streamName, groupName, consumerName);
     }
 }
 exports.Stream = Stream;
