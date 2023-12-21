@@ -299,7 +299,8 @@ export class Stream extends EventEmitter {
    * @example
    */
   public async createGroup(name: string): Promise<void> {
-    if (await this.groupExist(name)) {
+    const exist = await this.groupExist(name);
+    if (exist) {
       return;
     }
 
@@ -313,7 +314,8 @@ export class Stream extends EventEmitter {
    * @example
    */
   public async deleteGroup(name: string) {
-    if (!(await this.groupExist(name))) {
+    const exist = await this.groupExist(name);
+    if (!exist) {
       return;
     }
 
@@ -347,11 +349,7 @@ export class Stream extends EventEmitter {
   public async consumerExist(groupName: string, consumerName: string): Promise<boolean> {
     const consumer = await this.getConsumerData(groupName, consumerName);
 
-    if (!consumer) {
-      return false;
-    }
-
-    return true;
+    return typeof consumer !== "undefined";
   }
 
   /**
@@ -362,7 +360,8 @@ export class Stream extends EventEmitter {
    * @example
    */
   public async createConsumer(groupName: string, consumerName: string): Promise<void> {
-    if (await this.consumerExist(groupName, consumerName)) {
+    const exist = await this.consumerExist(groupName, consumerName);
+    if (exist) {
       return;
     }
 
@@ -377,10 +376,9 @@ export class Stream extends EventEmitter {
    * @example
    */
   public async deleteConsumer(groupName: string, consumerName: string): Promise<void> {
-    const consumerExist = await this.consumerExist(groupName, consumerName);
-
-    if (!consumerExist) {
-      throw new Error("Consumer doesn't exist.");
+    const exist = await this.consumerExist(groupName, consumerName);
+    if (!exist) {
+      return;
     }
 
     await this.redis.xgroup("DELCONSUMER", this.streamName, groupName, consumerName);
