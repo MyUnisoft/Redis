@@ -77,9 +77,9 @@ describe("RedisStream instance", () => {
         number: 20
       };
       const entryId = await stream.push({
-          key: "foo",
-          value: Buffer.from(JSON.stringify(fakePayload))
-        }, {});
+        key: "foo",
+        value: Buffer.from(JSON.stringify(fakePayload))
+      }, {});
 
       await stream.delEntry(entryId);
 
@@ -339,6 +339,214 @@ describe("RedisStream instance", () => {
       const nbDeletedEntries = await stream.trim(entryId);
       assert.equal(nbDeletedEntries, 1);
       entries.splice(0, nbDeletedEntries);
+    });
+  });
+
+  describe("createGroup", () => {
+    test(`GIVEN a name that does exist
+    WHEN calling groupExist
+    THEN it should create the group`,
+    async() => {
+      const groupName = "group";
+
+      await stream.createGroup(groupName);
+      const groupExist = await stream.groupExist(groupName);
+      assert.equal(groupExist, true);
+    });
+  });
+
+  describe("groupExist", () => {
+    test(`GIVEN a name that doesn't exist
+          WHEN calling groupExist
+          THEN it should return false`,
+    async() => {
+      const groupExist = await stream.groupExist("bar");
+      assert.equal(groupExist, false);
+    });
+
+    test(`GIVEN a name that does exist
+          WHEN calling groupExist
+          THEN it should return true`,
+    async() => {
+      const groupName = "group";
+
+      await stream.createGroup(groupName);
+      const groupExist = await stream.groupExist(groupName);
+      assert.equal(groupExist, true);
+    });
+  });
+
+  describe("createConsumer", () => {
+    test(`GIVEN a groupName that doesn't exist
+          WHEN calling createConsumer
+          THEN it should throw`,
+    async() => {
+      try {
+        await stream.createConsumer("foo", "consumer");
+      }
+      catch (error) {
+        assert.ok(error);
+      }
+    });
+
+    test(`GIVEN a groupName that does exist
+          WHEN calling createConsumer
+          THEN it should create the consumer for the given group`,
+    async() => {
+      const groupName = "group";
+      const consumerName = "consumer";
+
+      await stream.createConsumer(groupName, consumerName);
+      const consumerExist = await stream.consumerExist(groupName, consumerName);
+      assert.equal(consumerExist, true);
+    });
+  });
+
+  describe("consumerExist", async() => {
+    test(`GIVEN a groupName that doesn't exist
+    WHEN calling consumerExist
+    THEN it should throw`,
+    async() => {
+      try {
+        await stream.consumerExist("bar", "consumer");
+      }
+      catch (error) {
+        assert.ok(error);
+      }
+    });
+
+    test(`GIVEN a groupName that exist & consumerName that doesn't exist
+        WHEN calling consumerExist
+        THEN it should return false`,
+    async() => {
+      const groupName = "group";
+
+      await stream.createGroup(groupName);
+      const consumerExist = await stream.consumerExist(groupName, "bar");
+      assert.equal(consumerExist, false);
+    });
+
+    test(`GIVEN a groupName that exist & a consumerName that does exist
+        WHEN calling consumerExist
+        THEN it should return true`,
+    async() => {
+      const groupName = "group";
+      const consumerName = "consumer";
+
+      await stream.createGroup(groupName);
+      await stream.createConsumer(groupName, consumerName);
+      const consumerExist = await stream.consumerExist(groupName, consumerName);
+      assert.equal(consumerExist, true);
+    });
+  });
+
+  describe("getConsumerData", async() => {
+    test(`GIVEN a groupName that doesn't exist
+          WHEN calling getConsumerData
+          THEN it should throw`,
+    async() => {
+      try {
+        await stream.getConsumerData("bar", "consumer");
+      }
+      catch (error) {
+        assert.ok(error);
+      }
+    });
+
+    test(`GIVEN a groupName that does exist & a consumerName that doesn't exist
+          WHEN calling getConsumerData
+          THEN it should throw`,
+    async() => {
+      try {
+        await stream.getConsumerData("group", "bar");
+      }
+      catch (error) {
+        assert.ok(error);
+      }
+    });
+
+    test(`GIVEN a groupName & a consumerName that does exist
+          WHEN calling getConsumerData
+          THEN it return the according data`,
+    async() => {
+      const groupName = "group";
+      const consumerName = "consumer";
+
+      await stream.createGroup(groupName);
+      await stream.createConsumer(groupName, consumerName);
+      const consumerData = await stream.getConsumerData(groupName, consumerName);
+
+      assert.ok(consumerData);
+      assert.equal(consumerData.name, consumerName);
+    });
+  });
+
+  describe("deleteConsumer", async() => {
+    test(`GIVEN a groupName that doesn't exist
+    WHEN calling deleteConsumer
+    THEN it should throw`,
+    async() => {
+      try {
+        await stream.deleteConsumer("bar", "consumer");
+      }
+      catch (error) {
+        assert.ok(error);
+      }
+    });
+
+    test(`GIVEN a groupName that does exist & a consumerName that doesn't exist
+        WHEN calling deleteConsumer
+        THEN it should throw`,
+    async() => {
+      try {
+        await stream.deleteConsumer("bar", "consumer");
+      }
+      catch (error) {
+        assert.ok(error);
+      }
+    });
+
+    test(`GIVEN a groupName & a consumerName that does exist
+        WHEN calling deleteConsumer
+        THEN it should delete the consumer`,
+    async() => {
+      const groupName = "group";
+      const consumerName = "consumer";
+
+      await stream.createGroup(groupName);
+      await stream.createConsumer(groupName, consumerName);
+
+      await stream.deleteConsumer(groupName, consumerName);
+      const consumerExist = await stream.consumerExist(groupName, consumerName);
+
+      assert.equal(consumerExist, false);
+    });
+  });
+
+  describe("deleteGroup", async() => {
+    test(`GIVEN a groupName that doesn't exist
+    WHEN calling deleteGroup
+    THEN it should throw`,
+    async() => {
+      try {
+        await stream.deleteGroup("bar");
+      }
+      catch (error) {
+        assert.ok(error);
+      }
+    });
+
+    test(`GIVEN a groupName that does exist
+        WHEN calling groupName
+        THEN it should delete the group`,
+    async() => {
+      const groupName = "group";
+
+      await stream.createGroup(groupName);
+      await stream.deleteGroup(groupName);
+      const groupExist = await stream.groupExist(groupName);
+
+      assert.equal(groupExist, false);
     });
   });
 
