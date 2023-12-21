@@ -193,7 +193,8 @@ export class Interpersonal extends Stream {
   }
 
   public async createGroup(): Promise<void> {
-    if (await this.groupExist()) {
+    const exist = await this.groupExist();
+    if (exist) {
       return;
     }
 
@@ -201,7 +202,8 @@ export class Interpersonal extends Stream {
   }
 
   public async deleteGroup() {
-    if (!(await this.groupExist())) {
+    const exist = await this.groupExist();
+    if (!exist) {
       return;
     }
 
@@ -211,15 +213,12 @@ export class Interpersonal extends Stream {
   public async consumerExist(): Promise<boolean> {
     const consumer = await this.getConsumerData();
 
-    if (!consumer) {
-      return false;
-    }
-
-    return true;
+    return typeof consumer !== "undefined";
   }
 
   public async createConsumer(): Promise<void> {
-    if (await this.consumerExist()) {
+    const exist = await this.consumerExist();
+    if (exist) {
       return;
     }
 
@@ -227,10 +226,9 @@ export class Interpersonal extends Stream {
   }
 
   public async deleteConsumer(): Promise<void> {
-    const consumerExist = await this.consumerExist();
-
-    if (!consumerExist) {
-      throw new Error("Consumer doesn't exist.");
+    const exist = await this.consumerExist();
+    if (!exist) {
+      return;
     }
 
     await this.redis.xgroup("DELCONSUMER", this.streamName, this.groupName, this.consumerName);
