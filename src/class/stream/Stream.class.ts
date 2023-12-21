@@ -206,6 +206,7 @@ export class Stream extends EventEmitter {
 
   /**
    *
+   * @description Return a range of elements in a stream, with IDs matching the specified IDs interval.
    * @param {{ min: string; max: string; count?: number; }} [options={ min: "-", max: "+" }]
    * @returns {Promise<Entry[]>}
    * @example
@@ -238,6 +239,35 @@ export class Stream extends EventEmitter {
     return utils.parseEntries(await this.redis.xrange(...redisOptions as utils.FormattedRedisOptions));
   }
 
+  /**
+   *
+   * @description Return a range of elements in a stream, with IDs matching the specified IDs interval,
+   * in reverse order (from greater to smaller IDs).
+   * @param {{ min: string; max: string; count?: number; }} [options={ min: "-", max: "+" }]
+   * @returns {Promise<Entry[]>}
+   * @example
+   * ```ts
+   * // Return all entries
+   * await getRevRange({ min: "-", max: "+" })
+   * ```
+   * @example
+   * ```ts
+   * // Return single Entry
+   * await getRevRange({ min: "1526985685298-0", max: "1526985685298-0" })
+   * ```
+   * @example
+   * ```ts
+   * // Return entries between those timestamp (inclusive)
+   * await getRevRange({ min: "1526985054069", max: "1526985055069"})
+   * ```
+   * @example
+   * ```ts
+   * // Return Entry with id 1526985676425-0 & 1526985685298-0
+   * await getRevRange({ min: "-", max: "+", count: 2})
+   * // Return two next Entry, "(" exluding the given id
+   * await getRevRange({ min: "(1526985685298-0", max: "+", count: 2 })
+   * ```
+   */
   public async getRevRange(options: GetRangeOptions = kDefaultRangeOptions): Promise<Entry[]> {
     const { min, max, count } = options;
     const redisOptions = utils.createRedisOptions(this.streamName, max, min, { count }) as unknown;
@@ -247,13 +277,13 @@ export class Stream extends EventEmitter {
 
   /**
    *
-   * @description Trim the stream, if the threshold is a number, then it is considered as a maxlength,
+   * @description Trim the stream, if the threshold is a number, then it is considered as a max-length,
    * if the threshold is a string, then it is considered as a reference to an ID/Timestamp.
    * @param {(number | string)} threshold
    * @returns {Promise<number>}
    * @example
    * ```ts
-   * // Given a number, it acts like a maxlen
+   * // Given a number, it acts like a max-lenght
    * for (let index = 0; index < 1000; index++) await push({ data: { key: "foo", value: "bar" }})
    * const nbEvictedEntry = await trim(900)
    * console.log(nbEvictedEntry) // 100
@@ -275,16 +305,9 @@ export class Stream extends EventEmitter {
 
   /**
    *
-   * @description Check if a given group exist for the initialized Stream.
+   * @description Check whenever a given group exist for the initialized Stream.
    * @param {string} name
    * @returns {Promise<boolean>}
-   * @example
-   * ```ts
-   * const groupExist = await groupExist("my-group-name");
-   * if (!groupExist) {
-   *  // Do some code
-   * }
-   * ```
    */
   public async groupExist(name: string): Promise<boolean> {
     const groups = await this.getGroupsData();
@@ -294,9 +317,8 @@ export class Stream extends EventEmitter {
 
   /**
    *
-   * @description
+   * @description Create a new group related to the initialized Stream.
    * @param {string} name
-   * @example
    */
   public async createGroup(name: string): Promise<void> {
     const exist = await this.groupExist(name);
@@ -309,9 +331,8 @@ export class Stream extends EventEmitter {
 
   /**
    *
-   * @description
+   * @description Delete a group related to the initialized Stream.
    * @param {string} name
-   * @example
    */
   public async deleteGroup(name: string) {
     const exist = await this.groupExist(name);
@@ -324,11 +345,10 @@ export class Stream extends EventEmitter {
 
   /**
    *
-   * @description
+   * @description Return Consumer data for a given group related to the initialized Stream.
    * @param {string} groupName
    * @param {string} consumerName
    * @returns {Promise<utils.XINFOConsumerData | undefined>}
-   * @example
    */
   public async getConsumerData(groupName: string, consumerName: string): Promise<utils.XINFOConsumerData | undefined> {
     const consumers = await this.redis.xinfo("CONSUMERS", this.streamName, groupName);
@@ -340,11 +360,10 @@ export class Stream extends EventEmitter {
 
   /**
    *
-   * @description
+   * @description Check whenever a consumer exist for a given group related to the initialized Stream.
    * @param {string} groupName
    * @param {string} consumerName
    * @returns {Promise<boolean>}
-   * @example
    */
   public async consumerExist(groupName: string, consumerName: string): Promise<boolean> {
     const consumer = await this.getConsumerData(groupName, consumerName);
@@ -354,10 +373,9 @@ export class Stream extends EventEmitter {
 
   /**
    *
-   * @description
+   * @description Create a new consumer for a given group related to the initialized Stream.
    * @param {string} groupName
    * @param {string} consumerName
-   * @example
    */
   public async createConsumer(groupName: string, consumerName: string): Promise<void> {
     const exist = await this.consumerExist(groupName, consumerName);
@@ -370,10 +388,9 @@ export class Stream extends EventEmitter {
 
   /**
    *
-   * @description
+   * @description Delete a consumer for a given group related to the initialized Stream.
    * @param {string} groupName
    * @param {string} consumerName
-   * @example
    */
   public async deleteConsumer(groupName: string, consumerName: string): Promise<void> {
     const exist = await this.consumerExist(groupName, consumerName);
