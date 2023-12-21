@@ -7,9 +7,9 @@ export const pendings = [
 ];
 
 export const formattedPendings = [
-  { id: "id", consumerName: "consumerName", idleTime: 20000, unknow: 1 },
-  { id: "id", consumerName: "consumerName", idleTime: 20000, unknow: 1 },
-  { id: "id", idleTime: 20000, unknow: 1 }
+  { id: "id", consumerName: "consumerName", idleTime: 20000, unknown: 1 },
+  { id: "id", consumerName: "consumerName", idleTime: 20000, unknown: 1 },
+  { id: "id", idleTime: 20000, unknown: 1 }
 ];
 
 export const entries = [
