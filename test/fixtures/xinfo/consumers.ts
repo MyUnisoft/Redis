@@ -3,7 +3,7 @@ export const consumers = [
   ["name", "secondConsumerName", "pending", 4, "idle", 5465465465]
 ];
 
-export const formatedConsumers = [
+export const formattedConsumers = [
   {
     name: "consumerName",
     pending: 2,

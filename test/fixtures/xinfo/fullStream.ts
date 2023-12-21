@@ -6,7 +6,7 @@ export const pendings = [
   ["id", 20000, 1]
 ];
 
-export const formatedPendings = [
+export const formattedPendings = [
   { id: "id", consumerName: "consumerName", idleTime: 20000, unknow: 1 },
   { id: "id", consumerName: "consumerName", idleTime: 20000, unknow: 1 },
   { id: "id", idleTime: 20000, unknow: 1 }
@@ -17,7 +17,7 @@ export const entries = [
   ["secondId", ["key", "value", "secondKey", Buffer.from("abc")]]
 ];
 
-export const formatedEntries = [
+export const formattedEntries = [
   { id: "id", data: { key: "value", secondKey: 1 } },
   { id: "secondId", data: { key: "value", secondKey: Buffer.from("abc") } }
 ];
@@ -32,13 +32,13 @@ export const consumers = [
   ]
 ];
 
-export const formatedConsumers = [
+export const formattedConsumers = [
   [
-    { name: "name", seenTime: 2000, pelCount: 28, pending: formatedPendings }
+    { name: "name", seenTime: 2000, pelCount: 28, pending: formattedPendings }
   ],
   [
-    { name: "name", seenTime: 2000, pelCount: 28, pending: formatedPendings },
-    { name: "name", seenTime: 2000, pelCount: 28, pending: formatedPendings }
+    { name: "name", seenTime: 2000, pelCount: 28, pending: formattedPendings },
+    { name: "name", seenTime: 2000, pelCount: 28, pending: formattedPendings }
   ]
 ];
 
@@ -55,9 +55,9 @@ export const groups: XGroups = [
   ]
 ];
 
-export const formatedGroups = [
-  { name: "pulsarService", lastDeliveredId: "id", pelCount: 20, pending: formatedPendings, consumers: formatedConsumers[0] },
-  { name: "pulsarService", lastDeliveredId: "id", pelCount: 20, pending: formatedPendings, consumers: formatedConsumers[1] }
+export const formattedGroups = [
+  { name: "pulsarService", lastDeliveredId: "id", pelCount: 20, pending: formattedPendings, consumers: formattedConsumers[0] },
+  { name: "pulsarService", lastDeliveredId: "id", pelCount: 20, pending: formattedPendings, consumers: formattedConsumers[1] }
 ];
 
 export const streamData: XRedisData = [
@@ -69,11 +69,11 @@ export const streamData: XRedisData = [
   "groups", groups
 ];
 
-export const formatedStreamData = {
+export const formattedStreamData = {
   length: 2,
   radixTreeKeys: 1,
   radixTreeNodes: 2,
   lastGeneratedId: "1588152473531-0",
-  entries: formatedEntries,
-  groups: formatedGroups
+  entries: formattedEntries,
+  groups: formattedGroups
 };

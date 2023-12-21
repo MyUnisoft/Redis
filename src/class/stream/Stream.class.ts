@@ -75,9 +75,9 @@ export interface PushOptions {
  * @description Shared method used to work on a Redis Stream
  */
 export class Stream extends EventEmitter {
+  public streamName: string;
   public lastId: string;
 
-  protected streamName: string;
   protected frequency: number;
   protected count?: number;
 
@@ -125,15 +125,15 @@ export class Stream extends EventEmitter {
   }
 
   public async getInfo(): Promise<XINFOStreamData> {
-    const formatedStreamData = {};
+    const formattedStreamData = {};
 
     const streamData = await this.redis.xinfo("STREAM", this.streamName, "FULL", "COUNT", 0) as utils.XRedisData;
 
     for (const [key, value] of utils.parseData(streamData)) {
-      formatedStreamData[key as string] = value;
+      formattedStreamData[key as string] = value;
     }
 
-    return formatedStreamData as XINFOStreamData;
+    return formattedStreamData as XINFOStreamData;
   }
 
   public async getLength(): Promise<number> {
@@ -183,9 +183,9 @@ export class Stream extends EventEmitter {
       entries.push(key, value);
     }
 
-    const formatedId = id ?? "*";
+    const formattedId = id ?? "*";
 
-    return await this.redis.xadd(this.streamName, formatedId, ...entries) as string;
+    return await this.redis.xadd(this.streamName, formattedId, ...entries) as string;
   }
 
   public async delEntry(entryId: string): Promise<void> {
@@ -235,21 +235,21 @@ export class Stream extends EventEmitter {
     const { min, max, count } = options;
     const redisOptions = utils.createRedisOptions(this.streamName, min, max, { count }) as unknown;
 
-    return utils.parseEntries(await this.redis.xrange(...redisOptions as utils.FormatedRedisOptions));
+    return utils.parseEntries(await this.redis.xrange(...redisOptions as utils.FormattedRedisOptions));
   }
 
   public async getRevRange(options: GetRangeOptions = kDefaultRangeOptions): Promise<Entry[]> {
     const { min, max, count } = options;
     const redisOptions = utils.createRedisOptions(this.streamName, max, min, { count }) as unknown;
 
-    return utils.parseEntries(await this.redis.xrevrange(...redisOptions as utils.FormatedRedisOptions));
+    return utils.parseEntries(await this.redis.xrevrange(...redisOptions as utils.FormattedRedisOptions));
   }
 
   /**
    *
-   * @description Trim the stream, if the treshold is a number, then it is considered as a maxlength,
-   * if the treshold is a string, then it is considered as a reference to an ID/Timestamp.
-   * @param {(number | string)} treshold
+   * @description Trim the stream, if the threshold is a number, then it is considered as a maxlength,
+   * if the threshold is a string, then it is considered as a reference to an ID/Timestamp.
+   * @param {(number | string)} threshold
    * @returns {Promise<number>}
    * @example
    * ```ts
@@ -259,17 +259,130 @@ export class Stream extends EventEmitter {
    * console.log(nbEvictedEntry) // 100
    * ```
    */
-  public async trim(treshold: number | string): Promise<number> {
-    return typeof treshold === "number" ?
+  public async trim(threshold: number | string): Promise<number> {
+    return typeof threshold === "number" ?
       await this.redis.xtrim(
         this.streamName,
         "MAXLEN",
-        treshold
+        threshold
       ) :
       await this.redis.xtrim(
         this.streamName,
         "MINID",
-        treshold
+        threshold
       );
+  }
+
+  /**
+   *
+   * @description Check if a given group exist for the initialized Stream.
+   * @param {string} name
+   * @returns {Promise<boolean>}
+   * @example
+   * ```ts
+   * const groupExist = await groupExist("my-group-name");
+   * if (!groupExist) {
+   *  // Do some code
+   * }
+   * ```
+   */
+  public async groupExist(name: string): Promise<boolean> {
+    const groups = await this.getGroupsData();
+
+    return groups.some((group) => group.name === name);
+  }
+
+  /**
+   *
+   * @description
+   * @param {string} name
+   * @example
+   */
+  public async createGroup(name: string): Promise<void> {
+    if (await this.groupExist(name)) {
+      return;
+    }
+
+    await this.redis.xgroup("CREATE", this.streamName, name, "$", "MKSTREAM");
+  }
+
+  /**
+   *
+   * @description
+   * @param {string} name
+   * @example
+   */
+  public async deleteGroup(name: string) {
+    if (!(await this.groupExist(name))) {
+      return;
+    }
+
+    await this.redis.xgroup("DESTROY", this.streamName, name);
+  }
+
+  /**
+   *
+   * @description
+   * @param {string} groupName
+   * @param {string} consumerName
+   * @returns {Promise<utils.XINFOConsumerData | undefined>}
+   * @example
+   */
+  public async getConsumerData(groupName: string, consumerName: string): Promise<utils.XINFOConsumerData | undefined> {
+    const consumers = await this.redis.xinfo("CONSUMERS", this.streamName, groupName);
+
+    const formattedConsumers = utils.parseXINFOConsumers(consumers as utils.XINFOConsumers);
+
+    return formattedConsumers.find((consumer) => consumer.name === consumerName);
+  }
+
+  /**
+   *
+   * @description
+   * @param {string} groupName
+   * @param {string} consumerName
+   * @returns {Promise<boolean>}
+   * @example
+   */
+  public async consumerExist(groupName: string, consumerName: string): Promise<boolean> {
+    const consumer = await this.getConsumerData(groupName, consumerName);
+
+    if (!consumer) {
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   *
+   * @description
+   * @param {string} groupName
+   * @param {string} consumerName
+   * @example
+   */
+  public async createConsumer(groupName: string, consumerName: string): Promise<void> {
+    if (await this.consumerExist(groupName, consumerName)) {
+      return;
+    }
+
+    await this.redis.xgroup("CREATECONSUMER", this.streamName, groupName, consumerName);
+  }
+
+  /**
+   *
+   * @description
+   * @param {string} groupName
+   * @param {string} consumerName
+   * @example
+   */
+  public async deleteConsumer(groupName: string, consumerName: string): Promise<void> {
+    const consumerExist = await this.consumerExist(groupName, consumerName);
+
+    if (!consumerExist) {
+      throw new Error("Consumer doesn't exist.");
+    }
+
+    await this.redis.xgroup("DELCONSUMER", this.streamName, groupName, consumerName);
   }
 }

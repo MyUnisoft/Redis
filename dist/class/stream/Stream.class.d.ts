@@ -122,8 +122,8 @@ export declare class Stream extends EventEmitter {
     getRevRange(options?: GetRangeOptions): Promise<Entry[]>;
     /**
      *
-     * @description Trim the stream, if the treshold is a number, then it is considered as a maxlength,
-     * if the treshold is a string, then it is considered as a reference to an ID/Timestamp.
+     * @description Trim the stream, if the threshold is a number, then it is considered as a maxlength,
+     * if the threshold is a string, then it is considered as a reference to an ID/Timestamp.
      * @param {(number | string)} treshold
      * @returns {Promise<number>}
      * @example
@@ -134,5 +134,5 @@ export declare class Stream extends EventEmitter {
      * console.log(nbEvictedEntry) // 100
      * ```
      */
-    trim(treshold: number | string): Promise<number>;
+    trim(threshold: number | string): Promise<number>;
 }

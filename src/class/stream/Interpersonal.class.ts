@@ -181,18 +181,18 @@ export class Interpersonal extends Stream {
   public async getConsumerData(): Promise<utils.XINFOConsumerData | undefined> {
     const consumers = await this.redis.xinfo("CONSUMERS", this.streamName, this.groupName);
 
-    const formatedConsumers = utils.parseXINFOConsumers(consumers as utils.XINFOConsumers);
+    const formattedConsumers = utils.parseXINFOConsumers(consumers as utils.XINFOConsumers);
 
-    return formatedConsumers.find((consumer) => consumer.name === this.consumerName);
+    return formattedConsumers.find((consumer) => consumer.name === this.consumerName);
   }
 
-  private async groupExist(): Promise<boolean> {
+  public async groupExist(): Promise<boolean> {
     const groups = await this.getGroupsData();
 
     return groups.some((group) => group.name === this.groupName);
   }
 
-  private async createGroup(): Promise<void> {
+  public async createGroup(): Promise<void> {
     if (await this.groupExist()) {
       return;
     }
@@ -200,7 +200,15 @@ export class Interpersonal extends Stream {
     await this.redis.xgroup("CREATE", this.streamName, this.groupName, "$", "MKSTREAM");
   }
 
-  private async consumerExist(): Promise<boolean> {
+  public async deleteGroup() {
+    if (!(await this.groupExist())) {
+      return;
+    }
+
+    await this.redis.xgroup("DESTROY", this.streamName, this.groupName);
+  }
+
+  public async consumerExist(): Promise<boolean> {
     const consumer = await this.getConsumerData();
 
     if (!consumer) {
@@ -210,7 +218,7 @@ export class Interpersonal extends Stream {
     return true;
   }
 
-  private async createConsumer(): Promise<void> {
+  public async createConsumer(): Promise<void> {
     if (await this.consumerExist()) {
       return;
     }
@@ -222,7 +230,7 @@ export class Interpersonal extends Stream {
     const consumerExist = await this.consumerExist();
 
     if (!consumerExist) {
-      throw new Error("Consumer dosn't exist.");
+      throw new Error("Consumer doesn't exist.");
     }
 
     await this.redis.xgroup("DELCONSUMER", this.streamName, this.groupName, this.consumerName);

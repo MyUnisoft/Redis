@@ -3,7 +3,7 @@ export const groups = [
   ["name", "mySecondGroupName", "consumers", 4, "pending", 10, "last-delivered-id", "2590589-9"]
 ];
 
-export const formatedGroups = [
+export const formattedGroups = [
   {
     name: "myGroupName",
     consumers: 2,

@@ -315,7 +315,7 @@ describe("RedisStream instance", () => {
   });
 
   describe("trim", () => {
-    test(`GIVEN a number as treshold
+    test(`GIVEN a number as threshold
           WHEN calling trim
           THEN it should return the number of deleted entries`,
     async() => {
@@ -328,7 +328,7 @@ describe("RedisStream instance", () => {
       entries.splice(0, nbDeletedEntries);
     });
 
-    test(`GIVEN a string as treshold
+    test(`GIVEN a string as threshold
           WHEN calling trim
           THEN it should return the number of deleted entries`,
     async() => {
