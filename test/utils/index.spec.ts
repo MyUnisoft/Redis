@@ -10,24 +10,24 @@ import * as consumersData from "../fixtures/xinfo/consumers";
 
 describe("parseFullStreamData", () => {
   it("should return a properly parsed object", () => {
-    const formatedStreamData = {};
+    const formattedStreamData = {};
 
     for (const [key, value] of utils.parseFullStreamData(fullStreamData.streamData)) {
-      formatedStreamData[key as string] = value;
+      formattedStreamData[key as string] = value;
     }
 
-    assert.deepEqual(formatedStreamData, fullStreamData.formatedStreamData);
+    assert.deepEqual(formattedStreamData, fullStreamData.formattedStreamData);
   });
 });
 
 describe("parseXINFOGroups", () => {
   it("should return a properly parsed object", () => {
-    assert.deepEqual(utils.parseXINFOGroups(groupsData.groups), groupsData.formatedGroups);
+    assert.deepEqual(utils.parseXINFOGroups(groupsData.groups), groupsData.formattedGroups);
   });
 });
 
 describe("parseXINFOConsumers", () => {
   it("should return a properly parsed object", () => {
-    assert.deepEqual(utils.parseXINFOConsumers(consumersData.consumers), consumersData.formatedConsumers);
+    assert.deepEqual(utils.parseXINFOConsumers(consumersData.consumers), consumersData.formattedConsumers);
   });
 });

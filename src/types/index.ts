@@ -13,7 +13,7 @@ export interface Pending {
   id: string;
   consumerName?: string;
   idleTime: number,
-  unknow: number;
+  unknown: number;
 }
 
 export interface Consumer {

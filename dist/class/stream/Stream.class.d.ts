@@ -53,8 +53,8 @@ export interface PushOptions {
  * @description Shared method used to work on a Redis Stream
  */
 export declare class Stream extends EventEmitter {
+    streamName: string;
     lastId: string;
-    protected streamName: string;
     protected frequency: number;
     protected count?: number;
     constructor(options: StreamOptions);
@@ -93,6 +93,7 @@ export declare class Stream extends EventEmitter {
     handleEntries(entries: utils.XEntries, cursor?: string): Promise<Entry[]>;
     /**
      *
+     * @description Return a range of elements in a stream, with IDs matching the specified IDs interval.
      * @param {{ min: string; max: string; count?: number; }} [options={ min: "-", max: "+" }]
      * @returns {Promise<Entry[]>}
      * @example
@@ -119,20 +120,98 @@ export declare class Stream extends EventEmitter {
      * ```
      */
     getRange(options?: GetRangeOptions): Promise<Entry[]>;
+    /**
+     *
+     * @description Return a range of elements in a stream, with IDs matching the specified IDs interval,
+     * in reverse order (from greater to smaller IDs).
+     * @param {{ min: string; max: string; count?: number; }} [options={ min: "-", max: "+" }]
+     * @returns {Promise<Entry[]>}
+     * @example
+     * ```ts
+     * // Return all entries
+     * await getRevRange({ min: "-", max: "+" })
+     * ```
+     * @example
+     * ```ts
+     * // Return single Entry
+     * await getRevRange({ min: "1526985685298-0", max: "1526985685298-0" })
+     * ```
+     * @example
+     * ```ts
+     * // Return entries between those timestamp (inclusive)
+     * await getRevRange({ min: "1526985054069", max: "1526985055069"})
+     * ```
+     * @example
+     * ```ts
+     * // Return Entry with id 1526985676425-0 & 1526985685298-0
+     * await getRevRange({ min: "-", max: "+", count: 2})
+     * // Return two next Entry, "(" exluding the given id
+     * await getRevRange({ min: "(1526985685298-0", max: "+", count: 2 })
+     * ```
+     */
     getRevRange(options?: GetRangeOptions): Promise<Entry[]>;
     /**
      *
-     * @description Trim the stream, if the treshold is a number, then it is considered as a maxlength,
-     * if the treshold is a string, then it is considered as a reference to an ID/Timestamp.
-     * @param {(number | string)} treshold
+     * @description Trim the stream, if the threshold is a number, then it is considered as a max-length,
+     * if the threshold is a string, then it is considered as a reference to an ID/Timestamp.
+     * @param {(number | string)} threshold
      * @returns {Promise<number>}
      * @example
      * ```ts
-     * // Given a number, it acts like a maxlen
+     * // Given a number, it acts like a max-lenght
      * for (let index = 0; index < 1000; index++) await push({ data: { key: "foo", value: "bar" }})
      * const nbEvictedEntry = await trim(900)
      * console.log(nbEvictedEntry) // 100
      * ```
      */
-    trim(treshold: number | string): Promise<number>;
+    trim(threshold: number | string): Promise<number>;
+    /**
+     *
+     * @description Check whenever a given group exist for the initialized Stream.
+     * @param {string} name
+     * @returns {Promise<boolean>}
+     */
+    groupExist(name: string): Promise<boolean>;
+    /**
+     *
+     * @description Create a new group related to the initialized Stream.
+     * @param {string} name
+     */
+    createGroup(name: string): Promise<void>;
+    /**
+     *
+     * @description Delete a group related to the initialized Stream.
+     * @param {string} name
+     */
+    deleteGroup(name: string): Promise<void>;
+    /**
+     *
+     * @description Return Consumer data for a given group related to the initialized Stream.
+     * @param {string} groupName
+     * @param {string} consumerName
+     * @returns {Promise<utils.XINFOConsumerData | undefined>}
+     */
+    getConsumerData(groupName: string, consumerName: string): Promise<utils.XINFOConsumerData | undefined>;
+    /**
+     *
+     * @description Check whenever a consumer exist for a given group related to the initialized Stream.
+     * @param {string} groupName
+     * @param {string} consumerName
+     * @returns {Promise<boolean>}
+     */
+    consumerExist(groupName: string, consumerName: string): Promise<boolean>;
+    /**
+     *
+     * @description Create a new consumer for a given group related to the initialized Stream.
+     * @param {string} groupName
+     * @param {string} consumerName
+     */
+    createConsumer(groupName: string, consumerName: string): Promise<void>;
+    /**
+     *
+     * @description Delete a consumer for a given group related to the initialized Stream.
+     * @param {string} groupName
+     * @param {string} consumerName
+     */
+    deleteConsumer(groupName: string, consumerName: string): Promise<void>;
 }

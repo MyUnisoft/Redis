@@ -11,17 +11,17 @@ export interface XINFOGroupData {
 }
 
 export function parseXINFOGroups(groups: XINFOGroups): XINFOGroupData[] {
-  const formatedGroups: XINFOGroupData[] = [];
+  const formattedGroups: XINFOGroupData[] = [];
 
   for (const group of groups) {
-    const formatedGroup = {};
+    const formattedGroup = {};
 
     for (const [key, value] of parseData(group)) {
-      formatedGroup[key as string] = value;
+      formattedGroup[key as string] = value;
     }
 
-    formatedGroups.push(formatedGroup as XINFOGroupData);
+    formattedGroups.push(formattedGroup as XINFOGroupData);
   }
 
-  return formatedGroups;
+  return formattedGroups;
 }

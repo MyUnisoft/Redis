@@ -10,17 +10,17 @@ export interface XINFOConsumerData {
 }
 
 export function parseXINFOConsumers(consumers: XINFOConsumers): XINFOConsumerData[] {
-  const formatedConsumers: XINFOConsumerData[] = [];
+  const formattedConsumers: XINFOConsumerData[] = [];
 
   for (const consumer of consumers) {
-    const formatedConsumer = {};
+    const formattedConsumer = {};
 
     for (const [key, value] of parseData(consumer)) {
-      formatedConsumer[key as string] = value;
+      formattedConsumer[key as string] = value;
     }
 
-    formatedConsumers.push(formatedConsumer as XINFOConsumerData);
+    formattedConsumers.push(formattedConsumer as XINFOConsumerData);
   }
 
-  return formatedConsumers;
+  return formattedConsumers;
 }

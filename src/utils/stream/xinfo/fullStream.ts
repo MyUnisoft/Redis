@@ -58,49 +58,49 @@ export function* parseFullStreamData(arr: XRedisData): IterableIterator<
 }
 
 function parsePendings(pendings: XPending): Pending[] {
-  const formatedPendings: Pending[] = [];
+  const formattedPendings: Pending[] = [];
 
   for (const pending of pendings) {
     if (pending.length === 4) {
-      formatedPendings.push({
+      formattedPendings.push({
         id: pending[0] as string,
         consumerName: pending[1] as string,
         idleTime: pending[2] as number,
-        unknow: pending[3] as number
+        unknown: pending[3] as number
       });
     }
     else {
-      formatedPendings.push({
+      formattedPendings.push({
         id: pending[0] as string,
         idleTime: pending[1] as number,
-        unknow: pending[2] as number
+        unknown: pending[2] as number
       });
     }
   }
 
-  return formatedPendings;
+  return formattedPendings;
 }
 
 export function parseEntries(entries: XEntries): Entry[] {
-  const formatedEntries: Entry[] = [];
+  const formattedEntries: Entry[] = [];
 
   for (const entry of entries) {
-    const formatedEntry = {
+    const formattedEntry = {
       id: "",
       data: {}
     };
 
-    formatedEntry.id = entry[0] as string;
+    formattedEntry.id = entry[0] as string;
     entry.splice(0, 1);
 
     for (const [key, value] of parseEntryData(entry.flat())) {
-      formatedEntry.data[key as string] = value;
+      formattedEntry.data[key as string] = value;
     }
 
-    formatedEntries.push(formatedEntry);
+    formattedEntries.push(formattedEntry);
   }
 
-  return formatedEntries;
+  return formattedEntries;
 }
 
 function* parseEntryData(entry: XEntry) {
@@ -115,33 +115,33 @@ function* parseEntryData(entry: XEntry) {
 }
 
 export function parseConsumers(consumers: XConsumers): Consumer[] {
-  const formatedConsumers: Consumer[] = [];
+  const formattedConsumers: Consumer[] = [];
 
   for (const consumer of consumers) {
-    const formatedConsumer = {};
+    const formattedConsumer = {};
 
     for (const [key, value] of parseFullStreamData(consumer)) {
-      formatedConsumer[key as string] = value;
+      formattedConsumer[key as string] = value;
     }
 
-    formatedConsumers.push(formatedConsumer as Consumer);
+    formattedConsumers.push(formattedConsumer as Consumer);
   }
 
-  return formatedConsumers;
+  return formattedConsumers;
 }
 
 export function parseGroups(groups: XGroups): Group[] {
-  const formatedGroups: Group[] = [];
+  const formattedGroups: Group[] = [];
 
   for (const group of groups) {
-    const formatedGroup = {};
+    const formattedGroup = {};
 
     for (const [key, value] of parseFullStreamData(group)) {
-      formatedGroup[key as string] = value;
+      formattedGroup[key as string] = value;
     }
 
-    formatedGroups.push(formatedGroup as Group);
+    formattedGroups.push(formattedGroup as Group);
   }
 
-  return formatedGroups;
+  return formattedGroups;
 }

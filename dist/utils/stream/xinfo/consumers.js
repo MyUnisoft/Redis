@@ -4,15 +4,15 @@ exports.parseXINFOConsumers = void 0;
 // Import Internal Dependencies
 const __1 = require("..");
 function parseXINFOConsumers(consumers) {
-    const formatedConsumers = [];
+    const formattedConsumers = [];
     for (const consumer of consumers) {
-        const formatedConsumer = {};
+        const formattedConsumer = {};
         for (const [key, value] of (0, __1.parseData)(consumer)) {
-            formatedConsumer[key] = value;
+            formattedConsumer[key] = value;
         }
-        formatedConsumers.push(formatedConsumer);
+        formattedConsumers.push(formattedConsumer);
     }
-    return formatedConsumers;
+    return formattedConsumers;
 }
 exports.parseXINFOConsumers = parseXINFOConsumers;
 //# sourceMappingURL=consumers.js.map

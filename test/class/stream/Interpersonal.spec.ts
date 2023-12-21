@@ -215,12 +215,9 @@ describe("Consumer", () => {
     });
 
     test(`WHEN calling deleteConsumer consecutively for the same Consumer
-          THEN it should throw an Error`,
+          THEN it should do nothing`,
     async() => {
-      await assert.rejects(async() => firstConsumer.deleteConsumer(), {
-        name: "Error",
-        message: "Consumer dosn't exist."
-      });
+      await firstConsumer.deleteConsumer();
     });
   });
 });

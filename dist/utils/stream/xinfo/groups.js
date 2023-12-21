@@ -4,15 +4,15 @@ exports.parseXINFOGroups = void 0;
 // Import Internal Dependencies
 const __1 = require("..");
 function parseXINFOGroups(groups) {
-    const formatedGroups = [];
+    const formattedGroups = [];
     for (const group of groups) {
-        const formatedGroup = {};
+        const formattedGroup = {};
         for (const [key, value] of (0, __1.parseData)(group)) {
-            formatedGroup[key] = value;
+            formattedGroup[key] = value;
         }
-        formatedGroups.push(formatedGroup);
+        formattedGroups.push(formattedGroup);
     }
-    return formatedGroups;
+    return formattedGroups;
 }
 exports.parseXINFOGroups = parseXINFOGroups;
 //# sourceMappingURL=groups.js.map

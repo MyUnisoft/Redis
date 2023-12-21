@@ -28,9 +28,10 @@ export declare class Interpersonal extends Stream {
     claim(options: ClaimOptions): Promise<Entry[]>;
     claimEntry(entryId: string): Promise<void>;
     getConsumerData(): Promise<utils.XINFOConsumerData | undefined>;
-    private groupExist;
-    private createGroup;
-    private consumerExist;
-    private createConsumer;
+    groupExist(): Promise<boolean>;
+    createGroup(): Promise<void>;
+    deleteGroup(): Promise<void>;
+    consumerExist(): Promise<boolean>;
+    createConsumer(): Promise<void>;
     deleteConsumer(): Promise<void>;
 }
