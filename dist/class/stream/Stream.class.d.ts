@@ -88,7 +88,7 @@ export declare class Stream extends EventEmitter {
      * console.log(entryId) // 1526985685298-0
      * ```
      */
-    push(data: Data, options: PushOptions): Promise<string>;
+    push(data: Data, options?: PushOptions): Promise<string>;
     delEntry(entryId: string): Promise<void>;
     handleEntries(entries: utils.XEntries, cursor?: string): Promise<Entry[]>;
     /**
