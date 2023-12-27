@@ -5,8 +5,16 @@ exports.KVPeer = void 0;
 const node_events_1 = require("node:events");
 // Import Internal Dependencies
 const __1 = require("..");
+// Import Third-Party Dependencies
+const msgpackr_1 = require("msgpackr");
 // CONSTANTS
 const kDefaultKVType = "raw";
+const packr = new msgpackr_1.Packr({
+    maxSharedStructures: 8160,
+    structures: []
+});
+const pack = packr.pack.bind(packr);
+const unpack = packr.unpack.bind(packr);
 /**
 * @class KVPeer
 * @extends EventEmitter
@@ -48,13 +56,8 @@ class KVPeer extends node_events_1.EventEmitter {
             multiRedis.set(finalKey, payload);
         }
         else {
-            const propsMap = new Map(Object.entries(value).map(([key, value]) => {
-                if (typeof value === "object") {
-                    return [key, JSON.stringify(value)];
-                }
-                return [key, value];
-            }));
-            multiRedis.hmset(finalKey, propsMap);
+            const propsMap = pack(value);
+            multiRedis.set(finalKey, propsMap);
         }
         if (expiresIn) {
             multiRedis.pexpire(finalKey, expiresIn);
@@ -66,11 +69,11 @@ class KVPeer extends node_events_1.EventEmitter {
         const finalKey = typeof key === "object" ? Buffer.from(this.prefix + key) : this.prefix + key;
         const result = this.type === "raw" ?
             await this.redis.get(finalKey) :
-            deepParse(await this.redis.hgetall(finalKey));
+            await this.redis.getBuffer(finalKey);
         if (this.type === "object" && result && Object.keys(result).length === 0) {
             return null;
         }
-        return result === null ? null : this.mapValue(result);
+        return result === null ? null : this.mapValue(this.type === "raw" ? result : unpack(result));
     }
     async deleteValue(key) {
         const finalKey = typeof key === "object" ? Buffer.from(this.prefix + key) : this.prefix + key;
@@ -78,22 +81,4 @@ class KVPeer extends node_events_1.EventEmitter {
     }
 }
 exports.KVPeer = KVPeer;
-function deepParse(object) {
-    function* parse() {
-        for (const [key, value] of Object.entries(object)) {
-            if (typeof value !== "object" || !isNaN(Number(value))) {
-                try {
-                    yield [key, JSON.parse(value)];
-                }
-                catch {
-                    yield [key, value];
-                }
-            }
-            else {
-                yield [key, value];
-            }
-        }
-    }
-    return Object.fromEntries(parse());
-}
 //# sourceMappingURL=KVPeer.class.js.map

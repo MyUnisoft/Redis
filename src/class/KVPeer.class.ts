@@ -5,10 +5,17 @@ import { EventEmitter } from "node:events";
 import { getRedis } from "..";
 import { KeyType } from "../types/index";
 
+// Import Third-Party Dependencies
+import { Packr } from "msgpackr";
+
 // CONSTANTS
 const kDefaultKVType = "raw";
-
-type ValueType = string | Buffer | number | any[];
+const packr = new Packr({
+  maxSharedStructures: 8160,
+  structures: []
+});
+const pack = packr.pack.bind(packr);
+const unpack = packr.unpack.bind(packr);
 
 export type KVType = "raw" | "object";
 
@@ -89,15 +96,9 @@ export class KVPeer<T extends StringOrObject = StringOrObject, K extends Record<
       multiRedis.set(finalKey, payload);
     }
     else {
-      const propsMap = new Map(Object.entries(value as Record<string, any>).map(([key, value]) => {
-        if (typeof value === "object") {
-          return [key, JSON.stringify(value)];
-        }
+      const propsMap = pack(value);
 
-        return [key, value];
-      })) as Map<string, ValueType>;
-
-      multiRedis.hmset(finalKey, propsMap);
+      multiRedis.set(finalKey, propsMap);
     }
 
     if (expiresIn) {
@@ -114,13 +115,13 @@ export class KVPeer<T extends StringOrObject = StringOrObject, K extends Record<
 
     const result = this.type === "raw" ?
       await this.redis.get(finalKey) :
-      deepParse(await this.redis.hgetall(finalKey));
+      await this.redis.getBuffer(finalKey);
 
     if (this.type === "object" && result && Object.keys(result).length === 0) {
       return null;
     }
 
-    return result === null ? null : this.mapValue(result as T);
+    return result === null ? null : this.mapValue(this.type === "raw" ? result as T : unpack(result as Buffer));
   }
 
   async deleteValue(key: KeyType): Promise<number> {
@@ -128,25 +129,4 @@ export class KVPeer<T extends StringOrObject = StringOrObject, K extends Record<
 
     return this.redis.del(finalKey);
   }
-}
-
-
-function deepParse(object: Record<string, any>): Record<string, any> {
-  function* parse() {
-    for (const [key, value] of Object.entries(object)) {
-      if (typeof value !== "object" || !isNaN(Number(value))) {
-        try {
-          yield [key, JSON.parse(value)];
-        }
-        catch {
-          yield [key, value];
-        }
-      }
-      else {
-        yield [key, value];
-      }
-    }
-  }
-
-  return Object.fromEntries(parse());
 }

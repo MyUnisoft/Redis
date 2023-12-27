@@ -172,11 +172,30 @@ describe("KVPeer instance", () => {
       assert.equal(finalKey, key);
     });
 
+    test(`Given a buffer
+          WHEN calling setValue
+          THEN it store a buffer`,
+    async() => {
+      const customKey = "nested-buffer";
+      const value = {
+        foo: {
+          buffer: Buffer.from("string")
+        }
+      };
+
+      const finalKey = await kvPeer.setValue({ key: customKey, value });
+      assert.equal(finalKey, customKey);
+      const finalValue = await kvPeer.getValue(customKey);
+      assert.equal(finalValue!["foo"]["buffer"].toString(), value.foo.buffer.toString());
+    });
+
+
     test(`Given a valid key
           WHEN calling getValue
           THEN it should return the associated value`,
     async() => {
       const relatedValue = await kvPeer.getValue(key);
+      // console.log("FOOO", relatedValue, value);
       assert.deepStrictEqual(relatedValue, value);
     });
   });
