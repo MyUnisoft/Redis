@@ -140,7 +140,7 @@ describe("StoreContext", () => {
       ctx.getCookie = () => sessionId;
       ctx["session-id"] = sessionId;
 
-      assert.equal((await sessionContext.getSession(ctx))!.returnTo, false);
+      assert.equal((await sessionContext.getSession(ctx))!.returnTo, "false");
     });
   });
 
@@ -210,7 +210,7 @@ describe("StoreContext", () => {
 
       await sessionWithCtx.initSession(sessionId, payload);
 
-      assert.equal((await sessionWithCtx.getSession()).returnTo, false);
+      assert.equal((await sessionWithCtx.getSession()).returnTo, "false");
     });
   });
 
