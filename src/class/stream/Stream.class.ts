@@ -171,8 +171,8 @@ export class Stream extends EventEmitter {
    * console.log(entryId) // 1526985685298-0
    * ```
    */
-  public async push(data: Data, options: PushOptions): Promise<string> {
-    const { id, metadata } = options;
+  public async push(data: Data, options?: PushOptions): Promise<string> {
+    const { id, metadata } = options ?? {};
     const entries: RedisValue[] = [];
 
     if (metadata) {

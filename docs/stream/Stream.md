@@ -65,7 +65,7 @@ interface ConsumeOptions {
 ## 📚 Usage
 
 ```ts
-const redisStream = new Basement({
+const redisStream = new Stream({
   streamName: "my-stream-name",
   frequency: 10000, 
   lastId: "0-0",

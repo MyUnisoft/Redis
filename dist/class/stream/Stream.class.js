@@ -112,7 +112,7 @@ class Stream extends node_events_1.EventEmitter {
      * ```
      */
     async push(data, options) {
-        const { id, metadata } = options;
+        const { id, metadata } = options ?? {};
         const entries = [];
         if (metadata) {
             entries.push("metadata", metadata);

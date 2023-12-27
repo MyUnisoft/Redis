@@ -60,7 +60,7 @@ describe("RedisStream instance", () => {
         WHEN calling push
         THEN it should return a String`,
     async() => {
-      const entryId = await stream.push({ foo: "bar" }, {});
+      const entryId = await stream.push({ foo: "bar" });
 
       await stream.delEntry(entryId);
 
@@ -79,7 +79,7 @@ describe("RedisStream instance", () => {
       const entryId = await stream.push({
         key: "foo",
         value: Buffer.from(JSON.stringify(fakePayload))
-      }, {});
+      });
 
       await stream.delEntry(entryId);
 
@@ -90,7 +90,7 @@ describe("RedisStream instance", () => {
         WHEN calling push
         THEN it should return a String`,
     async() => {
-      const entryId = await stream.push({ key: "foo", value: 20 }, {});
+      const entryId = await stream.push({ key: "foo", value: 20 });
 
       await stream.delEntry(entryId);
 
