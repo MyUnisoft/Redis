@@ -18,7 +18,7 @@ export interface TimedKVPeerOptions<T extends object, K extends Record<string, a
   randomKeyCallback?: () => string;
 }
 
-interface TimedSetValueOptions<T> extends Omit<SetValueOptions<T>, "expiresIn" | "key"> { key?: string | Buffer }
+interface TimedSetValueOptions<T extends object> extends Omit<SetValueOptions<T>, "expiresIn" | "key"> { key?: string | Buffer }
 
 /**
 * @class TimedKVPeer
