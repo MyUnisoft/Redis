@@ -140,7 +140,7 @@ export class KVPeer<T extends StringOrObject = StringOrObject, K extends Record<
   private deepParse(object: Record<string, any>): T {
     function* parse() {
       for (const [key, value] of Object.entries(object)) {
-        if (typeof value !== "object" || !isNaN(Number(value))) {
+        if (typeof value !== "object" || !Number.isNaN(Number(value))) {
           try {
             yield [key, JSON.parse(value)];
           }
