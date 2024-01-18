@@ -83,7 +83,7 @@ class KVPeer extends node_events_1.EventEmitter {
     deepParse(object) {
         function* parse() {
             for (const [key, value] of Object.entries(object)) {
-                if (typeof value !== "object" || !isNaN(Number(value))) {
+                if (typeof value !== "object" || !Number.isNaN(Number(value))) {
                     try {
                         yield [key, JSON.parse(value)];
                     }

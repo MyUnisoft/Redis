@@ -1,5 +1,4 @@
 /// <reference types="node" />
-/// <reference types="node" />
 import { EventEmitter } from "node:events";
 import { KeyType } from "../types/index";
 type CustomPackFn<T extends StringOrObject = Record<string, any>> = (value: Partial<T>) => Buffer;
