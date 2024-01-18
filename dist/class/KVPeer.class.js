@@ -9,12 +9,11 @@ const __1 = require("..");
 const msgpackr_1 = require("msgpackr");
 // CONSTANTS
 const kDefaultKVType = "raw";
+const kWrongRedisCommandError = "WRONGTYPE Operation against a key holding the wrong kind of value";
 const packr = new msgpackr_1.Packr({
     maxSharedStructures: 8160,
     structures: []
 });
-const pack = packr.pack.bind(packr);
-const unpack = packr.unpack.bind(packr);
 /**
 * @class KVPeer
 * @extends EventEmitter
@@ -32,6 +31,8 @@ const unpack = packr.unpack.bind(packr);
 class KVPeer extends node_events_1.EventEmitter {
     constructor(options = {}) {
         super();
+        this.customPack = packr.pack.bind(packr);
+        this.customUnpack = packr.unpack.bind(packr);
         const { prefix, type, mapValue } = options;
         this.prefix = prefix ? `${prefix}-` : "";
         this.type = type ?? kDefaultKVType;
@@ -56,8 +57,8 @@ class KVPeer extends node_events_1.EventEmitter {
             multiRedis.set(finalKey, payload);
         }
         else {
-            const propsMap = pack(value);
-            multiRedis.set(finalKey, propsMap);
+            const buffer = this.customPack(value);
+            multiRedis.set(finalKey, buffer);
         }
         if (expiresIn) {
             multiRedis.pexpire(finalKey, expiresIn);
@@ -67,17 +68,51 @@ class KVPeer extends node_events_1.EventEmitter {
     }
     async getValue(key) {
         const finalKey = typeof key === "object" ? Buffer.from(this.prefix + key) : this.prefix + key;
-        const result = this.type === "raw" ?
+        const result = (this.type === "raw" ?
             await this.redis.get(finalKey) :
-            await this.redis.getBuffer(finalKey);
+            await this.handlePackedOrMappedObject(finalKey));
         if (this.type === "object" && result && Object.keys(result).length === 0) {
             return null;
         }
-        return result === null ? null : this.mapValue(this.type === "raw" ? result : unpack(result));
+        return result === null ? null : this.mapValue(result);
     }
     async deleteValue(key) {
         const finalKey = typeof key === "object" ? Buffer.from(this.prefix + key) : this.prefix + key;
         return this.redis.del(finalKey);
+    }
+    deepParse(object) {
+        function* parse() {
+            for (const [key, value] of Object.entries(object)) {
+                if (typeof value !== "object" || !isNaN(Number(value))) {
+                    try {
+                        yield [key, JSON.parse(value)];
+                    }
+                    catch {
+                        yield [key, value];
+                    }
+                }
+                else {
+                    yield [key, value];
+                }
+            }
+        }
+        return Object.fromEntries(parse());
+    }
+    async handlePackedOrMappedObject(key) {
+        let result = null;
+        try {
+            const packedValue = await this.redis.getBuffer(key);
+            if (packedValue !== null) {
+                result = this.customUnpack(packedValue);
+            }
+        }
+        catch (error) {
+            if (error.message !== kWrongRedisCommandError) {
+                throw error;
+            }
+            result = this.deepParse(await this.redis.hgetall(key));
+        }
+        return result;
     }
 }
 exports.KVPeer = KVPeer;
