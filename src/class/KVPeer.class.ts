@@ -10,12 +10,17 @@ import { Packr } from "msgpackr";
 
 // CONSTANTS
 const kDefaultKVType = "raw";
+const kWrongRedisCommandError = "WRONGTYPE Operation against a key holding the wrong kind of value";
 const packr = new Packr({
   maxSharedStructures: 8160,
   structures: []
 });
-const pack = packr.pack.bind(packr);
-const unpack = packr.unpack.bind(packr);
+
+type CustomPackFn<T extends StringOrObject = Record<string, any>> =
+  (value: Partial<T>) => Buffer;
+
+type CustomUnpackFn<T extends StringOrObject = Record<string, any>> =
+  (messagePack: Buffer | Uint8Array) => T;
 
 export type KVType = "raw" | "object";
 
@@ -35,7 +40,7 @@ export interface KVOptions<T extends StringOrObject = Record<string, any>, K ext
   mapValue?: KVMapper<T, K>;
 }
 
-export interface SetValueOptions<T> {
+export interface SetValueOptions<T extends StringOrObject = Record<string, any>> {
   key: KeyType;
   value: Partial<T>;
   expiresIn?: number;
@@ -60,6 +65,8 @@ export class KVPeer<T extends StringOrObject = StringOrObject, K extends Record<
   protected prefixedName: string;
   protected type: KVType;
   protected mapValue: KVMapper<T, K>;
+  protected customPack = packr.pack.bind(packr) as CustomPackFn<T>;
+  protected customUnpack = packr.unpack.bind(packr) as CustomUnpackFn<T>;
 
   constructor(options: KVOptions<T, K> = {}) {
     super();
@@ -96,9 +103,9 @@ export class KVPeer<T extends StringOrObject = StringOrObject, K extends Record<
       multiRedis.set(finalKey, payload);
     }
     else {
-      const propsMap = pack(value);
+      const buffer = this.customPack(value);
 
-      multiRedis.set(finalKey, propsMap);
+      multiRedis.set(finalKey, buffer);
     }
 
     if (expiresIn) {
@@ -113,20 +120,61 @@ export class KVPeer<T extends StringOrObject = StringOrObject, K extends Record<
   async getValue(key: KeyType): Promise<MappedValue<T, K> | null> {
     const finalKey = typeof key === "object" ? Buffer.from(this.prefix + key) : this.prefix + key;
 
-    const result = this.type === "raw" ?
+    const result = (this.type === "raw" ?
       await this.redis.get(finalKey) :
-      await this.redis.getBuffer(finalKey);
+      await this.handlePackedOrMappedObject(finalKey)) as T;
 
     if (this.type === "object" && result && Object.keys(result).length === 0) {
       return null;
     }
 
-    return result === null ? null : this.mapValue(this.type === "raw" ? result as T : unpack(result as Buffer));
+    return result === null ? null : this.mapValue(result);
   }
 
   async deleteValue(key: KeyType): Promise<number> {
     const finalKey = typeof key === "object" ? Buffer.from(this.prefix + key) : this.prefix + key;
 
     return this.redis.del(finalKey);
+  }
+
+  private deepParse(object: Record<string, any>): T {
+    function* parse() {
+      for (const [key, value] of Object.entries(object)) {
+        if (typeof value !== "object" || !Number.isNaN(Number(value))) {
+          try {
+            yield [key, JSON.parse(value)];
+          }
+          catch {
+            yield [key, value];
+          }
+        }
+        else {
+          yield [key, value];
+        }
+      }
+    }
+
+    return Object.fromEntries(parse());
+  }
+
+  private async handlePackedOrMappedObject(key: KeyType): Promise<T | null> {
+    let result: T | null = null;
+
+    try {
+      const packedValue = await this.redis.getBuffer(key);
+
+      if (packedValue !== null) {
+        result = this.customUnpack(packedValue);
+      }
+    }
+    catch (error) {
+      if (error.message !== kWrongRedisCommandError) {
+        throw error;
+      }
+
+      result = this.deepParse(await this.redis.hgetall(key));
+    }
+
+    return result;
   }
 }
