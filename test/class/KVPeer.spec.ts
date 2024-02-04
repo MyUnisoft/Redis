@@ -207,7 +207,7 @@ describe("KVPeer instance", () => {
       // CONSTANTS
       const [key, value] = ["foo", {
         bar: [
-          { foo: "bar" }, { bar: "foo" }
+          { foo: undefined }, { bar: null }, { foo: "string" }
         ]
       }];
       const mapValue = (value: object) => {
@@ -231,7 +231,14 @@ describe("KVPeer instance", () => {
             THEN it should return a mapped object according to the mapValue fn`,
       async() => {
         const finalValue = await kvPeer.getValue(key);
-        assert.deepStrictEqual(finalValue, { ...value, mapped: true });
+        assert.deepStrictEqual(finalValue, {
+          bar: [
+            {},
+            { bar: null },
+            { foo: "string" }
+          ],
+          mapped: true
+        });
       });
     });
 
