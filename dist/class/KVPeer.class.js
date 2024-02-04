@@ -5,15 +5,8 @@ exports.KVPeer = void 0;
 const node_events_1 = require("node:events");
 // Import Internal Dependencies
 const __1 = require("..");
-// Import Third-Party Dependencies
-const msgpackr_1 = require("msgpackr");
 // CONSTANTS
 const kDefaultKVType = "raw";
-const kWrongRedisCommandError = "WRONGTYPE Operation against a key holding the wrong kind of value";
-const packr = new msgpackr_1.Packr({
-    maxSharedStructures: 8160,
-    structures: []
-});
 /**
 * @class KVPeer
 * @extends EventEmitter
@@ -31,8 +24,6 @@ const packr = new msgpackr_1.Packr({
 class KVPeer extends node_events_1.EventEmitter {
     constructor(options = {}) {
         super();
-        this.customPack = packr.pack.bind(packr);
-        this.customUnpack = packr.unpack.bind(packr);
         const { prefix, type, mapValue } = options;
         this.prefix = prefix ? `${prefix}-` : "";
         this.type = type ?? kDefaultKVType;
@@ -52,13 +43,21 @@ class KVPeer extends node_events_1.EventEmitter {
         const { key, value, expiresIn } = options;
         const finalKey = typeof key === "object" ? Buffer.from(this.prefix + key) : this.prefix + key;
         const multiRedis = this.redis.multi();
+        function booleanStringToBuffer(value) {
+            return value === "false" || value === "true" ? Buffer.from(value) : value;
+        }
         if (this.type === "raw") {
-            const payload = typeof value === "string" ? value : JSON.stringify(value);
+            const payload = typeof value === "object" ? JSON.stringify(value) : booleanStringToBuffer(value);
             multiRedis.set(finalKey, payload);
         }
         else {
-            const buffer = this.customPack(value);
-            multiRedis.set(finalKey, buffer);
+            const propsMap = new Map(Object.entries(this.parseInput(value)).map(([key, value]) => {
+                if (typeof value === "object") {
+                    return [key, JSON.stringify(value)];
+                }
+                return [key, booleanStringToBuffer(value)];
+            }));
+            multiRedis.hmset(finalKey, propsMap);
         }
         if (expiresIn) {
             multiRedis.pexpire(finalKey, expiresIn);
@@ -68,9 +67,9 @@ class KVPeer extends node_events_1.EventEmitter {
     }
     async getValue(key) {
         const finalKey = typeof key === "object" ? Buffer.from(this.prefix + key) : this.prefix + key;
-        const result = (this.type === "raw" ?
+        const result = this.type === "raw" ?
             await this.redis.get(finalKey) :
-            await this.handlePackedOrMappedObject(finalKey));
+            this.parseOutput(await this.redis.hgetall(finalKey));
         if (this.type === "object" && result && Object.keys(result).length === 0) {
             return null;
         }
@@ -80,10 +79,51 @@ class KVPeer extends node_events_1.EventEmitter {
         const finalKey = typeof key === "object" ? Buffer.from(this.prefix + key) : this.prefix + key;
         return this.redis.del(finalKey);
     }
-    deepParse(object) {
-        function* parse() {
+    *deepParseInput(input) {
+        if (Array.isArray(input)) {
+            for (const value of input) {
+                if (typeof value === "object") {
+                    if (Buffer.isBuffer(value)) {
+                        yield value.toString();
+                    }
+                    else if (Array.isArray(value)) {
+                        yield [...this.deepParseInput(value)];
+                    }
+                    else {
+                        yield Object.fromEntries(this.deepParseInput(value));
+                    }
+                }
+                else {
+                    yield value;
+                }
+            }
+        }
+        else {
+            for (const [key, value] of Object.entries(input)) {
+                if (typeof value === "object") {
+                    if (Buffer.isBuffer(value)) {
+                        yield [key, value.toString()];
+                    }
+                    else if (Array.isArray(value)) {
+                        yield [key, [...this.deepParseInput(value)]];
+                    }
+                    else {
+                        yield [key, JSON.stringify(Object.fromEntries(this.deepParseInput(value)))];
+                    }
+                }
+                else {
+                    yield [key, value];
+                }
+            }
+        }
+    }
+    parseInput(object) {
+        return Object.fromEntries(this.deepParseInput(object));
+    }
+    parseOutput(object) {
+        function* deepParseOutput() {
             for (const [key, value] of Object.entries(object)) {
-                if (typeof value !== "object" || !Number.isNaN(Number(value))) {
+                if ((typeof value !== "object" || !Number.isNaN(Number(value))) && (value !== "false" && value !== "true")) {
                     try {
                         yield [key, JSON.parse(value)];
                     }
@@ -96,23 +136,7 @@ class KVPeer extends node_events_1.EventEmitter {
                 }
             }
         }
-        return Object.fromEntries(parse());
-    }
-    async handlePackedOrMappedObject(key) {
-        let result = null;
-        try {
-            const packedValue = await this.redis.getBuffer(key);
-            if (packedValue !== null) {
-                result = this.customUnpack(packedValue);
-            }
-        }
-        catch (error) {
-            if (error.message !== kWrongRedisCommandError) {
-                throw error;
-            }
-            result = this.deepParse(await this.redis.hgetall(key));
-        }
-        return result;
+        return Object.fromEntries(deepParseOutput());
     }
 }
 exports.KVPeer = KVPeer;
