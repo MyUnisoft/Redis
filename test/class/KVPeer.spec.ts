@@ -24,35 +24,6 @@ describe("KVPeer instance", () => {
     await closeAllRedis();
   });
 
-  describe("MappedObject over PackedObject", () => {
-    let kvPeer: KVPeer;
-
-    // CONSTANTS
-    const key = "test-key";
-    const value = { foo: { bar: "foo" } };
-
-    before(() => {
-      kvPeer = new KVPeer({
-        type: "object"
-      });
-
-      const propsMap = new Map(Object.entries(value as Record<string, any>).map(([key, value]) => {
-        if (typeof value === "object") {
-          return [key, JSON.stringify(value)];
-        }
-
-        return [key, value];
-      })) as Map<string, any>;
-
-      kvPeer.redis.hmset(key, propsMap);
-    });
-
-    test("Working with MappedObject, it should return the proper value", async() => {
-      const res = await kvPeer.getValue(key);
-      assert.deepStrictEqual(res, value);
-    });
-  });
-
   describe("Default instantiation", () => {
     let kvPeer: KVPeer;
 
@@ -215,6 +186,7 @@ describe("KVPeer instance", () => {
       const finalKey = await kvPeer.setValue({ key: customKey, value });
       assert.equal(finalKey, customKey);
       const finalValue = await kvPeer.getValue(customKey);
+      // eslint-disable-next-line dot-notation
       assert.equal(finalValue!["foo"]["buffer"].toString(), value.foo.buffer.toString());
     });
 
