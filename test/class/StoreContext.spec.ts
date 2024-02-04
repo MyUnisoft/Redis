@@ -53,7 +53,6 @@ describe("StoreContext", () => {
     };
   }
 
-  // initSession SUITE
   describe("Store Context initSession suite", () => {
     let sessionContext: StoreContext;
 
@@ -91,7 +90,6 @@ describe("StoreContext", () => {
     });
   });
 
-  // destroySession Suite
   describe("Store Context destroySession suite", () => {
     let sessionContext: StoreContext;
 
@@ -123,7 +121,6 @@ describe("StoreContext", () => {
     });
   });
 
-  // getSession SUITE
   describe("Store Context getSession suite", () => {
     let sessionContext: StoreContext;
 
@@ -144,8 +141,6 @@ describe("StoreContext", () => {
     });
   });
 
-
-  // isAuthenticated SUITE
   describe("Store Context isUserAuthenticated suite", () => {
     let sessionContext: StoreContext;
 
@@ -214,7 +209,6 @@ describe("StoreContext", () => {
     });
   });
 
-  // SessionStore SUITE via super()
   describe("Store Context SessionStore suite", () => {
     let sessionContext: StoreContext;
 

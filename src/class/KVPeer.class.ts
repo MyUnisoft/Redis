@@ -3,24 +3,10 @@ import { EventEmitter } from "node:events";
 
 // Import Internal Dependencies
 import { getRedis } from "..";
-import { KeyType } from "../types/index";
-
-// Import Third-Party Dependencies
-import { Packr } from "msgpackr";
+import { KeyType, Value } from "../types/index";
 
 // CONSTANTS
 const kDefaultKVType = "raw";
-const kWrongRedisCommandError = "WRONGTYPE Operation against a key holding the wrong kind of value";
-const packr = new Packr({
-  maxSharedStructures: 8160,
-  structures: []
-});
-
-type CustomPackFn<T extends StringOrObject = Record<string, any>> =
-  (value: Partial<T>) => Buffer;
-
-type CustomUnpackFn<T extends StringOrObject = Record<string, any>> =
-  (messagePack: Buffer | Uint8Array) => T;
 
 export type KVType = "raw" | "object";
 
@@ -65,8 +51,6 @@ export class KVPeer<T extends StringOrObject = StringOrObject, K extends Record<
   protected prefixedName: string;
   protected type: KVType;
   protected mapValue: KVMapper<T, K>;
-  protected customPack = packr.pack.bind(packr) as CustomPackFn<T>;
-  protected customUnpack = packr.unpack.bind(packr) as CustomUnpackFn<T>;
 
   constructor(options: KVOptions<T, K> = {}) {
     super();
@@ -98,14 +82,24 @@ export class KVPeer<T extends StringOrObject = StringOrObject, K extends Record<
     const finalKey = typeof key === "object" ? Buffer.from(this.prefix + key) : this.prefix + key;
     const multiRedis = this.redis.multi();
 
+    function booleanStringToBuffer(value: string): string | Buffer {
+      return value === "false" || value === "true" ? Buffer.from(value) : value;
+    }
+
     if (this.type === "raw") {
-      const payload = typeof value === "string" ? value : JSON.stringify(value);
+      const payload = typeof value === "object" ? JSON.stringify(value) : booleanStringToBuffer(value);
       multiRedis.set(finalKey, payload);
     }
     else {
-      const buffer = this.customPack(value);
+      const propsMap = new Map(Object.entries(this.parseInput(value)).map(([key, value]) => {
+        if (typeof value === "object") {
+          return [key, JSON.stringify(value)];
+        }
 
-      multiRedis.set(finalKey, buffer);
+        return [key, booleanStringToBuffer(value)];
+      })) as Map<string, Value>;
+
+      multiRedis.hmset(finalKey, propsMap);
     }
 
     if (expiresIn) {
@@ -119,16 +113,15 @@ export class KVPeer<T extends StringOrObject = StringOrObject, K extends Record<
 
   async getValue(key: KeyType): Promise<MappedValue<T, K> | null> {
     const finalKey = typeof key === "object" ? Buffer.from(this.prefix + key) : this.prefix + key;
-
-    const result = (this.type === "raw" ?
+    const result = this.type === "raw" ?
       await this.redis.get(finalKey) :
-      await this.handlePackedOrMappedObject(finalKey)) as T;
+      this.parseOutput(await this.redis.hgetall(finalKey));
 
     if (this.type === "object" && result && Object.keys(result).length === 0) {
       return null;
     }
 
-    return result === null ? null : this.mapValue(result);
+    return result === null ? null : this.mapValue(result as T);
   }
 
   async deleteValue(key: KeyType): Promise<number> {
@@ -137,10 +130,55 @@ export class KVPeer<T extends StringOrObject = StringOrObject, K extends Record<
     return this.redis.del(finalKey);
   }
 
-  private deepParse(object: Record<string, any>): T {
-    function* parse() {
+  private* deepParseInput(input: Record<string, any> | any[]) {
+    if (Array.isArray(input)) {
+      for (const value of input) {
+        if (typeof value === "object") {
+          if (Buffer.isBuffer(value)) {
+            yield value.toString();
+          }
+          else if (Array.isArray(value)) {
+            yield [...this.deepParseInput(value)];
+          }
+          else {
+            yield Object.fromEntries(this.deepParseInput(value));
+          }
+        }
+        else {
+          yield value;
+        }
+      }
+    }
+    else {
+      for (const [key, value] of Object.entries(input)) {
+        if (typeof value === "object") {
+          if (Buffer.isBuffer(value)) {
+            yield [key, value.toString()];
+          }
+          else if (Array.isArray(value)) {
+            yield [key, [...this.deepParseInput(value)]];
+          }
+          else {
+            yield [key, JSON.stringify(Object.fromEntries(this.deepParseInput(value)))];
+          }
+        }
+        else {
+          yield [key, value];
+        }
+      }
+    }
+  }
+
+  private parseInput(object: Record<string, any>) {
+    return Object.fromEntries(this.deepParseInput(object));
+  }
+
+  private parseOutput(object: Record<string, any>): T {
+    function* deepParseOutput() {
       for (const [key, value] of Object.entries(object)) {
-        if (typeof value !== "object" || !Number.isNaN(Number(value))) {
+        if (
+          (typeof value !== "object" || !Number.isNaN(Number(value))) && (value !== "false" && value !== "true")
+        ) {
           try {
             yield [key, JSON.parse(value)];
           }
@@ -154,27 +192,6 @@ export class KVPeer<T extends StringOrObject = StringOrObject, K extends Record<
       }
     }
 
-    return Object.fromEntries(parse());
-  }
-
-  private async handlePackedOrMappedObject(key: KeyType): Promise<T | null> {
-    let result: T | null = null;
-
-    try {
-      const packedValue = await this.redis.getBuffer(key);
-
-      if (packedValue !== null) {
-        result = this.customUnpack(packedValue);
-      }
-    }
-    catch (error) {
-      if (error.message !== kWrongRedisCommandError) {
-        throw error;
-      }
-
-      result = this.deepParse(await this.redis.hgetall(key));
-    }
-
-    return result;
+    return Object.fromEntries(deepParseOutput());
   }
 }
