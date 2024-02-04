@@ -82,7 +82,7 @@ class KVPeer extends node_events_1.EventEmitter {
     *deepParseInput(input) {
         if (Array.isArray(input)) {
             for (const value of input) {
-                if (typeof value === "object") {
+                if (typeof value === "object" && value !== null) {
                     if (Buffer.isBuffer(value)) {
                         yield value.toString();
                     }
@@ -100,7 +100,7 @@ class KVPeer extends node_events_1.EventEmitter {
         }
         else {
             for (const [key, value] of Object.entries(input)) {
-                if (typeof value === "object") {
+                if (typeof value === "object" && value !== null) {
                     if (Buffer.isBuffer(value)) {
                         yield [key, value.toString()];
                     }
