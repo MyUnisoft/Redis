@@ -133,7 +133,7 @@ export class KVPeer<T extends StringOrObject = StringOrObject, K extends Record<
   private* deepParseInput(input: Record<string, any> | any[]) {
     if (Array.isArray(input)) {
       for (const value of input) {
-        if (typeof value === "object") {
+        if (typeof value === "object" && value !== null) {
           if (Buffer.isBuffer(value)) {
             yield value.toString();
           }
@@ -151,7 +151,7 @@ export class KVPeer<T extends StringOrObject = StringOrObject, K extends Record<
     }
     else {
       for (const [key, value] of Object.entries(input)) {
-        if (typeof value === "object") {
+        if (typeof value === "object" && value !== null) {
           if (Buffer.isBuffer(value)) {
             yield [key, value.toString()];
           }
