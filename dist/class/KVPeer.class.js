@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.KVPeer = void 0;
+/* eslint-disable max-depth */
 // Import Node.js Dependencies
 const node_events_1 = require("node:events");
 // Import Internal Dependencies
@@ -121,22 +122,32 @@ class KVPeer extends node_events_1.EventEmitter {
         return Object.fromEntries(this.deepParseInput(object));
     }
     parseOutput(object) {
-        function* deepParseOutput() {
-            for (const [key, value] of Object.entries(object)) {
-                if ((typeof value !== "object" || !Number.isNaN(Number(value))) && (value !== "false" && value !== "true")) {
-                    try {
-                        yield [key, JSON.parse(value)];
-                    }
-                    catch {
-                        yield [key, value];
-                    }
-                }
-                else {
-                    yield [key, value];
-                }
+        if (typeof object === "string") {
+            if (!Number.isNaN(Number(object))) {
+                // if a numeric string is received, return itself
+                // otherwise JSON.parse will convert it to a number
+                return object;
+            }
+            else if (object === "false" || object === "true") {
+                return object;
+            }
+            try {
+                return this.parseOutput(JSON.parse(object));
+            }
+            catch {
+                return object;
             }
         }
-        return Object.fromEntries(deepParseOutput());
+        // if an array is received, map over the array and deepParse each value
+        if (Array.isArray(object)) {
+            return object.map((val) => this.parseOutput(val));
+        }
+        // if an object is received then deep parse each element in the object
+        // typeof null returns 'object' too, so we have to eliminate that
+        if (typeof object === "object" && object !== null) {
+            return Object.keys(object).reduce((obj, key) => Object.assign(obj, { [key]: this.parseOutput(object[key]) }), {});
+        }
+        return object;
     }
 }
 exports.KVPeer = KVPeer;
