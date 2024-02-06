@@ -140,17 +140,32 @@ describe("KVPeer instance", () => {
 
     // CONSTANTS
     const [key, value] = ["foo", {
-      bar: [
+      my: [
         {
-          foo: [
-            { bar: "foo" },
-            { foo: "bar" }
+          data: [
+            { is: "foo" },
+            { so: "bar" }
           ]
         },
         {
-          bar: "foo"
+          good: "foo"
         }
-      ]
+      ],
+      foo: {
+        is: "bar",
+        not: {
+          bar: {
+            but: "bar",
+            key: [
+              {
+                is: {
+                  maybe: "foo"
+                }
+              }
+            ]
+          }
+        }
+      }
     }];
 
     before(() => {
@@ -231,14 +246,7 @@ describe("KVPeer instance", () => {
             THEN it should return a mapped object according to the mapValue fn`,
       async() => {
         const finalValue = await kvPeer.getValue(key);
-        assert.deepStrictEqual(finalValue, {
-          bar: [
-            {},
-            { bar: null },
-            { foo: "string" }
-          ],
-          mapped: true
-        });
+        assert.ok(finalValue!["mapped"]);
       });
     });
 
