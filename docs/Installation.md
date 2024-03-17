@@ -16,7 +16,7 @@
 ### Launch the server
 
 First at all, you must open a terminal and launch the server
-```
+```bash
 $ redis-server
 $ redis-cli ping
 // output PONG 

@@ -77,7 +77,7 @@ const redisStream = new Stream({
 
 ### streamExist
 
-> Use this method to know if a Redis stream exist with the class prop streamName.
+Use this method to know if a Redis stream exist with the class prop streamName.
 
 ```ts
 const streamExist = await redisStream.streamExist();
@@ -86,7 +86,7 @@ console.log(streamExist) // false
 
 ### init
 
-> Use this method to create a new Redis stream with the class prop streamName.
+Use this method to create a new Redis stream with the class prop streamName.
 
 ```ts
 await redisStream.init();
@@ -97,19 +97,19 @@ console.log(streamExist) // true
 
 ### getData
 
-> Use this method to get all information on the connected stream.
+Use this method to get all information on the connected stream.
 
 ### getLength 
 
-> Use this method to get the number of entries on the connected stream.
+Use this method to get the number of entries on the connected stream.
 
 ### getGroupsData
 
-> Use this method to get information on groups attached to the connected stream.
+Use this method to get information on groups attached to the connected stream.
 
 ### push
 
-> Use this method to create an entry on the connected stream.
+Use this method to create an entry on the connected stream.
 
 ```ts
 const entryId = await redisStream.push({ foo: "bar" }); 
@@ -121,7 +121,7 @@ console.log(entryId) // "any-custom-id"
 
 ### delEntry
 
-> Use this method to delete an entry on the connected stream.
+Use this method to delete an entry on the connected stream.
 
 ```ts
 await redisStream.delEntry("any-id");
@@ -129,7 +129,7 @@ await redisStream.delEntry("any-id");
 
 ### getRange
 
-> Use this method to get entries for a given range.
+Use this method to get entries for a given range.
 
 ```ts
 const entries = await redisStream.getRange({ min: "-", max: "+" });
@@ -141,7 +141,7 @@ console.log(entries) // [0-0, 0-1, 0-2, 0-3, 0-4];
 
 ### getRevRange
 
-> Same as getRange but work in reverse order.
+Same as getRange but work in reverse order.
 
 ```ts
 const entries = await redisStream.getRevRange({ min: "-", max: "+" });
@@ -153,7 +153,7 @@ console.log(entries) // [0-9, 0-8, 0-7, 0-6, 0-5];
 
 ### trim
 
-> Use this method to trim the stream for a given max length or minimum id.
+Use this method to trim the stream for a given max length or minimum id.
 
 ```ts
 for (let index = 0; index < 100; index++) {

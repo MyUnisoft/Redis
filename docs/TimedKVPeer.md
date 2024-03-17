@@ -40,9 +40,9 @@ const store = new TimedKVPeer<MyCustomObject>({
 
 ## 📜 API
 
-### setValue(value: T, key?: KeyType): Promise<KeyType>
+### setValue(value: T, key?: KeyType): Promise< KeyType >
 
-> this method is used to set a key-value peer
+this method is used to set a key-value peer
 
 ```ts
 const value: MyCustomObject = {
@@ -56,9 +56,9 @@ const finalKey = await store.setValue(value);
 console.log(finalKey);
 ```
 
-### deleteValue(key: KeyType): Promise<number>;
+### deleteValue(key: KeyType): Promise< number >;
 
-> this method is used to delete a key-value peer
+this method is used to delete a key-value peer
 
 ```ts
 const res = await store.deleteValue(finalKey);

@@ -52,11 +52,11 @@ readable.on("readable", async() => {
 
 ### init
 
-> Use this method to create a new Consumer rattached to the specified groupName, imself rattached to the connected stream.
+Use this method to create a new Consumer rattached to the specified groupName, imself rattached to the connected stream.
 
 ### consume
 
-> Use this method to pull data out of the connected stream. In the context of a GroupConsumer, you must claim each entry to pull out after you dealed with.
+Use this method to pull data out of the connected stream. In the context of a GroupConsumer, you must claim each entry to pull out after you dealed with.
 
 ```ts
 const entries = await consumer.consume();
@@ -68,7 +68,7 @@ for (const entry of entries) {
 
 ### claim
 
-> Use this method to pull data out of another GroupConsumer connected to the stream for data that have been pulled out but not claimed. 
+Use this method to pull data out of another GroupConsumer connected to the stream for data that have been pulled out but not claimed. 
 
 ```ts
 const entries = await consumer.claim({ idleTime: 1000 * 60 });
@@ -80,13 +80,12 @@ for (const entry of entries) {
 
 ### claimEntry
 
-> Use this method to claim and delete an entry on the connected stream. Call this method only after you dealed with your entry data.
-
+Use this method to claim and delete an entry on the connected stream. Call this method only after you dealed with your entry data.
 
 ### getConsumerData
 
-> Use this method to get information on the current consumer.
+Use this method to get information on the current consumer.
 
 ### deleteConsumer
 
-> Use this method to delete the current consumer. 
+Use this method to delete the current consumer. 

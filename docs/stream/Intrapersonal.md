@@ -2,7 +2,6 @@
   Intrapersonal
 </h1>
 
-
 <p align="center">
   This class is an abstraction of a consumer acting out of a group, handling intrapersonal communication (with himself) through a redis stream.
 </p>
@@ -25,8 +24,8 @@ const readable = Readable.from(basicStream[Symbol.asyncIterator]());
 
 ### consume
 
-> Use this method to pull data out of the connected stream.
+Use this method to pull data out of the connected stream.
 
 ### cleanStream
 
-> Use this method to pull out all data of the connected stream.
+Use this method to pull out all data of the connected stream.

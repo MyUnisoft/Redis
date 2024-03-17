@@ -47,9 +47,9 @@ const restrictedKV = new RestrictedKV({
 
 ## 📜 API
 
-### getAttempt(key: KeyType): Promise<Attempt>
+### getAttempt(key: KeyType): Promise< Attempt >
 
-> Returns the number of attempts (failure, last tentative timestamp ...) for a given key.  
+Returns the number of attempts (failure, last tentative timestamp ...) for a given key.  
 
 ```ts
 const key: string = "foo"
@@ -62,10 +62,10 @@ strictEqual(lastTry, Date.now())
 strictEqual(locked, false);
 ```
 
-### fail(key: KeyType): Promise<Attempt>
+### fail(key: KeyType): Promise< Attempt >
 
-> Increment an attempt failure for a given key.  
-> When the number of failures exceeds the defined limitation, the key is locked.  
+Increment an attempt failure for a given key.  
+When the number of failures exceeds the defined limitation, the key is locked.  
 
 ```ts
 const key: string = "foo";
@@ -79,7 +79,7 @@ strictEqual(locked, false);
 ```
 ### success( )
 
-> Notify a successful attempt for a given key. This will remove all traces of previous failed attempt.
+Notify a successful attempt for a given key. This will remove all traces of previous failed attempt.
 
 ```ts
 const key: string = "foo";
@@ -96,9 +96,10 @@ strictEqual(locked, false);
 
 ### clearExpired()
 
-> Clear all keys where the last attempt exceeds an allocated lifetime.
-> Cast the event `expiredKeys` olding the removed keys.
+Clear all keys where the last attempt exceeds an allocated lifetime.
 
 ```ts
 await restrictedKV.clearExpired()
 ```
+
+Cast the event `expiredKeys` olding the removed keys.

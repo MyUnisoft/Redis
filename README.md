@@ -14,9 +14,10 @@
 
 ## 🚧 Requirements
 
-- [Node.js](https://nodejs.org/en/) version 14 or higher.
+- [Node.js](https://nodejs.org/en/) version 18 or higher.
 - Docker (for running tests).
 
+> [!TIP]
 > If you ever want to setup a local instance of Redis, please follow [this guide](./docs/Installation.md).
 
 ## 🚀 Getting Started
@@ -31,6 +32,7 @@ $ yarn add @myunisoft/redis
 
 ## 📚 Usage
 
+> [!IMPORTANT]
 > The package export methods to instantiate and close connection to Redis. By default, all features automatically re-use the current Redis connection.
 
 ```js
@@ -52,27 +54,29 @@ await closeAllRedis();
 
 ## 📜 API
 
+```ts
 export type Instance = "subscriber" | "publisher";
 
 type CustomRedisOptions: Partial<RedisOptions> & {
   port?: number;
   host?: string;
 };
+```
 
 ### getRedis(instance: Instance = "publisher"): Redis;
 
-> This function return either the publisher instance, either the subscriber instance.
+This function return either the publisher instance, either the subscriber instance.
 
 ---
 
 
-### initRedis(redisOptions: CustomRedisOptions = {}, instance: Instance = "publisher", external?: boolean): Promise<Redis>
+### initRedis(redisOptions: CustomRedisOptions = {}, instance: Instance = "publisher", external?: boolean): Promise< Redis >
 
-> This function is used to init redis connections. Passing instance with "subscriber" value, it init the local  subscriber Redis instance. Otherwise, it init the local publisher Redis instance.
+This function is used to init redis connections. Passing instance with "subscriber" value, it init the local  subscriber Redis instance. Otherwise, it init the local publisher Redis instance.
 
 ---
 
-### getConnectionPerf(instance: Instance = "publisher", redisInstance?: Redis): Promise<GetConnectionPerfResponse>
+### getConnectionPerf(instance: Instance = "publisher", redisInstance?: Redis): Promise< GetConnectionPerfResponse >
 
 ```ts
 export interface GetConnectionPerfResponse {
@@ -80,7 +84,8 @@ export interface GetConnectionPerfResponse {
   perf?: number;
 }
 ```
-> This function is used to check Redis connection state.
+
+This function is used to check Redis connection state.
 
 ```ts
 const { isAlive } = await getConnectionPerf(); // true
@@ -88,21 +93,21 @@ const { isAlive } = await getConnectionPerf(); // true
 
 ---
 
-### closeRedis(instance: Instance = "publisher", redisInstance?: Redis, forceExit: boolean = false): Promise<void>
+### closeRedis(instance: Instance = "publisher", redisInstance?: Redis, forceExit: boolean = false): Promise< void >
 
-> This function is used to close a single local instance.
-
----
-
-### closeAllRedis(redisInstance?: [Redis, Redis], forceExit: boolean = false): Promise<void>
-
-> This function is used to close every local instances.
+This function is used to close a single local instance.
 
 ---
 
-### clearAllKeys(instance: Instance = "publisher", redis?: Redis): Promise<void>
+### closeAllRedis(redisInstance?: [Redis, Redis], forceExit: boolean = false): Promise< void >
 
-> This function is used to clear all keys from redis db (it doesn't clean up streams or pubsub !).
+This function is used to close every local instances.
+
+---
+
+### clearAllKeys(instance: Instance = "publisher", redis?: Redis): Promise< void >
+
+This function is used to clear all keys from redis db (it doesn't clean up streams or pubsub !).
 
 ```ts
 await clearAllKeys();
