@@ -58,7 +58,7 @@ export declare class Stream extends EventEmitter {
     protected frequency: number;
     protected count?: number;
     constructor(options: StreamOptions);
-    get redis(): import("ioredis/built/Redis").default;
+    get redis(): import("ioredis").default;
     streamExist(): Promise<boolean>;
     /**
      *
