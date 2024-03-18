@@ -2,7 +2,6 @@
   Channel
 </h1>
 
-
 <p align="center">
   This class is used to publish on a prefixed channel using the Redis PubSub.
 </p>
@@ -43,9 +42,9 @@ const channel = new Channel({ name });
 
 ## 📜 API
 
-### publish(options: PublishOptions<T, K>): Promise<void>
+### publish(options: PublishOptions< T, K >): Promise< void >
 
-> Publish an event on the pubsub channel
+Publish an event on the pubsub channel
 
 ```ts
 await channel.publish({ data: { foo: "bar" }});

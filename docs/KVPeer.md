@@ -68,9 +68,9 @@ const customKvWrapper = new RedisKV<MyCustomObject, Metadata>(options);
 
 ## 📜 API
 
-### setValue(options: SetValueOptions<T>): Promise<KeyType>
+### setValue(options: SetValueOptions< T >): Promise< KeyType >
 
-> this method is used to set a key-value pair in Redis
+this method is used to set a key-value pair in Redis
 
 ```ts
 const key = "foo";
@@ -81,9 +81,9 @@ const value: MyCustomObject = {
 await customKvWrapper.setValue(key, value); // "local-foo"
 ```
 
-### getValue(key: KeyType): Promise<MappedValue<T, K> | null>
+### getValue(key: KeyType): Promise< MappedValue< T, K > | null >
 
-> this method is used to get a value from Redis
+this method is used to get a value from Redis
 
 ```ts
 const returnValue = await customKvWrapper.getValue(key);
@@ -99,9 +99,9 @@ console.Log(returnValue);
 */
 ```
 
-### deleteValue(key: KeyType): Promise<number>
+### deleteValue(key: KeyType): Promise< number >
 
-> this method is used to delete a key-value pair
+this method is used to delete a key-value pair
 
 ```ts
 const result = await customKvWrapper.deleteValue("key");

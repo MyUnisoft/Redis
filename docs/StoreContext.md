@@ -46,7 +46,7 @@ const store: StoreContext = new StoreContext(options);
 
 ### initSession(id: string, ctx: FrameworkContext, payload: Store & T): Promise< string >
 
-> this method is used to initialize a session.
+this method is used to initialize a session.
 
 ```ts
 const id = "foo";
@@ -59,7 +59,7 @@ await store.initSession(id, ctx, payload);
 
 ### destroySession(ctx: FrameworkContext): Promise< void >
 
-> this method is used to destroy the session.
+this method is used to destroy the session.
 
 ```ts
 await store.destroySession(ctx);
@@ -67,7 +67,7 @@ await store.destroySession(ctx);
 
 ### getSession(ctx: FrameworkContext): Promise< T | null >
 
-> this method is used to get a session and attached data.
+this method is used to get a session and attached data.
 
 ```ts
 await store.getSession(ctx);
@@ -75,7 +75,7 @@ await store.getSession(ctx);
 
 ### updateSession(ctx: FrameworkContext, payload: Partial< T >): Promise< void >
 
-> this method is used to update the properties of a session.
+this method is used to update the properties of a session.
 
 ```ts
 const payload = {
@@ -87,7 +87,7 @@ await store.updateSession(ctx, payload);
 
 ### isUserAuthenticated(): Promise< void >
 
-> this method return a boolean to know if an user is authenticated.
+this method return a boolean to know if an user is authenticated.
 
 ```ts
 await store.isUserAuthenticated(ctx);
