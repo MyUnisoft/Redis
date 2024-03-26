@@ -18,7 +18,9 @@
 - Docker (for running tests).
 
 > [!TIP]
-> If you ever want to setup a local instance of Redis, please follow [this guide](./docs/Installation.md).
+> If you ever want to setup a local instance of Redis,  
+> you can follow the [Redis documentation](https://redis.io/docs/getting-started/) for Mac,  
+> or, you can use [Memurai](https://www.memurai.com/) for Windows.
 
 ## 🚀 Getting Started
 
