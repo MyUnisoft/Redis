@@ -37,10 +37,10 @@
   "devDependencies": {
     "@nodesecure/eslint-config": "^1.9.0",
     "@types/lodash.isempty": "^4.4.9",
-    "@types/node": "^20.10.3",
+    "@types/node": "^22.0.0",
     "c8": "^10.1.2",
     "dotenv": "^16.3.1",
-    "glob": "^10.3.10",
+    "glob": "^11.0.0",
     "mockdate": "^3.0.5",
     "testcontainers": "^10.3.1",
     "tsx": "^4.7.0",
