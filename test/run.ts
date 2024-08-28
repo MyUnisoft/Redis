@@ -5,10 +5,7 @@ import process from "node:process";
 
 // Import Third-Party Dependencies
 import { globSync } from "glob";
-import { config } from "dotenv";
 import { GenericContainer } from "testcontainers";
-
-config();
 
 // VARS & Config
 const kRedisPort = 6379;
