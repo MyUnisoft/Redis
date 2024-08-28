@@ -1,4 +1,3 @@
-/// <reference types="node" />
 export type KeyType = string | Buffer;
 export type Value = string | Buffer | number;
 export type Data = Record<string, Value>;
@@ -25,3 +24,4 @@ export interface Group {
     pending: Pending[];
     consumers: Consumer[];
 }
+//# sourceMappingURL=index.d.ts.map

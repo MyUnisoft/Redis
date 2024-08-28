@@ -66,7 +66,7 @@ describe("basicStream instance", () => {
   test("reading data", async() => {
     await timers.setTimeout(kFrequency + 100);
 
-    assert.equal(mockedHandleEntries.mock.calls.length, 1)
+    assert.equal(mockedHandleEntries.mock.calls.length, 1);
     assert.equal(assertEntryIdCalls, 3);
 
     for (let index = 0; index < kCount; index++) {
@@ -75,12 +75,12 @@ describe("basicStream instance", () => {
 
     await timers.setTimeout(kFrequency);
 
-    assert.equal(mockedHandleEntries.mock.calls.length, 2)
+    assert.equal(mockedHandleEntries.mock.calls.length, 2);
     assert.equal(assertEntryIdCalls, 6);
 
     await timers.setTimeout(kFrequency);
 
-    assert.equal(mockedHandleEntries.mock.calls.length, 2)
+    assert.equal(mockedHandleEntries.mock.calls.length, 2);
     assert.equal(assertEntryIdCalls, 6);
 
     for (let index = 0; index < kCount; index++) {
@@ -89,7 +89,7 @@ describe("basicStream instance", () => {
 
     await timers.setTimeout(kFrequency);
 
-    assert.equal(mockedHandleEntries.mock.calls.length, 3)
+    assert.equal(mockedHandleEntries.mock.calls.length, 3);
     assert.equal(assertEntryIdCalls, 9);
   });
 
@@ -133,7 +133,8 @@ describe("basicStream instance", () => {
         for (const entry of resolvedEntries) {
           kEntries.splice(kEntries.indexOf(entry.id), 1);
         }
-      } else {
+      }
+      else {
         throw new Error("Unresolved entries");
       }
     });
@@ -169,7 +170,7 @@ describe("basicStream instance", () => {
       const cleanedEntries = await intrapersonalStream.cleanStream();
       if (cleanedEntries) {
         assert.equal(cleanedEntries.length, kEntries.length);
-      } 
+      }
       else {
         throw new Error("No cleaned entries");
       }

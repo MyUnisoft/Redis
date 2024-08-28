@@ -6,7 +6,7 @@ const node_crypto_1 = require("node:crypto");
 // Import Internal Dependencies
 const KVPeer_class_1 = require("./KVPeer.class");
 // CONSTANTS
-const kDefaultTtl = 1000 * 60 * 10;
+const kDefaultTtl = 1_000 * 60 * 10;
 // eslint-disable-next-line func-style
 const kDefaultRandomKeyGenerator = () => (0, node_crypto_1.randomBytes)(6).toString("hex");
 /**
@@ -14,6 +14,8 @@ const kDefaultRandomKeyGenerator = () => (0, node_crypto_1.randomBytes)(6).toStr
 * @description TimedKVPeer represents an abstraction design to store time-lifed key-value peer. You probably don't need to use this class directly.
 */
 class TimedKVPeer extends KVPeer_class_1.KVPeer {
+    randomKeyGenerator;
+    ttl;
     constructor(options = {}) {
         super({ ...options, type: "object" });
         this.ttl = options.ttl ?? kDefaultTtl;

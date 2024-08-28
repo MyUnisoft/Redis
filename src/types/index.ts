@@ -12,7 +12,7 @@ export interface Entry {
 export interface Pending {
   id: string;
   consumerName?: string;
-  idleTime: number,
+  idleTime: number;
   unknown: number;
 }
 

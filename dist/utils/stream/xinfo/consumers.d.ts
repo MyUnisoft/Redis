@@ -5,3 +5,4 @@ export interface XINFOConsumerData {
     idle: number;
 }
 export declare function parseXINFOConsumers(consumers: XINFOConsumers): XINFOConsumerData[];
+//# sourceMappingURL=consumers.d.ts.map

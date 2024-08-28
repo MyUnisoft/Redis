@@ -18,7 +18,9 @@ export interface TimedKVPeerOptions<T extends object, K extends Record<string, a
   randomKeyCallback?: () => string;
 }
 
-interface TimedSetValueOptions<T extends object> extends Omit<SetValueOptions<T>, "expiresIn" | "key"> { key?: string | Buffer }
+interface TimedSetValueOptions<T extends object> extends Omit<SetValueOptions<T>, "expiresIn" | "key"> {
+  key?: string | Buffer;
+}
 
 /**
 * @class TimedKVPeer
@@ -35,7 +37,7 @@ export class TimedKVPeer<T extends object, K extends Record<string, any> | null 
     this.randomKeyGenerator = options.randomKeyCallback ?? kDefaultRandomKeyGenerator;
   }
 
-  async setValue(options: TimedSetValueOptions<T>): Promise<KeyType> {
+  override async setValue(options: TimedSetValueOptions<T>): Promise<KeyType> {
     const { key, value } = options;
 
     const finalKey = key ?? this.randomKeyGenerator();

@@ -72,3 +72,4 @@ export declare class RestrictedKV extends KVPeer<Partial<Attempt>> {
     clearExpired(): Promise<void>;
     private isKeyExpired;
 }
+//# sourceMappingURL=RestrictedKV.class.d.ts.map

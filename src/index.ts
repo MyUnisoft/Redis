@@ -1,3 +1,4 @@
+/* eslint-disable default-param-last */
 /* eslint-disable max-params */
 // Import Node.js Dependencies
 import { once } from "node:events";
@@ -27,7 +28,11 @@ export function getRedis(instance: Instance = "publisher") {
  * @param {Redis} instance
  * @param {number} [attempt=4]
  */
-async function assertConnection(instance: Instance, attempt = kDefaultAttempt, redis?: Redis) {
+async function assertConnection(
+  instance: Instance,
+  attempt = kDefaultAttempt,
+  redis?: Redis
+) {
   if (attempt <= 0) {
     throw new Error("Failed at initializing a Redis connection.");
   }
@@ -96,7 +101,6 @@ export async function getConnectionPerf(
 
   return { isAlive: true, perf: performance.now() - start };
 }
-
 
 interface AssertDisconnectionOptions {
   redis: Redis;

@@ -30,7 +30,7 @@ export class Intrapersonal extends Stream {
     const { lastId, count, block } = options;
     const redisOptions = createRedisOptions({ count, streams: this.streamName }, lastId);
 
-    let streamResults;
+    let streamResults: any;
 
     if (count) {
       const optionsWithCount = [...redisOptions] as [
@@ -51,18 +51,6 @@ export class Intrapersonal extends Stream {
       ];
 
       streamResults = await this.redis.xread(...optionsWithBlock);
-    }
-    else if (block && count) {
-      const optionsWithBlockAndCount = [...redisOptions] as [
-        countToken: "COUNT",
-        count: number | string,
-        blockToken: "BLOCK",
-        block: number | string,
-        streamsToken: "STREAMS",
-        ...args: RedisValue[]
-      ];
-
-      streamResults = await this.redis.xread(...optionsWithBlockAndCount);
     }
     else {
       const optionsWithoutCount = [...redisOptions] as [

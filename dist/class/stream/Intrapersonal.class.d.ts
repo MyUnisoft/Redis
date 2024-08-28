@@ -9,3 +9,4 @@ export declare class Intrapersonal extends Stream {
     consume(options?: ConsumeOptions): Promise<Entry[]>;
     cleanStream(): Promise<Entry[] | null>;
 }
+//# sourceMappingURL=Intrapersonal.class.d.ts.map

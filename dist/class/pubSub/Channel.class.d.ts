@@ -12,3 +12,4 @@ export declare class Channel<T extends Record<string, any> = Record<string, any>
     get redis(): import("ioredis/built/Redis").default;
     publish(options: PublishOptions<T, K>): Promise<void>;
 }
+//# sourceMappingURL=Channel.class.d.ts.map

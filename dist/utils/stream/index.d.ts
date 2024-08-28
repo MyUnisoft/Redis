@@ -22,3 +22,4 @@ export type FormattedRedisOptions = [
     (string | number)
 ];
 export declare function createRedisOptions(...options: (((string | number) | undefined) | RedisOptions)[]): IterableIterator<(string | number) | (string | number)[]>;
+//# sourceMappingURL=index.d.ts.map

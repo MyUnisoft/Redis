@@ -30,7 +30,7 @@ export type XRedisData<T = (
     )[][] |
     XGroups |
     (string | Value[][])[]
-  )[][]> = T extends (infer R)[] ? R : T;
+)[][]> = T extends (infer R)[] ? R : T;
 
 export function* parseData(arr: XRedisData):
 IterableIterator<

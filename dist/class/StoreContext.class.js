@@ -27,6 +27,8 @@ const kStoreContextSessionName = "session-id";
 * ```
 */
 class StoreContext extends TimedKVPeer_class_1.TimedKVPeer {
+    authenticationField;
+    cookiesOptions;
     constructor(options) {
         super(options);
         this.authenticationField = options?.authentificationField ?? null;

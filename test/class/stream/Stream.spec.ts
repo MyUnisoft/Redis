@@ -32,7 +32,6 @@ describe("RedisStream instance", () => {
 
     assert.ok(await stream.streamExist());
 
-
     for (let index = 0; index < kLength; index++) {
       const entryId = await stream.push({ foo: "bar" }, { metadata: "fake-metadata" });
 
@@ -155,9 +154,7 @@ describe("RedisStream instance", () => {
         count: 5
       };
 
-      let foundEntries: Entry[] = [];
-
-      foundEntries = await stream.getRange(options);
+      let foundEntries = await stream.getRange(options);
       assert.ok(foundEntries.length <= options.count);
 
       options.count = 12;
@@ -241,9 +238,7 @@ describe("RedisStream instance", () => {
         count: 5
       };
 
-      let foundEntries: Entry[] = [];
-
-      foundEntries = await stream.getRevRange(options);
+      let foundEntries = await stream.getRevRange(options);
       assert.ok(foundEntries.length <= options.count);
 
       options.count = 12;

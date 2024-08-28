@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.parseXINFOConsumers = void 0;
+exports.parseXINFOConsumers = parseXINFOConsumers;
 // Import Internal Dependencies
 const __1 = require("..");
 function parseXINFOConsumers(consumers) {
@@ -14,5 +14,4 @@ function parseXINFOConsumers(consumers) {
     }
     return formattedConsumers;
 }
-exports.parseXINFOConsumers = parseXINFOConsumers;
 //# sourceMappingURL=consumers.js.map

@@ -1,4 +1,3 @@
-/// <reference types="node" />
 import { EventEmitter } from "node:events";
 import { KeyType } from "../types/index";
 export type KVType = "raw" | "object";
@@ -48,3 +47,4 @@ export declare class KVPeer<T extends StringOrObject = StringOrObject, K extends
     private parseOutput;
 }
 export {};
+//# sourceMappingURL=KVPeer.class.d.ts.map

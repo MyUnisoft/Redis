@@ -93,3 +93,4 @@ export declare class StoreContext<T extends Store = Store> extends TimedKVPeer<T
     */
     private getSessionId;
 }
+//# sourceMappingURL=StoreContext.class.d.ts.map
