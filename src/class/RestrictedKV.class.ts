@@ -1,6 +1,3 @@
-// Import Third-party requirement
-import dayjs from "dayjs";
-
 // Import Internal dependencies
 import { KVPeer, KVOptions } from "./KVPeer.class";
 import { getConnectionPerf } from "..";
@@ -113,7 +110,7 @@ export class RestrictedKV extends KVPeer<Partial<Attempt>> {
     const attempt: Attempt = { failure: 1, lastTry: Date.now(), locked: false };
 
     if (stored !== null) {
-      const diff = dayjs().diff(stored.lastTry, "second");
+      const diff = (Date.now() - stored.lastTry) / 1000;
       if (diff < this.banTimeInSecond) {
         attempt.failure = stored.failure + 1;
       }
@@ -192,6 +189,6 @@ export class RestrictedKV extends KVPeer<Partial<Attempt>> {
     const attempt = await this.getValue(finalKey) as Attempt;
     const lastTry = "lastTry" in attempt ? Number(attempt.lastTry) : null;
 
-    return lastTry === null ? false : dayjs().diff(lastTry, "second") >= this.banTimeInSecond;
+    return lastTry === null ? false : (Date.now() - lastTry) / 1000 >= this.banTimeInSecond;
   }
 }

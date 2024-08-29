@@ -1,11 +1,6 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RestrictedKV = void 0;
-// Import Third-party requirement
-const dayjs_1 = __importDefault(require("dayjs"));
 // Import Internal dependencies
 const KVPeer_class_1 = require("./KVPeer.class");
 const __1 = require("..");
@@ -87,7 +82,7 @@ class RestrictedKV extends KVPeer_class_1.KVPeer {
         const stored = await this.getAttempt(key);
         const attempt = { failure: 1, lastTry: Date.now(), locked: false };
         if (stored !== null) {
-            const diff = (0, dayjs_1.default)().diff(stored.lastTry, "second");
+            const diff = (Date.now() - stored.lastTry) / 1000;
             if (diff < this.banTimeInSecond) {
                 attempt.failure = stored.failure + 1;
             }
@@ -152,7 +147,7 @@ class RestrictedKV extends KVPeer_class_1.KVPeer {
         }
         const attempt = await this.getValue(finalKey);
         const lastTry = "lastTry" in attempt ? Number(attempt.lastTry) : null;
-        return lastTry === null ? false : (0, dayjs_1.default)().diff(lastTry, "second") >= this.banTimeInSecond;
+        return lastTry === null ? false : (Date.now() - lastTry) / 1000 >= this.banTimeInSecond;
     }
 }
 exports.RestrictedKV = RestrictedKV;
