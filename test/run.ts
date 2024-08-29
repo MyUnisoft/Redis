@@ -5,25 +5,21 @@ import process from "node:process";
 
 // Import Third-Party Dependencies
 import { globSync } from "glob";
-import { config } from "dotenv";
 import { GenericContainer } from "testcontainers";
-
-config();
 
 // VARS & Config
 const kRedisPort = 6379;
-let redis;
 
 async function startContainers() {
   console.info("\nStarting containers ...");
 
   try {
     console.info("Starting redis ...");
-    redis = await new GenericContainer("redis")
+    const redis = await new GenericContainer("redis")
       .withExposedPorts(kRedisPort)
       .start();
 
-    process.env.REDIS_PORT = redis.getMappedPort(kRedisPort);
+    process.env.REDIS_PORT = String(redis.getMappedPort(kRedisPort));
     process.env.REDIS_HOST = redis.getHost();
   }
   catch (error) {
@@ -44,6 +40,6 @@ async function runTests() {
     process.exitCode = 1;
   });
 
-  testStream.compose<spec>(new spec()).pipe(process.stdout);
+  testStream.compose(new spec()).pipe(process.stdout);
 }
 runTests();

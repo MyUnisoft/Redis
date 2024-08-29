@@ -38,6 +38,9 @@ const utils = __importStar(require("../../utils/stream/index"));
  * to handle interpersonal communication through a redis stream
  */
 class Interpersonal extends Stream_class_1.Stream {
+    consumerName;
+    groupName;
+    claimOptions;
     constructor(options) {
         const { groupName, consumerName, claimOptions, ...StreamOptions } = options;
         super(StreamOptions);

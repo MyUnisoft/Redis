@@ -1,27 +1,8 @@
 {
+  "extends": "@openally/config.typescript/cjs",
   "compilerOptions": {
-    "declaration": true,
-    "strictNullChecks": true,
-    "target": "es2020",
     "outDir": "dist",
-    "module": "CommonJS",
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "esModuleInterop": true,
-    "sourceMap": true,
-    "rootDir": "src",
-    "typeRoots": [
-      "node_modules/@types",
-      "./types"
-    ],
-    "types": [
-      "node",
-    ],
-    "paths": {
-      "~/*": [
-        "./src/*"
-      ]
-    }
+    "rootDir": "src"
   },
   "include": [
     "src"

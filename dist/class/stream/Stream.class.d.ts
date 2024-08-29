@@ -1,4 +1,3 @@
-/// <reference types="node" />
 import { EventEmitter } from "node:events";
 import * as utils from "../../utils/stream/index";
 import { Data, Entry, Group } from "../../types/index";
@@ -215,3 +214,4 @@ export declare class Stream extends EventEmitter {
      */
     deleteConsumer(groupName: string, consumerName: string): Promise<void>;
 }
+//# sourceMappingURL=Stream.class.d.ts.map

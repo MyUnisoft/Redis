@@ -32,10 +32,6 @@ class Intrapersonal extends Stream_class_1.Stream {
             const optionsWithBlock = [...redisOptions];
             streamResults = await this.redis.xread(...optionsWithBlock);
         }
-        else if (block && count) {
-            const optionsWithBlockAndCount = [...redisOptions];
-            streamResults = await this.redis.xread(...optionsWithBlockAndCount);
-        }
         else {
             const optionsWithoutCount = [...redisOptions];
             streamResults = await this.redis.xread(...optionsWithoutCount);

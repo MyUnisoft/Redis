@@ -12,7 +12,6 @@ import {
 } from "../../src";
 import { KVPeer } from "../../src/index";
 
-
 // KVPeer Instance
 describe("KVPeer instance", () => {
   before(async() => {
@@ -205,7 +204,6 @@ describe("KVPeer instance", () => {
       assert.equal(finalValue!["foo"]["buffer"].toString(), value.foo.buffer.toString());
     });
 
-
     test(`Given a valid key
           WHEN calling getValue
           THEN it should return the associated value`,
@@ -217,7 +215,7 @@ describe("KVPeer instance", () => {
 
   describe("Working with mapValue", () => {
     describe("mapped object without predefined type", () => {
-      let kvPeer: KVPeer<object>;
+      let kvPeer: KVPeer<any>;
 
       // CONSTANTS
       const [key, value] = ["foo", {
@@ -246,7 +244,7 @@ describe("KVPeer instance", () => {
             THEN it should return a mapped object according to the mapValue fn`,
       async() => {
         const finalValue = await kvPeer.getValue(key);
-        assert.ok(finalValue!["mapped"]);
+        assert.ok(finalValue!.mapped);
       });
     });
 

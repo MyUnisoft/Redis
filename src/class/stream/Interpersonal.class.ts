@@ -74,7 +74,7 @@ export class Interpersonal extends Stream {
     }
   }
 
-  public async init(): Promise<void> {
+  override async init(): Promise<void> {
     await super.init();
     await this.createGroup();
     await this.createConsumer();
@@ -130,11 +130,11 @@ export class Interpersonal extends Stream {
 
   public async claim(options: ClaimOptions): Promise<Entry[]> {
     const { idleTime } = options;
-    const redisOptions = utils.createRedisOptions(this.streamName, this.groupName, this.consumerName, idleTime, "0-0",
-      { count: this.count });
+    const redisOptions = utils.createRedisOptions(
+      this.streamName, this.groupName, this.consumerName, idleTime, "0-0", { count: this.count }
+    );
 
-    let streamResults;
-
+    let streamResults: any;
     if (this.count) {
       const optionsWithCount = [...redisOptions] as [
         key: RedisKey,
@@ -178,7 +178,7 @@ export class Interpersonal extends Stream {
     await this.delEntry(entryId);
   }
 
-  public async getConsumerData(): Promise<utils.XINFOConsumerData | undefined> {
+  override async getConsumerData(): Promise<utils.XINFOConsumerData | undefined> {
     const consumers = await this.redis.xinfo("CONSUMERS", this.streamName, this.groupName);
 
     const formattedConsumers = utils.parseXINFOConsumers(consumers as utils.XINFOConsumers);
@@ -186,13 +186,13 @@ export class Interpersonal extends Stream {
     return formattedConsumers.find((consumer) => consumer.name === this.consumerName);
   }
 
-  public async groupExist(): Promise<boolean> {
+  override async groupExist(): Promise<boolean> {
     const groups = await this.getGroupsData();
 
     return groups.some((group) => group.name === this.groupName);
   }
 
-  public async createGroup(): Promise<void> {
+  override async createGroup(): Promise<void> {
     const exist = await this.groupExist();
     if (exist) {
       return;
@@ -201,7 +201,7 @@ export class Interpersonal extends Stream {
     await this.redis.xgroup("CREATE", this.streamName, this.groupName, "$", "MKSTREAM");
   }
 
-  public async deleteGroup() {
+  override async deleteGroup() {
     const exist = await this.groupExist();
     if (!exist) {
       return;
@@ -210,13 +210,13 @@ export class Interpersonal extends Stream {
     await this.redis.xgroup("DESTROY", this.streamName, this.groupName);
   }
 
-  public async consumerExist(): Promise<boolean> {
+  override async consumerExist(): Promise<boolean> {
     const consumer = await this.getConsumerData();
 
     return typeof consumer !== "undefined";
   }
 
-  public async createConsumer(): Promise<void> {
+  override async createConsumer(): Promise<void> {
     const exist = await this.consumerExist();
     if (exist) {
       return;
@@ -225,7 +225,7 @@ export class Interpersonal extends Stream {
     await this.redis.xgroup("CREATECONSUMER", this.streamName, this.groupName, this.consumerName);
   }
 
-  public async deleteConsumer(): Promise<void> {
+  override async deleteConsumer(): Promise<void> {
     const exist = await this.consumerExist();
     if (!exist) {
       return;

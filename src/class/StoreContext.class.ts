@@ -33,7 +33,7 @@ export interface Store {
 
 export interface FrameworkContext {
   getCookie: (cookieName: string) => string;
-  setCookie: (cookieName: string, cookieValue: string | null, opts?: CookieSerializeOptions) => void
+  setCookie: (cookieName: string, cookieValue: string | null, opts?: CookieSerializeOptions) => void;
 }
 
 export interface StoreContextOptions<T extends Store> extends TimedKVPeerOptions<T> {
@@ -74,7 +74,7 @@ export class StoreContext<T extends Store = Store> extends TimedKVPeer<T> {
       Object.assign({}, kDefaultCookiesOptions, options.setCookiesOptions);
   }
 
-  get redis() {
+  override get redis() {
     const redis = getRedis();
 
     if (!redis) {

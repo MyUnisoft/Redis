@@ -1,7 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.KVPeer = void 0;
-/* eslint-disable max-depth */
 // Import Node.js Dependencies
 const node_events_1 = require("node:events");
 // Import Internal Dependencies
@@ -23,6 +22,10 @@ const kDefaultKVType = "raw";
 * ```
 */
 class KVPeer extends node_events_1.EventEmitter {
+    prefix;
+    prefixedName;
+    type;
+    mapValue;
     constructor(options = {}) {
         super();
         const { prefix, type, mapValue } = options;

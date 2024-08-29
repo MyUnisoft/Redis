@@ -1,4 +1,4 @@
-/* eslint-disable max-depth */
+
 // Import Node.js Dependencies
 import { EventEmitter } from "node:events";
 
@@ -14,10 +14,10 @@ export type KVType = "raw" | "object";
 export type StringOrObject = string | Record<string, any>;
 
 type IsMetadataDefined<T extends Record<string, any>, K extends Record<string, any> | null = null> =
-  K extends Record<string, any> ? T & { customData: K } : T;
+  K extends Record<string, any> ? T & { customData: K; } : T;
 
 type MappedValue<T extends StringOrObject, K extends Record<string, any> | null = null> = T extends Record<string, any> ?
-IsMetadataDefined<T, K> : T;
+  IsMetadataDefined<T, K> : T;
 
 export type KVMapper<T extends StringOrObject, K extends Record<string, any> | null = null> = (value: T) => MappedValue<T, K>;
 

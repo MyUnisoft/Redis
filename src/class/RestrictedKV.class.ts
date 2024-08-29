@@ -14,7 +14,7 @@ export type RestrictedKVOptions = Pick<KVOptions<Attempt>, "prefix"> & {
   autoClearExpired?: number;
   allowedAttempt?: number;
   banTimeInSecond?: number;
-}
+};
 
 // type Definition
 export interface Attempt {

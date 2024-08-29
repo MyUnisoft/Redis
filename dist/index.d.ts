@@ -38,3 +38,4 @@ export * from "./class/TimedKVPeer.class";
 export * from "./class/RestrictedKV.class";
 export * from "./class/StoreContext.class";
 export * as Types from "./types/index";
+//# sourceMappingURL=index.d.ts.map

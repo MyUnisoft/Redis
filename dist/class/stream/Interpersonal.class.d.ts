@@ -35,3 +35,4 @@ export declare class Interpersonal extends Stream {
     createConsumer(): Promise<void>;
     deleteConsumer(): Promise<void>;
 }
+//# sourceMappingURL=Interpersonal.class.d.ts.map

@@ -14,7 +14,9 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createRedisOptions = exports.parseData = exports.kParseRegex = void 0;
+exports.kParseRegex = void 0;
+exports.parseData = parseData;
+exports.createRedisOptions = createRedisOptions;
 // Import Internal Dependencies
 __exportStar(require("./xinfo/groups"), exports);
 __exportStar(require("./xinfo/consumers"), exports);
@@ -36,7 +38,6 @@ function* parseData(arr) {
         yield [curr, next];
     }
 }
-exports.parseData = parseData;
 function* createRedisOptions(...options) {
     for (const args of options) {
         if (typeof args === "object") {
@@ -55,5 +56,4 @@ function* createRedisOptions(...options) {
         }
     }
 }
-exports.createRedisOptions = createRedisOptions;
 //# sourceMappingURL=index.js.map

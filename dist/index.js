@@ -29,7 +29,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Types = exports.clearAllKeys = exports.closeAllRedis = exports.closeRedis = exports.getConnectionPerf = exports.initRedis = exports.getRedis = exports.Redis = void 0;
+exports.Types = exports.Redis = void 0;
+exports.getRedis = getRedis;
+exports.initRedis = initRedis;
+exports.getConnectionPerf = getConnectionPerf;
+exports.closeRedis = closeRedis;
+exports.closeAllRedis = closeAllRedis;
+exports.clearAllKeys = clearAllKeys;
+/* eslint-disable default-param-last */
 /* eslint-disable max-params */
 // Import Node.js Dependencies
 const node_events_1 = require("node:events");
@@ -47,7 +54,6 @@ function getRedis(instance = "publisher") {
     const redis = instance === "publisher" ? publisher : subscriber;
     return redis;
 }
-exports.getRedis = getRedis;
 /**
  *
  * Ensure the connection to the Redis instance.
@@ -86,7 +92,6 @@ async function initRedis(redisOptions = {}, instance = "publisher", external) {
     await assertConnection(instance);
     return redis;
 }
-exports.initRedis = initRedis;
 /**
  * Check Redis connection state.
  */
@@ -104,7 +109,6 @@ async function getConnectionPerf(instance = "publisher", redisInstance) {
     }
     return { isAlive: true, perf: node_perf_hooks_1.performance.now() - start };
 }
-exports.getConnectionPerf = getConnectionPerf;
 async function assertDisconnection(options) {
     const { redis, instance, attempt, forceExit, timeout } = {
         ...options,
@@ -160,7 +164,6 @@ async function closeRedis(instance = "publisher", redisInstance, forceExit = fal
         subscriber = undefined;
     }
 }
-exports.closeRedis = closeRedis;
 /**
  * Close every redis connections.
  */
@@ -173,7 +176,6 @@ async function closeAllRedis(redisInstance, forceExit = false, timeout) {
         await closeConnection("publisher", instance, forceExit, timeout);
     }));
 }
-exports.closeAllRedis = closeAllRedis;
 /**
   * Clear all keys from redis (it doesn't clean up streams).
   */
@@ -184,7 +186,6 @@ async function clearAllKeys(instance = "publisher", redis) {
     }
     await redisInstance.flushdb();
 }
-exports.clearAllKeys = clearAllKeys;
 async function closeConnection(instance = "publisher", redis, forceExit = false, timeout) {
     const { isAlive } = await getConnectionPerf(instance, redis);
     if (!isAlive) {

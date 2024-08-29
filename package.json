@@ -6,6 +6,7 @@
   "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsc",
+    "lint": "eslint src test",
     "prepublishOnly": "npm run build",
     "test": "tsx ./test/run.ts",
     "coverage": "c8 --all --src ./src -r html npm test"
@@ -35,11 +36,10 @@
     "pubsub"
   ],
   "devDependencies": {
-    "@nodesecure/eslint-config": "^1.9.0",
-    "@types/lodash.isempty": "^4.4.9",
+    "@openally/config.eslint": "^1.0.0",
+    "@openally/config.typescript": "^1.0.3",
     "@types/node": "^22.1.0",
     "c8": "^10.1.2",
-    "dotenv": "^16.3.1",
     "glob": "^11.0.0",
     "mockdate": "^3.0.5",
     "testcontainers": "^10.3.1",
@@ -48,7 +48,6 @@
   },
   "dependencies": {
     "dayjs": "^1.11.10",
-    "ioredis": "^5.3.2",
-    "lodash.isempty": "^4.4.0"
+    "ioredis": "^5.3.2"
   }
 }

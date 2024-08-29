@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.parseXINFOGroups = void 0;
+exports.parseXINFOGroups = parseXINFOGroups;
 // Import Internal Dependencies
 const __1 = require("..");
 function parseXINFOGroups(groups) {
@@ -14,5 +14,4 @@ function parseXINFOGroups(groups) {
     }
     return formattedGroups;
 }
-exports.parseXINFOGroups = parseXINFOGroups;
 //# sourceMappingURL=groups.js.map

@@ -4,3 +4,4 @@ export declare function parseFullStreamData(arr: XRedisData): IterableIterator<A
 export declare function parseEntries(entries: XEntries): Entry[];
 export declare function parseConsumers(consumers: XConsumers): Consumer[];
 export declare function parseGroups(groups: XGroups): Group[];
+//# sourceMappingURL=fullStream.d.ts.map

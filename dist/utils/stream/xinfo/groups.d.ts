@@ -6,3 +6,4 @@ export interface XINFOGroupData {
     lastDeliveredId: string;
 }
 export declare function parseXINFOGroups(groups: XINFOGroups): XINFOGroupData[];
+//# sourceMappingURL=groups.d.ts.map

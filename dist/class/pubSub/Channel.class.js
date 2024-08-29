@@ -4,6 +4,7 @@ exports.Channel = void 0;
 // Import Internal Dependencies
 const __1 = require("../..");
 class Channel {
+    name;
     constructor(options) {
         const { name, prefix } = options;
         this.name = `${prefix ? `${prefix}-` : ""}` + name;

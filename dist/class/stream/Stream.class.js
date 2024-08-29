@@ -37,6 +37,10 @@ const kMinId = "0-0";
  * @description Shared method used to work on a Redis Stream
  */
 class Stream extends node_events_1.EventEmitter {
+    streamName;
+    lastId;
+    frequency;
+    count;
     constructor(options) {
         super();
         this.streamName = options.streamName;
