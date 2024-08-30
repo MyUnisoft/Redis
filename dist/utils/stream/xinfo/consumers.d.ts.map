@@ -1,1 +1,0 @@
-{"version":3,"file":"consumers.d.ts","sourceRoot":"","sources":["../../../../src/utils/stream/xinfo/consumers.ts"],"names":[],"mappings":"AAGA,MAAM,MAAM,cAAc,GAAG,CAAC,MAAM,GAAG,MAAM,CAAC,EAAE,EAAE,CAAC;AAEnD,MAAM,WAAW,iBAAiB;IAChC,IAAI,EAAE,MAAM,CAAC;IACb,OAAO,EAAE,MAAM,CAAC;IAChB,IAAI,EAAE,MAAM,CAAC;CACd;AAED,wBAAgB,mBAAmB,CAAC,SAAS,EAAE,cAAc,GAAG,iBAAiB,EAAE,CAclF"}
