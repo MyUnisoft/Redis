@@ -2,8 +2,8 @@
 import { randomBytes } from "node:crypto";
 
 // Import Internal Dependencies
-import { KVPeer, KVOptions, SetValueOptions } from "./KVPeer.class";
-import { KeyType } from "../types/index";
+import { KVPeer, type KVOptions, type SetValueOptions } from "./KVPeer.class.js";
+import type { KeyType } from "../types/index.js";
 
 // CONSTANTS
 const kDefaultTtl = 1_000 * 60 * 10;
@@ -30,7 +30,7 @@ export class TimedKVPeer<T extends object, K extends Record<string, any> | null 
   protected randomKeyGenerator: () => string;
   private ttl: number;
 
-  constructor(options: TimedKVPeerOptions<T, K> = {}) {
+  constructor(options: TimedKVPeerOptions<T, K>) {
     super({ ...options, type: "object" });
 
     this.ttl = options.ttl ?? kDefaultTtl;

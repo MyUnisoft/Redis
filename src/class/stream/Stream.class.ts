@@ -5,7 +5,7 @@ import { EventEmitter } from "node:events";
 import { RedisValue } from "ioredis";
 
 // Import Internal Depencencies
-import { getRedis } from "../../index";
+import { Connection } from "../../index";
 import * as utils from "../../utils/stream/index";
 
 // Import Types
@@ -33,6 +33,7 @@ export interface StreamOptions {
    * Number of entries it must pull at each iteration
    */
   count?: number;
+  connection: Connection;
 }
 
 export interface GetRangeOptions {

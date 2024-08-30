@@ -10,7 +10,7 @@ import {
 import {
   Err,
   Ok,
-  Result
+  type Result
 } from "@openally/result";
 
 // CONSTANTS
@@ -42,6 +42,8 @@ export type ConnectionOptions = Partial<RedisOptions> & {
 export class Connection extends Redis {
   #attempt: number;
   #disconnectionTimeout: number;
+
+  ready: boolean = false;
 
   constructor(options: ConnectionOptions) {
     const { port, host, password } = options;
@@ -96,6 +98,8 @@ export class Connection extends Redis {
     if (!isAlive) {
       await this.assertConnection(attempt - 1);
     }
+
+    this.ready = true;
 
     return Ok(null);
   }

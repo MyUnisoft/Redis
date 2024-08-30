@@ -1,6 +1,5 @@
 // Import Internal Dependencies
-import { TimedKVPeer, TimedKVPeerOptions } from "./TimedKVPeer.class";
-import { getRedis } from "../index";
+import { TimedKVPeer, type TimedKVPeerOptions } from "./TimedKVPeer.class.js";
 
 // CONSTANTS
 const kDefaultCookiesOptions: CookieSerializeOptions = { sameSite: "none", secure: true };
@@ -38,7 +37,7 @@ export interface FrameworkContext {
 
 export interface StoreContextOptions<T extends Store> extends TimedKVPeerOptions<T> {
   /** Property name used in isUserAuthenticated() method to define if the user is authenticated or not **/
-  authentificationField: keyof T;
+  authenticationField: keyof T;
   /** HTTP Cookies options. Will be used when creating the session cookie. **/
   setCookiesOptions?: CookieSerializeOptions;
 }
@@ -58,7 +57,7 @@ export interface StoreContextOptions<T extends Store> extends TimedKVPeerOptions
 * }
 *
 * export const store = new StoreContext<DextStore>({
-*   authentificationField: "mail"
+*   authenticationField: "mail"
 * });
 * ```
 */
@@ -66,22 +65,12 @@ export class StoreContext<T extends Store = Store> extends TimedKVPeer<T> {
   protected authenticationField: keyof T | null;
   protected cookiesOptions: CookieSerializeOptions;
 
-  constructor(options?: Partial<StoreContextOptions<T>>) {
+  constructor(options: StoreContextOptions<T>) {
     super(options);
 
-    this.authenticationField = options?.authentificationField ?? null;
-    this.cookiesOptions = typeof options?.setCookiesOptions === "undefined" ? Object.assign({}, kDefaultCookiesOptions) :
+    this.authenticationField = options.authenticationField ?? null;
+    this.cookiesOptions = typeof options.setCookiesOptions === "undefined" ? Object.assign({}, kDefaultCookiesOptions) :
       Object.assign({}, kDefaultCookiesOptions, options.setCookiesOptions);
-  }
-
-  override get redis() {
-    const redis = getRedis();
-
-    if (!redis) {
-      throw new Error("Redis must be init");
-    }
-
-    return redis;
   }
 
   /**

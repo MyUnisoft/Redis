@@ -1,13 +1,12 @@
 // Import Internal dependencies
-import { KVPeer, KVOptions } from "./KVPeer.class";
-import { getConnectionPerf } from "..";
-import { KeyType } from "../types/index";
+import { KVPeer, type KVOptions } from "./KVPeer.class.js";
+import type { KeyType } from "../types/index.js";
 
 // CONSTANTS
 const kDefaultAllowedAttempt = 6;
 const kDefaultBanTime = 60 * 5;
 
-export type RestrictedKVOptions = Pick<KVOptions<Attempt>, "prefix"> & {
+export type RestrictedKVOptions = Pick<KVOptions<Attempt>, "prefix" | "connection"> & {
   autoClearExpired?: number;
   allowedAttempt?: number;
   banTimeInSecond?: number;
@@ -36,10 +35,11 @@ export class RestrictedKV extends KVPeer<Partial<Attempt>> {
     return { failure: 0, lastTry: Date.now(), locked: false };
   }
 
-  constructor(options: RestrictedKVOptions = {}) {
-    const { prefix, autoClearExpired, allowedAttempt, banTimeInSecond } = options;
+  constructor(options: RestrictedKVOptions) {
+    const { prefix, autoClearExpired, allowedAttempt, banTimeInSecond, connection } = options;
 
     super({
+      connection,
       prefix: prefix ?? "limited-",
       type: "object"
     });
@@ -50,7 +50,7 @@ export class RestrictedKV extends KVPeer<Partial<Attempt>> {
     if (autoClearExpired) {
       this.autoClearInterval = setInterval(async() => {
         try {
-          const connectionPerf = await getConnectionPerf("publisher");
+          const connectionPerf = await this.connection.getConnectionPerf();
 
           if (connectionPerf.isAlive) {
             await this.clearExpired();
@@ -150,7 +150,7 @@ export class RestrictedKV extends KVPeer<Partial<Attempt>> {
   * ```
   */
   async clearExpired(): Promise<void> {
-    const promises = [this.redis.keysBuffer(`${this.prefix}*`), this.redis.keys(`${this.prefix}*`)];
+    const promises = [this.connection.keysBuffer(`${this.prefix}*`), this.connection.keys(`${this.prefix}*`)];
 
     const data = [...await Promise.all(promises)].flat();
     if (data.length === 0) {
@@ -168,7 +168,7 @@ export class RestrictedKV extends KVPeer<Partial<Attempt>> {
       .map((row) => row.key);
 
     if (expiredKeys.length > 0) {
-      const pipeline = this.redis.pipeline();
+      const pipeline = this.connection.pipeline();
       this.emit("expiredKeys", expiredKeys);
       expiredKeys.forEach((key) => pipeline.del(key));
 

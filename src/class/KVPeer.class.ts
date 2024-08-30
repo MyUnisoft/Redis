@@ -3,8 +3,8 @@
 import { EventEmitter } from "node:events";
 
 // Import Internal Dependencies
-import { getRedis } from "..";
-import { KeyType, Value } from "../types/index";
+import type { KeyType, Value } from "../types/index";
+import { Connection } from "./Connection.class.js";
 
 // CONSTANTS
 const kDefaultKVType = "raw";
@@ -22,6 +22,7 @@ type MappedValue<T extends StringOrObject, K extends Record<string, any> | null 
 export type KVMapper<T extends StringOrObject, K extends Record<string, any> | null = null> = (value: T) => MappedValue<T, K>;
 
 export interface KVOptions<T extends StringOrObject = Record<string, any>, K extends Record<string, any> | null = null> {
+  connection: Connection;
   prefix?: string;
   type?: KVType;
   mapValue?: KVMapper<T, K>;
@@ -52,11 +53,18 @@ export class KVPeer<T extends StringOrObject = StringOrObject, K extends Record<
   protected prefixedName: string;
   protected type: KVType;
   protected mapValue: KVMapper<T, K>;
+  protected connection: Connection;
 
-  constructor(options: KVOptions<T, K> = {}) {
+  constructor(options: KVOptions<T, K>) {
     super();
 
-    const { prefix, type, mapValue } = options;
+    const { prefix, type, mapValue, connection } = options;
+
+    this.connection = connection;
+
+    if (!this.connection.ready) {
+      throw new Error("Redis connection not initialized");
+    }
 
     this.prefix = prefix ? `${prefix}-` : "";
     this.type = type ?? kDefaultKVType;
@@ -67,21 +75,11 @@ export class KVPeer<T extends StringOrObject = StringOrObject, K extends Record<
     return value as MappedValue<T, K>;
   }
 
-  get redis() {
-    const redis = getRedis();
-
-    if (!redis) {
-      throw new Error("Redis must be init");
-    }
-
-    return redis;
-  }
-
   async setValue(options: SetValueOptions<T>): Promise<KeyType> {
     const { key, value, expiresIn } = options;
 
     const finalKey = typeof key === "object" ? Buffer.from(this.prefix + key) : this.prefix + key;
-    const multiRedis = this.redis.multi();
+    const multiRedis = this.connection.multi();
 
     function booleanStringToBuffer(value: string): string | Buffer {
       return value === "false" || value === "true" ? Buffer.from(value) : value;
@@ -115,8 +113,8 @@ export class KVPeer<T extends StringOrObject = StringOrObject, K extends Record<
   async getValue(key: KeyType): Promise<MappedValue<T, K> | null> {
     const finalKey = typeof key === "object" ? Buffer.from(this.prefix + key) : this.prefix + key;
     const result = this.type === "raw" ?
-      await this.redis.get(finalKey) :
-      this.parseOutput(await this.redis.hgetall(finalKey));
+      await this.connection.get(finalKey) :
+      this.parseOutput(await this.connection.hgetall(finalKey));
 
     if (this.type === "object" && result && Object.keys(result).length === 0) {
       return null;
@@ -128,7 +126,7 @@ export class KVPeer<T extends StringOrObject = StringOrObject, K extends Record<
   async deleteValue(key: KeyType): Promise<number> {
     const finalKey = typeof key === "object" ? Buffer.from(this.prefix + key) : this.prefix + key;
 
-    return this.redis.del(finalKey);
+    return this.connection.del(finalKey);
   }
 
   private* deepParseInput(input: Record<string, any> | any[]) {
