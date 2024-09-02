@@ -74,17 +74,17 @@ describe("StoreContext", () => {
       const ctx = createFrameworkCtx();
       const payload = { returnTo: "http://localhost/" };
 
-      await assert.rejects(async() => sessionContext.initSession("", ctx, payload), {
-        name: "Error",
-        message: "id must not be an empty string"
-      });
+      const res = await sessionContext.initSession("", ctx, payload);
+
+      assert.equal(res.err, true);
+      assert.equal(res.val, "id must not be an empty string");
     });
 
     it("should return the final key when init success", async() => {
       const key = randomValue();
       const ctx = createFrameworkCtx();
 
-      assert.equal(await sessionContext.initSession(key, ctx, {}), key);
+      assert.equal((await sessionContext.initSession(key, ctx, {})).unwrap(), key);
     });
 
     it("should set a cookie when initSession() has been call", async() => {
@@ -114,7 +114,7 @@ describe("StoreContext", () => {
       const ctx = createFrameworkCtx();
 
       await assert.rejects(async() => sessionContext.destroySession(ctx), {
-        name: "TypeError",
+        name: "Error",
         message: "Unable to found any cookie session-id. Your session is probably expired!"
       });
     });
@@ -153,7 +153,9 @@ describe("StoreContext", () => {
       ctx.getCookie = () => sessionId;
       ctx["session-id"] = sessionId;
 
-      assert.equal((await sessionContext.getSession(ctx))!.returnTo, "false");
+      const res = await sessionContext.getSession(ctx);
+
+      assert.equal(res!.returnTo, "false");
     });
   });
 
@@ -215,13 +217,13 @@ describe("StoreContext", () => {
     it("should return the final key when init success", async() => {
       const key = randomValue();
 
-      assert.equal(await sessionWithCtx.initSession(key, {}), key);
+      assert.equal((await sessionWithCtx.initSession(key, {})).unwrap(), key);
     });
 
     it("should set a cookie when initSession() has been call", async() => {
       const payload = { returnTo: "http://localhost/" };
 
-      assert.equal(await sessionWithCtx.initSession(sessionId, payload), sessionId);
+      assert.equal((await sessionWithCtx.initSession(sessionId, payload)).unwrap(), sessionId);
     });
 
     it("should return the session if available", async() => {

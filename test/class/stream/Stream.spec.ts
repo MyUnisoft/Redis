@@ -139,10 +139,10 @@ describe("RedisStream instance", () => {
     async() => {
       const id = "00";
 
-      await assert.rejects(async() => stream.delEntry(id), {
-        name: "Error",
-        message: `Failed entry deletion for ${id}`
-      });
+      const res = await stream.delEntry(id);
+
+      assert.equal(res.err, true);
+      assert.equal(res.val, `Failed entry deletion for ${id}`);
     });
   });
 
