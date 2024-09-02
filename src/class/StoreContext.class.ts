@@ -37,7 +37,7 @@ export interface FrameworkContext {
 
 export interface StoreContextOptions<T extends Store> extends TimedKVPeerOptions<T> {
   /** Property name used in isUserAuthenticated() method to define if the user is authenticated or not **/
-  authenticationField: keyof T;
+  authenticationField?: keyof T;
   /** HTTP Cookies options. Will be used when creating the session cookie. **/
   setCookiesOptions?: CookieSerializeOptions;
 }

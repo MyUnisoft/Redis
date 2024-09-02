@@ -3,8 +3,8 @@
 import { EventEmitter } from "node:events";
 
 // Import Internal Dependencies
-import type { KeyType, Value } from "../types/index";
-import { Connection } from "./Connection.class.js";
+import type { KeyType, Value } from "../types/index.js";
+import { Connection } from "../index.js";
 
 // CONSTANTS
 const kDefaultKVType = "raw";

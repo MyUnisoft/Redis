@@ -4,22 +4,21 @@ import { EventEmitter } from "node:events";
 // Import Third-party Dependencies
 import { RedisValue } from "ioredis";
 
-// Import Internal Depencencies
-import { Connection } from "../../index";
-import * as utils from "../../utils/stream/index";
-
-// Import Types
-import {
+// Import Internal Dependencies
+import { Connection } from "../../index.js";
+import * as utils from "../../utils/stream/index.js";
+import type {
   Data,
   Entry,
   Group
-} from "../../types/index";
+} from "../../types/index.js";
 
 // CONSTANTS
 const kDefaultRangeOptions = { min: "-", max: "+" };
 const kMinId = "0-0";
 
 export interface StreamOptions {
+  connection: Connection;
   streamName: string;
   /**
    * Interval of time between two iteration on the stream
@@ -33,7 +32,6 @@ export interface StreamOptions {
    * Number of entries it must pull at each iteration
    */
   count?: number;
-  connection: Connection;
 }
 
 export interface GetRangeOptions {
@@ -79,11 +77,18 @@ export class Stream extends EventEmitter {
   public streamName: string;
   public lastId: string;
 
+  protected connection: Connection;
   protected frequency: number;
   protected count?: number;
 
   constructor(options: StreamOptions) {
     super();
+
+    this.connection = options.connection;
+
+    if (!this.connection.ready) {
+      throw new Error("Redis connection not initialized");
+    }
 
     this.streamName = options.streamName;
     this.frequency = options.frequency;
@@ -91,19 +96,9 @@ export class Stream extends EventEmitter {
     this.lastId = options.lastId ?? kMinId;
   }
 
-  get redis() {
-    const redis = getRedis();
-
-    if (!redis) {
-      throw new Error("Redis must be init");
-    }
-
-    return redis;
-  }
-
   public async streamExist(): Promise<boolean> {
     try {
-      await this.redis.xinfo("STREAM", this.streamName);
+      await this.connection.xinfo("STREAM", this.streamName);
 
       return true;
     }
@@ -121,14 +116,14 @@ export class Stream extends EventEmitter {
       return;
     }
 
-    await this.redis.xadd(this.streamName, "0-1", "init", "stream");
-    await this.redis.xdel(this.streamName, "0-1");
+    await this.connection.xadd(this.streamName, "0-1", "init", "stream");
+    await this.connection.xdel(this.streamName, "0-1");
   }
 
   public async getInfo(): Promise<XINFOStreamData> {
     const formattedStreamData = {};
 
-    const streamData = await this.redis.xinfo("STREAM", this.streamName, "FULL", "COUNT", 0) as utils.XRedisData;
+    const streamData = await this.connection.xinfo("STREAM", this.streamName, "FULL", "COUNT", 0) as utils.XRedisData;
 
     for (const [key, value] of utils.parseData(streamData)) {
       formattedStreamData[key as string] = value;
@@ -138,17 +133,17 @@ export class Stream extends EventEmitter {
   }
 
   public async getLength(): Promise<number> {
-    return await this.redis.xlen(this.streamName);
+    return await this.connection.xlen(this.streamName);
   }
 
   public async getGroupsData(): Promise<utils.XINFOGroupData[]> {
     try {
-      const groups = await this.redis.xinfo("GROUPS", this.streamName) as utils.XINFOGroups;
+      const groups = await this.connection.xinfo("GROUPS", this.streamName) as utils.XINFOGroups;
 
       return utils.parseXINFOGroups(groups);
     }
     catch {
-      throw new Error("Stream not initialiazed yet.");
+      throw new Error("Stream not initialized yet.");
     }
   }
 
@@ -186,11 +181,11 @@ export class Stream extends EventEmitter {
 
     const formattedId = id ?? "*";
 
-    return await this.redis.xadd(this.streamName, formattedId, ...entries) as string;
+    return await this.connection.xadd(this.streamName, formattedId, ...entries) as string;
   }
 
   public async delEntry(entryId: string): Promise<void> {
-    const res = await this.redis.xdel(this.streamName, entryId);
+    const res = await this.connection.xdel(this.streamName, entryId);
 
     if (res !== 1) {
       throw new Error(`Failed entry deletion for ${entryId}`);
@@ -237,7 +232,7 @@ export class Stream extends EventEmitter {
     const { min, max, count } = options;
     const redisOptions = utils.createRedisOptions(this.streamName, min, max, { count }) as unknown;
 
-    return utils.parseEntries(await this.redis.xrange(...redisOptions as utils.FormattedRedisOptions));
+    return utils.parseEntries(await this.connection.xrange(...redisOptions as utils.FormattedRedisOptions));
   }
 
   /**
@@ -273,7 +268,7 @@ export class Stream extends EventEmitter {
     const { min, max, count } = options;
     const redisOptions = utils.createRedisOptions(this.streamName, max, min, { count }) as unknown;
 
-    return utils.parseEntries(await this.redis.xrevrange(...redisOptions as utils.FormattedRedisOptions));
+    return utils.parseEntries(await this.connection.xrevrange(...redisOptions as utils.FormattedRedisOptions));
   }
 
   /**
@@ -292,12 +287,12 @@ export class Stream extends EventEmitter {
    */
   public async trim(threshold: number | string): Promise<number> {
     return typeof threshold === "number" ?
-      await this.redis.xtrim(
+      await this.connection.xtrim(
         this.streamName,
         "MAXLEN",
         threshold
       ) :
-      await this.redis.xtrim(
+      await this.connection.xtrim(
         this.streamName,
         "MINID",
         threshold
@@ -327,7 +322,7 @@ export class Stream extends EventEmitter {
       return;
     }
 
-    await this.redis.xgroup("CREATE", this.streamName, name, "$", "MKSTREAM");
+    await this.connection.xgroup("CREATE", this.streamName, name, "$", "MKSTREAM");
   }
 
   /**
@@ -341,7 +336,7 @@ export class Stream extends EventEmitter {
       return;
     }
 
-    await this.redis.xgroup("DESTROY", this.streamName, name);
+    await this.connection.xgroup("DESTROY", this.streamName, name);
   }
 
   /**
@@ -352,7 +347,7 @@ export class Stream extends EventEmitter {
    * @returns {Promise<utils.XINFOConsumerData | undefined>}
    */
   public async getConsumerData(groupName: string, consumerName: string): Promise<utils.XINFOConsumerData | undefined> {
-    const consumers = await this.redis.xinfo("CONSUMERS", this.streamName, groupName);
+    const consumers = await this.connection.xinfo("CONSUMERS", this.streamName, groupName);
 
     const formattedConsumers = utils.parseXINFOConsumers(consumers as utils.XINFOConsumers);
 
@@ -384,7 +379,7 @@ export class Stream extends EventEmitter {
       return;
     }
 
-    await this.redis.xgroup("CREATECONSUMER", this.streamName, groupName, consumerName);
+    await this.connection.xgroup("CREATECONSUMER", this.streamName, groupName, consumerName);
   }
 
   /**
@@ -399,6 +394,6 @@ export class Stream extends EventEmitter {
       return;
     }
 
-    await this.redis.xgroup("DELCONSUMER", this.streamName, groupName, consumerName);
+    await this.connection.xgroup("DELCONSUMER", this.streamName, groupName, consumerName);
   }
 }

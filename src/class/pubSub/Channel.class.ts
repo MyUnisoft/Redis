@@ -1,8 +1,9 @@
 // Import Internal Dependencies
-import { getRedis } from "../..";
+import { Connection } from "../../index.js";
 
 export interface ChannelOptions {
   name: string;
+  connection: Connection;
   prefix?: string;
 }
 
@@ -20,23 +21,20 @@ export class Channel<
   K extends Record<string, any> | null = null> {
   readonly name: string;
 
+  #connection: Connection;
+
   constructor(options: ChannelOptions) {
     const { name, prefix } = options;
 
     this.name = `${prefix ? `${prefix}-` : ""}` + name;
-  }
+    this.#connection = options.connection;
 
-  get redis() {
-    const redis = getRedis();
-
-    if (!redis) {
-      throw new Error("Redis must be init");
+    if (!this.#connection.ready) {
+      throw new Error("Redis connection not initialized");
     }
-
-    return redis;
   }
 
   public async publish(options: PublishOptions<T, K>) {
-    await this.redis.publish(this.name, JSON.stringify(options));
+    await this.#connection.publish(this.name, JSON.stringify(options));
   }
 }

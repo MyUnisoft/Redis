@@ -34,7 +34,7 @@ export type CloseResponse = Result<null, AssertDisconnectionErrorMessage | "Redi
 
 export type ConnectionOptions = Partial<RedisOptions> & {
   port?: number;
-  host?: number;
+  host?: string;
   attempt?: number;
   disconnectionTimeout?: number;
 };
