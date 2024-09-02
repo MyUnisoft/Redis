@@ -57,7 +57,7 @@ export class Connection extends Redis {
     this.#disconnectionTimeout = options.disconnectionTimeout ?? kDefaultTimeout;
   }
 
-  async initialize() {
+  async initialize(): Promise<AssertConnectionResponse> {
     return this.assertConnection();
   }
 
