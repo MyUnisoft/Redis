@@ -29,7 +29,7 @@ export class Channel<
     this.name = `${prefix ? `${prefix}-` : ""}` + name;
     this.#connection = options.connection;
 
-    if (!this.#connection.ready) {
+    if (!this.#connection.isAlive) {
       throw new Error("Redis connection not initialized");
     }
   }

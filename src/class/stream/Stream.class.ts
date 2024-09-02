@@ -86,7 +86,7 @@ export class Stream extends EventEmitter {
 
     this.connection = options.connection;
 
-    if (!this.connection.ready) {
+    if (!this.connection.isAlive) {
       throw new Error("Redis connection not initialized");
     }
 

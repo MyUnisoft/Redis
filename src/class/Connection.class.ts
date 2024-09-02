@@ -27,9 +27,7 @@ export type GetConnectionPerfResponse = {
 };
 
 export type AssertConnectionResponse = Result<null, "Failed at initializing the Redis connection">;
-
 export type AssertDisconnectionResponse = Result<null, AssertDisconnectionErrorMessage>;
-
 export type CloseResponse = Result<null, AssertDisconnectionErrorMessage | "Redis connection already closed">;
 
 export type ConnectionOptions = Partial<RedisOptions> & {
@@ -43,9 +41,9 @@ export class Connection extends Redis {
   #attempt: number;
   #disconnectionTimeout: number;
 
-  ready: boolean = false;
+  isAlive: boolean = false;
 
-  constructor(options: ConnectionOptions) {
+  constructor(options: ConnectionOptions = {}) {
     const { port, host, password } = options;
 
     if (typeof port !== "undefined" && typeof host !== "undefined") {
@@ -60,7 +58,7 @@ export class Connection extends Redis {
   }
 
   async initialize() {
-    await this.assertConnection();
+    return this.assertConnection();
   }
 
   async getConnectionPerf(): Promise<GetConnectionPerfResponse> {
@@ -70,6 +68,8 @@ export class Connection extends Redis {
       await this.ping();
     }
     catch {
+      this.isAlive = false;
+
       return { isAlive: false };
     }
 
@@ -99,7 +99,7 @@ export class Connection extends Redis {
       await this.assertConnection(attempt - 1);
     }
 
-    this.ready = true;
+    this.isAlive = true;
 
     return Ok(null);
   }
@@ -124,6 +124,8 @@ export class Connection extends Redis {
     catch {
       await this.assertDisconnection(forceExit, attempt - 1);
     }
+
+    this.isAlive = false;
 
     return Ok(null);
   }
