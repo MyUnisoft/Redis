@@ -310,9 +310,13 @@ export class Stream extends EventEmitter {
    * @returns {Promise<boolean>}
    */
   public async groupExist(name: string): Promise<boolean> {
-    const groups = (await this.getGroupsData()).unwrap();
+    const getGroupsResult = await this.getGroupsData();
 
-    return groups.some((group) => group.name === name);
+    if (!getGroupsResult.ok) {
+      throw new Error(getGroupsResult.val);
+    }
+
+    return getGroupsResult.unwrap().some((group) => group.name === name);
   }
 
   /**

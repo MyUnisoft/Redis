@@ -110,16 +110,29 @@ export class StoreContext<T extends Store = Store> extends TimedKVPeer<T> {
   }
 
   async destroySession(ctx: FrameworkContext): Promise<void> {
-    const sessionId = this.getSessionId(ctx).unwrap();
+    const getSessionResult = this.getSessionId(ctx);
+
+    if (!getSessionResult.ok) {
+      throw new Error(getSessionResult.val);
+    }
+
+    const val = getSessionResult.unwrap();
+
     ctx.setCookie(kStoreContextSessionName, null);
 
-    await this.deleteValue(sessionId);
+    await this.deleteValue(val);
   }
 
   getSession(ctx: FrameworkContext): Promise<T | null> {
-    const sessionId = this.getSessionId(ctx).unwrap();
+    const getSessionResult = this.getSessionId(ctx);
 
-    return this.getValue(sessionId);
+    if (!getSessionResult.ok) {
+      throw new Error(getSessionResult.val);
+    }
+
+    const val = getSessionResult.unwrap();
+
+    return this.getValue(val);
   }
 
   /**
@@ -129,9 +142,15 @@ export class StoreContext<T extends Store = Store> extends TimedKVPeer<T> {
   * @param payload - the new property to assign at the session
   */
   async updateSession(ctx: FrameworkContext, payload: Partial<T>) {
-    const sessionId = this.getSessionId(ctx).unwrap();
+    const getSessionResult = this.getSessionId(ctx);
 
-    await this.setValue({ key: sessionId, value: payload });
+    if (!getSessionResult.ok) {
+      throw new Error(getSessionResult.val);
+    }
+
+    const val = getSessionResult.unwrap();
+
+    await this.setValue({ key: val, value: payload });
   }
 
   /**
