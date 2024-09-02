@@ -5,9 +5,7 @@ import EventEmitter from "node:events";
 
 // Import Internal Dependencies
 import {
-  initRedis,
-  closeAllRedis,
-  clearAllKeys,
+  Connection,
   StoreContext,
   Store
 } from "../../src/index";
@@ -22,13 +20,20 @@ interface CustomStore extends Store {
 }
 
 describe("StoreContext", () => {
+  let connection: Connection;
+
   before(async() => {
-    await initRedis({ port: Number(process.env.REDIS_PORT), host: process.env.REDIS_HOST });
-    await clearAllKeys();
+    connection = new Connection({
+      port: Number(process.env.REDIS_PORT),
+      host: process.env.REDIS_HOST
+    });
+
+    await connection.initialize();
+    await connection.flushdb();
   });
 
   after(async() => {
-    await closeAllRedis();
+    await connection.close();
   });
 
   describe("Store Context initialization's suite", () => {
@@ -36,7 +41,8 @@ describe("StoreContext", () => {
 
     it("should be instance of EventEmitter & StoreContext", () => {
       sessionContext = new StoreContext<CustomStore>({
-        authentificationField: "mail",
+        connection,
+        authenticationField: "mail",
         ttl: 3600,
         randomKeyCallback: () => "randomKey"
       });
@@ -57,7 +63,11 @@ describe("StoreContext", () => {
     let sessionContext: StoreContext;
 
     before(() => {
-      sessionContext = new StoreContext<CustomStore>({ authentificationField: "mail", prefix: "store-context-" });
+      sessionContext = new StoreContext<CustomStore>({
+        connection,
+        authenticationField: "mail",
+        prefix: "store-context-"
+      });
     });
 
     it("should throw an error if id is an empty string", async() => {
@@ -94,7 +104,10 @@ describe("StoreContext", () => {
     let sessionContext: StoreContext;
 
     before(() => {
-      sessionContext = new StoreContext<CustomStore>({ authentificationField: "mail" });
+      sessionContext = new StoreContext<CustomStore>({
+        connection,
+        authenticationField: "mail"
+      });
     });
 
     it("should throw error if there is no cookie `session-id`", async() => {
@@ -125,7 +138,10 @@ describe("StoreContext", () => {
     let sessionContext: StoreContext;
 
     before(() => {
-      sessionContext = new StoreContext<CustomStore>({ authentificationField: "mail" });
+      sessionContext = new StoreContext<CustomStore>({
+        authenticationField: "mail",
+        connection
+      });
     });
 
     it("should return the session if available", async() => {
@@ -145,7 +161,10 @@ describe("StoreContext", () => {
     let sessionContext: StoreContext;
 
     before(() => {
-      sessionContext = new StoreContext<CustomStore>({ authentificationField: "mail" });
+      sessionContext = new StoreContext<CustomStore>({
+        authenticationField: "mail",
+        connection
+      });
     });
 
     it("should return false for an undefined `session-id` cookie", async() => {
@@ -166,7 +185,9 @@ describe("StoreContext", () => {
     });
 
     it("should return true for a `session-id` cookie having data stored", async() => {
-      const noAuthOptionsContext = new StoreContext();
+      const noAuthOptionsContext = new StoreContext({
+        connection
+      });
       const ctx = createFrameworkCtx();
 
       await sessionContext.initSession("user", ctx, {});
@@ -185,7 +206,10 @@ describe("StoreContext", () => {
       ctx.getCookie = () => sessionId;
       ctx["session-id"] = sessionId;
 
-      sessionWithCtx = new StoreContext<any>({ authentificationField: "mail" }).useContext(ctx);
+      sessionWithCtx = new StoreContext<any>({
+        authenticationField: "mail",
+        connection
+      }).useContext(ctx);
     });
 
     it("should return the final key when init success", async() => {
@@ -213,7 +237,10 @@ describe("StoreContext", () => {
     let sessionContext: StoreContext;
 
     before(() => {
-      sessionContext = new StoreContext<any>({ authentificationField: "mail" });
+      sessionContext = new StoreContext<any>({
+        authenticationField: "mail",
+        connection
+      });
     });
 
     it("should return the key for the stored value", async() => {

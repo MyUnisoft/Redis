@@ -4,7 +4,7 @@ import { describe, before, after, test } from "node:test";
 import EventEmitter from "node:events";
 
 // Import Internal Dependencies
-import { initRedis, Stream, closeAllRedis } from "../../../src";
+import { Connection, Stream } from "../../../src";
 import { randomValue } from "../../fixtures/utils/randomValue";
 
 // Import Types
@@ -18,11 +18,23 @@ const kParseRegex = new RegExp("-([0-9])");
 const kFrequency = 3000;
 
 describe("RedisStream instance", () => {
+  let connection: Connection;
   let stream: Stream;
 
   before(async() => {
-    await initRedis({ port: Number(process.env.REDIS_PORT), host: process.env.REDIS_HOST });
-    stream = new Stream({ streamName: kStreamName, lastId: "0-0", frequency: kFrequency });
+    connection = new Connection({
+      port: Number(process.env.REDIS_PORT),
+      host: process.env.REDIS_HOST
+    });
+
+    await connection.initialize();
+
+    stream = new Stream({
+      connection,
+      streamName: kStreamName,
+      lastId: "0-0",
+      frequency: kFrequency
+    });
 
     const streamExist = await stream.streamExist();
 
@@ -46,7 +58,7 @@ describe("RedisStream instance", () => {
       await stream.delEntry(entryId);
     }
 
-    await closeAllRedis();
+    await connection.close();
   });
 
   test("should instantiate with differents options in constructor", () => {

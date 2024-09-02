@@ -8,7 +8,7 @@ import { EventEmitter } from "node:events";
 import MockDate from "mockdate";
 
 // Import Internal Dependencies
-import { initRedis, clearAllKeys, RestrictedKV, closeAllRedis } from "../../src";
+import { RestrictedKV, Connection } from "../../src";
 import { randomValue } from "../fixtures/utils/randomValue";
 
 // Internal Dependencies Mock
@@ -17,20 +17,29 @@ mock.method(RestrictedKV.prototype, "deleteValue", async() => "deleteValue");
 MockDate.set(Date.now());
 
 describe("RestrictedKV", () => {
+  let connection: Connection;
+
   before(async() => {
-    await initRedis({ port: Number(process.env.REDIS_PORT), host: process.env.REDIS_HOST });
-    await clearAllKeys();
+    connection = new Connection({
+      port: Number(process.env.REDIS_PORT),
+      host: process.env.REDIS_HOST
+    });
+
+    await connection.initialize();
+    await connection.flushdb();
   });
 
   after(async() => {
-    await closeAllRedis();
+    await connection.close();
   });
 
   describe("Instantiated with default options", () => {
     let restrictedKV: RestrictedKV;
 
     before(() => {
-      restrictedKV = new RestrictedKV();
+      restrictedKV = new RestrictedKV({
+        connection
+      });
     });
 
     it("should be instantiated", () => {
@@ -205,7 +214,11 @@ describe("RestrictedKV", () => {
     let restrictedKV: RestrictedKV;
 
     before(() => {
-      restrictedKV = new RestrictedKV({ prefix: "auth-", allowedAttempt });
+      restrictedKV = new RestrictedKV({
+        prefix: "auth-",
+        allowedAttempt,
+        connection
+      });
     });
 
     it("should be instantiated", () => {
@@ -237,7 +250,12 @@ describe("RestrictedKV", () => {
     let restrictedKV: RestrictedKV;
 
     before(async() => {
-      restrictedKV = new RestrictedKV({ prefix: "auth-", allowedAttempt, banTimeInSecond: banTime });
+      restrictedKV = new RestrictedKV({
+        prefix: "auth-",
+        allowedAttempt,
+        banTimeInSecond: banTime,
+        connection
+      });
 
       await restrictedKV.setValue({ key, value: payload });
     });
@@ -259,11 +277,15 @@ describe("RestrictedKV", () => {
     let restrictedKV: RestrictedKV;
 
     before(async() => {
-      restrictedKV = new RestrictedKV({ prefix: "auth-", autoClearExpired: 20 });
+      restrictedKV = new RestrictedKV({
+        prefix: "auth-",
+        autoClearExpired: 20,
+        connection
+      });
     });
 
     beforeEach(async() => {
-      await clearAllKeys();
+      await connection.flushdb();
     });
 
     after(async() => {

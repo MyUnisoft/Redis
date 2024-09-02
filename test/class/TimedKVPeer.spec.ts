@@ -5,9 +5,7 @@ import timers from "node:timers/promises";
 
 // Import Internal Dependencies
 import {
-  initRedis,
-  closeAllRedis,
-  clearAllKeys,
+  Connection,
   TimedKVPeer
 } from "../../src";
 
@@ -16,18 +14,26 @@ interface CustomStore {
 }
 
 describe("TimedKVPeer", () => {
+  let connection: Connection;
   let timedKVPeer: TimedKVPeer<CustomStore>;
 
   before(async() => {
-    await initRedis({ port: Number(process.env.REDIS_PORT), host: process.env.REDIS_HOST });
-    await clearAllKeys();
+    connection = new Connection({
+      port: Number(process.env.REDIS_PORT),
+      host: process.env.REDIS_HOST
+    });
+
+    await connection.initialize();
+    await connection.flushdb();
+
     timedKVPeer = new TimedKVPeer({
+      connection,
       ttl: 3600
     });
   });
 
   after(async() => {
-    await closeAllRedis();
+    await connection.close();
   });
 
   describe("SetValue", () => {

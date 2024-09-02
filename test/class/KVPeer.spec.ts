@@ -6,21 +6,26 @@ import { describe, before, after, test } from "node:test";
 
 // Import Internal Dependencies
 import {
-  initRedis,
-  clearAllKeys,
-  closeAllRedis
+  Connection
 } from "../../src";
 import { KVPeer } from "../../src/index";
 
 // KVPeer Instance
 describe("KVPeer instance", () => {
+  let connection: Connection;
+
   before(async() => {
-    await initRedis({ port: Number(process.env.REDIS_PORT), host: process.env.REDIS_HOST });
-    await clearAllKeys();
+    connection = new Connection({
+      port: Number(process.env.REDIS_PORT),
+      host: process.env.REDIS_HOST
+    });
+
+    await connection.initialize();
+    await connection.flushdb();
   });
 
   after(async() => {
-    await closeAllRedis();
+    await connection.close();
   });
 
   describe("Default instantiation", () => {
@@ -32,7 +37,9 @@ describe("KVPeer instance", () => {
     const fakeKey = "my-fake-key";
 
     before(() => {
-      kvPeer = new KVPeer();
+      kvPeer = new KVPeer({
+        connection
+      });
     });
 
     test("should be well instantiated", () => {
@@ -99,7 +106,8 @@ describe("KVPeer instance", () => {
 
     before(() => {
       kvPeer = new KVPeer({
-        prefix
+        prefix,
+        connection
       });
     });
 
@@ -169,7 +177,8 @@ describe("KVPeer instance", () => {
 
     before(() => {
       kvPeer = new KVPeer({
-        type: "object"
+        type: "object",
+        connection
       });
     });
 
@@ -233,7 +242,8 @@ describe("KVPeer instance", () => {
       before(async() => {
         kvPeer = new KVPeer({
           type: "object",
-          mapValue
+          mapValue,
+          connection
         });
 
         await kvPeer.setValue({ key, value });
@@ -276,7 +286,8 @@ describe("KVPeer instance", () => {
       before(async() => {
         kvPeer = new KVPeer<MyCustomObject, Metadata>({
           type: "object",
-          mapValue
+          mapValue,
+          connection
         });
 
         await kvPeer.setValue({ key, value });
@@ -306,7 +317,8 @@ describe("KVPeer instance", () => {
       before(async() => {
         kvPeer = new KVPeer({
           type: "raw",
-          mapValue
+          mapValue,
+          connection
         });
 
         await kvPeer.setValue({ key, value });

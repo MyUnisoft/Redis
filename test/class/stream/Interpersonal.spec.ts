@@ -6,7 +6,7 @@ import { Readable } from "node:stream";
 import { once } from "node:events";
 
 // Import Internal Dependencies
-import { initRedis, closeAllRedis, Interpersonal } from "../../../src/index";
+import { Connection, Interpersonal } from "../../../src/index";
 import { randomValue } from "../../fixtures/utils/randomValue";
 
 // Import Types
@@ -43,6 +43,7 @@ const kDiff = 1000;
 const kCount = 2;
 
 describe("Consumer", () => {
+  let connection: Connection;
   let firstConsumer: Interpersonal;
   let secondConsumer: Interpersonal;
   let thirdConsumer: Interpersonal;
@@ -53,9 +54,15 @@ describe("Consumer", () => {
   let thirdConsumerReadable: Readable;
 
   before(async() => {
-    await initRedis({ port: Number(process.env.REDIS_PORT), host: process.env.REDIS_HOST });
+    connection = new Connection({
+      port: Number(process.env.REDIS_PORT),
+      host: process.env.REDIS_HOST
+    });
+
+    await connection.initialize();
 
     firstConsumer = new Interpersonal({
+      connection,
       streamName: kStreamName,
       claimOptions: {
         idleTime: 1000
@@ -68,6 +75,7 @@ describe("Consumer", () => {
     });
 
     secondConsumer = new Interpersonal({
+      connection,
       streamName: kStreamName,
       claimOptions: {
         idleTime: 1000
@@ -80,6 +88,7 @@ describe("Consumer", () => {
     });
 
     thirdConsumer = new Interpersonal({
+      connection,
       streamName: kStreamName,
       groupName: kGroupName,
       consumerName: kThirdConsumerName,
@@ -138,7 +147,7 @@ describe("Consumer", () => {
     const promises = [once(secondConsumerReadable, "close"), once(thirdConsumerReadable, "close")];
     await Promise.all(promises);
 
-    await closeAllRedis();
+    await connection.close();
   });
 
   test(`WHEN calling init()
