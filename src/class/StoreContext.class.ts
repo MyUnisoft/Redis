@@ -1,3 +1,6 @@
+// Import Third-party Dependencies
+import { Result, Ok, Err } from "@openally/result";
+
 // Import Internal Dependencies
 import { TimedKVPeer, type TimedKVPeerOptions } from "./TimedKVPeer.class.js";
 
@@ -18,7 +21,7 @@ export interface CookieSerializeOptions {
 }
 
 export interface UseContext<T> {
-  initSession: (id: string, payload: T) => Promise<string>;
+  initSession: (id: string, payload: T) => Promise<InitSessionResponse>;
   destroySession: () => Promise<void>;
   getSession: () => Promise<T | null>;
   updateSession: (payload: Partial<T>) => Promise<void>;
@@ -34,6 +37,9 @@ export interface FrameworkContext {
   getCookie: (cookieName: string) => string;
   setCookie: (cookieName: string, cookieValue: string | null, opts?: CookieSerializeOptions) => void;
 }
+
+export type InitSessionResponse = Result<string, "id must not be an empty string">;
+export type GetSessionIdResponse = Result<string, "Unable to found any cookie session-id. Your session is probably expired!">;
 
 export interface StoreContextOptions<T extends Store> extends TimedKVPeerOptions<T> {
   /** Property name used in isUserAuthenticated() method to define if the user is authenticated or not **/
@@ -87,9 +93,9 @@ export class StoreContext<T extends Store = Store> extends TimedKVPeer<T> {
   * const sessionId = await handler.initSession(randomUUID(), ctx, { returnTo: "http://localhost:3000/" });
   * ```
   */
-  async initSession(id: string, ctx: FrameworkContext, payload: T): Promise<string> {
+  async initSession(id: string, ctx: FrameworkContext, payload: T): Promise<InitSessionResponse> {
     if (!id) {
-      throw new Error("id must not be an empty string");
+      return Err("id must not be an empty string");
     }
 
     ctx.setCookie(kStoreContextSessionName, id, this.cookiesOptions);
@@ -100,18 +106,18 @@ export class StoreContext<T extends Store = Store> extends TimedKVPeer<T> {
 
     await this.setValue({ key: id, value: payload });
 
-    return id;
+    return Ok(id);
   }
 
   async destroySession(ctx: FrameworkContext): Promise<void> {
-    const sessionId = this.getSessionId(ctx);
+    const sessionId = this.getSessionId(ctx).unwrap();
     ctx.setCookie(kStoreContextSessionName, null);
 
     await this.deleteValue(sessionId);
   }
 
   getSession(ctx: FrameworkContext): Promise<T | null> {
-    const sessionId = this.getSessionId(ctx);
+    const sessionId = this.getSessionId(ctx).unwrap();
 
     return this.getValue(sessionId);
   }
@@ -123,7 +129,7 @@ export class StoreContext<T extends Store = Store> extends TimedKVPeer<T> {
   * @param payload - the new property to assign at the session
   */
   async updateSession(ctx: FrameworkContext, payload: Partial<T>) {
-    const sessionId = this.getSessionId(ctx);
+    const sessionId = this.getSessionId(ctx).unwrap();
 
     await this.setValue({ key: sessionId, value: payload });
   }
@@ -162,12 +168,12 @@ export class StoreContext<T extends Store = Store> extends TimedKVPeer<T> {
   /**
   * @param ctx http context object
   */
-  private getSessionId(ctx: FrameworkContext): string {
+  private getSessionId(ctx: FrameworkContext): GetSessionIdResponse {
     const sessionId = ctx.getCookie(kStoreContextSessionName);
     if (!sessionId) {
-      throw new TypeError("Unable to found any cookie session-id. Your session is probably expired!");
+      return Err("Unable to found any cookie session-id. Your session is probably expired!");
     }
 
-    return sessionId;
+    return Ok(sessionId);
   }
 }

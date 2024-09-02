@@ -21,17 +21,17 @@ type MappedValue<T extends StringOrObject, K extends Record<string, any> | null 
 
 export type KVMapper<T extends StringOrObject, K extends Record<string, any> | null = null> = (value: T) => MappedValue<T, K>;
 
+export interface SetValueOptions<T extends StringOrObject = Record<string, any>> {
+  key: KeyType;
+  value: Partial<T>;
+  expiresIn?: number;
+}
+
 export interface KVOptions<T extends StringOrObject = Record<string, any>, K extends Record<string, any> | null = null> {
   connection: Connection;
   prefix?: string;
   type?: KVType;
   mapValue?: KVMapper<T, K>;
-}
-
-export interface SetValueOptions<T extends StringOrObject = Record<string, any>> {
-  key: KeyType;
-  value: Partial<T>;
-  expiresIn?: number;
 }
 
 /**
@@ -175,8 +175,6 @@ export class KVPeer<T extends StringOrObject = StringOrObject, K extends Record<
   private parseOutput(object: Record<string, any>) {
     if (typeof object === "string") {
       if (!Number.isNaN(Number(object))) {
-        // if a numeric string is received, return itself
-        // otherwise JSON.parse will convert it to a number
         return object;
       }
       else if (object === "false" || object === "true") {
@@ -191,13 +189,10 @@ export class KVPeer<T extends StringOrObject = StringOrObject, K extends Record<
       }
     }
 
-    // if an array is received, map over the array and deepParse each value
     if (Array.isArray(object)) {
       return object.map((val) => this.parseOutput(val));
     }
 
-    // if an object is received then deep parse each element in the object
-    // typeof null returns 'object' too, so we have to eliminate that
     if (typeof object === "object" && object !== null) {
       return Object.keys(object).reduce(
         (obj, key) => Object.assign(obj, { [key]: this.parseOutput(object[key]) }),

@@ -3,6 +3,7 @@ import { EventEmitter } from "node:events";
 
 // Import Third-party Dependencies
 import { RedisValue } from "ioredis";
+import { Result, Ok, Err } from "@openally/result";
 
 // Import Internal Dependencies
 import { Connection } from "../../index.js";
@@ -16,23 +17,6 @@ import type {
 // CONSTANTS
 const kDefaultRangeOptions = { min: "-", max: "+" };
 const kMinId = "0-0";
-
-export interface StreamOptions {
-  connection: Connection;
-  streamName: string;
-  /**
-   * Interval of time between two iteration on the stream
-   */
-  frequency: number;
-  /**
-   * Reference to the minimal ID we iterate from
-   */
-  lastId?: string;
-  /**
-   * Number of entries it must pull at each iteration
-   */
-  count?: number;
-}
 
 export interface GetRangeOptions {
   /**
@@ -67,6 +51,26 @@ export interface ConsumeOptions {
 export interface PushOptions {
   id?: string;
   metadata?: string;
+}
+
+export type GetGroupsDataResponse = Result<utils.XINFOGroupData[], "Stream not initialized yet">;
+export type DelEntryResponse = Result<void, string>;
+
+export interface StreamOptions {
+  connection: Connection;
+  streamName: string;
+  /**
+   * Interval of time between two iteration on the stream
+   */
+  frequency: number;
+  /**
+   * Reference to the minimal ID we iterate from
+   */
+  lastId?: string;
+  /**
+   * Number of entries it must pull at each iteration
+   */
+  count?: number;
 }
 
 /**
@@ -136,14 +140,14 @@ export class Stream extends EventEmitter {
     return await this.connection.xlen(this.streamName);
   }
 
-  public async getGroupsData(): Promise<utils.XINFOGroupData[]> {
+  public async getGroupsData(): Promise<GetGroupsDataResponse> {
     try {
       const groups = await this.connection.xinfo("GROUPS", this.streamName) as utils.XINFOGroups;
 
-      return utils.parseXINFOGroups(groups);
+      return Ok(utils.parseXINFOGroups(groups));
     }
     catch {
-      throw new Error("Stream not initialized yet.");
+      return Err("Stream not initialized yet");
     }
   }
 
@@ -184,14 +188,14 @@ export class Stream extends EventEmitter {
     return await this.connection.xadd(this.streamName, formattedId, ...entries) as string;
   }
 
-  public async delEntry(entryId: string): Promise<void> {
+  public async delEntry(entryId: string): Promise<DelEntryResponse> {
     const res = await this.connection.xdel(this.streamName, entryId);
 
     if (res !== 1) {
-      throw new Error(`Failed entry deletion for ${entryId}`);
+      return Err(`Failed entry deletion for ${entryId}`);
     }
 
-    return;
+    return Ok(void 0);
   }
 
   public async handleEntries(entries: utils.XEntries, cursor?: string): Promise<Entry[]> {
@@ -306,7 +310,7 @@ export class Stream extends EventEmitter {
    * @returns {Promise<boolean>}
    */
   public async groupExist(name: string): Promise<boolean> {
-    const groups = await this.getGroupsData();
+    const groups = (await this.getGroupsData()).unwrap();
 
     return groups.some((group) => group.name === name);
   }
@@ -318,6 +322,7 @@ export class Stream extends EventEmitter {
    */
   public async createGroup(name: string): Promise<void> {
     const exist = await this.groupExist(name);
+
     if (exist) {
       return;
     }
@@ -332,6 +337,7 @@ export class Stream extends EventEmitter {
    */
   public async deleteGroup(name: string) {
     const exist = await this.groupExist(name);
+
     if (!exist) {
       return;
     }
@@ -375,6 +381,7 @@ export class Stream extends EventEmitter {
    */
   public async createConsumer(groupName: string, consumerName: string): Promise<void> {
     const exist = await this.consumerExist(groupName, consumerName);
+
     if (exist) {
       return;
     }
@@ -390,6 +397,7 @@ export class Stream extends EventEmitter {
    */
   public async deleteConsumer(groupName: string, consumerName: string): Promise<void> {
     const exist = await this.consumerExist(groupName, consumerName);
+
     if (!exist) {
       return;
     }
