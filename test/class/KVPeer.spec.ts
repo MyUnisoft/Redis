@@ -10,8 +10,7 @@ import {
 } from "../../src";
 import { KVPeer } from "../../src/index";
 
-// KVPeer Instance
-describe("KVPeer instance", () => {
+describe("KVPeer", () => {
   let connection: Connection;
 
   before(async() => {
@@ -31,7 +30,6 @@ describe("KVPeer instance", () => {
   describe("Default instantiation", () => {
     let kvPeer: KVPeer;
 
-    // CONSTANTS
     const [stringRelatedKey, stringValue] = ["foo", "bar"];
     const [objectRelatedKey, objectValue] = ["bar", { foo: "bar" }];
     const fakeKey = "my-fake-key";
