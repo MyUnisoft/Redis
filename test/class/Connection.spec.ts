@@ -8,11 +8,14 @@ import {
 } from "../../src";
 
 describe("Connection", () => {
-  describe("Without options", () => {
+  describe("Default instantiation", () => {
     let connection: Connection;
 
     before(async() => {
-      connection = new Connection();
+      connection = new Connection({
+        port: Number(process.env.REDIS_PORT),
+        host: process.env.REDIS_HOST
+      });
     });
 
     after(async() => {
