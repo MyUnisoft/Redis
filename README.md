@@ -32,88 +32,89 @@ $ npm i @myunisoft/redis
 $ yarn add @myunisoft/redis
 ```
 
-## 📚 Usage
+## 📜 API
 
-> [!IMPORTANT]
-> The package export methods to instantiate and close connection to Redis. By default, all features automatically re-use the current Redis connection.
+<h1 align="center">
+  Connection
+</h1>
+
+<p align="center">
+  This class is used to instantiate and close connection to Redis. You need to re-use this instance in every other classes.
+</p>
+
+```ts
+type ConnectionOptions: Partial<RedisOptions> & {
+  port?: number;
+  host?: string;
+  attempt?: number;
+  disconnectionTimeout?: number;
+};
+```
+
+### 📚 Usage
 
 ```js
 import assert from "assert";
 import {
-  initRedis,
-  getRedis,
-  closeAllRedis
+  Connection
 } from "@myunisoft/redis";
 
-const publisher = await initRedis();
-const subscriber = await initRedis({}, "subscriber");
+const connection = new Connection();
 
-assert.strictEqual(publisher, getRedis());
-assert.strictEqual(subscriber, getRedis("subscriber"));
+await connection.initialize();
 
-await closeAllRedis();
+assert(connection.isAlive, true);
+
+await connection.close();
 ```
 
-## 📜 API
+### initialize(): Promise< AssertConnectionResponse >
 
 ```ts
-export type Instance = "subscriber" | "publisher";
+type AssertConnectionResponse = Result<null, "Failed at initializing the Redis connection">;
+```
 
-type CustomRedisOptions: Partial<RedisOptions> & {
-  port?: number;
-  host?: string;
+This function either return null, or an error;
+
+---
+
+### getConnectionPerf(): Promise< GetConnectionPerfResponse >
+
+```ts
+type GetConnectionPerfResponse = {
+  isAlive: false;
+} | {
+  isAlive: true;
+  perf: number;
 };
-```
-
-### getRedis(instance: Instance = "publisher"): Redis;
-
-This function return either the publisher instance, either the subscriber instance.
-
----
-
-
-### initRedis(redisOptions: CustomRedisOptions = {}, instance: Instance = "publisher", external?: boolean): Promise< Redis >
-
-This function is used to init redis connections. Passing instance with "subscriber" value, it init the local  subscriber Redis instance. Otherwise, it init the local publisher Redis instance.
-
----
-
-### getConnectionPerf(instance: Instance = "publisher", redisInstance?: Redis): Promise< GetConnectionPerfResponse >
-
-```ts
-export interface GetConnectionPerfResponse {
-  isAlive: boolean;
-  perf?: number;
-}
 ```
 
 This function is used to check Redis connection state.
 
 ```ts
-const { isAlive } = await getConnectionPerf(); // true
+const instancePerf = await getConnectionPerf();
+
+if (!instancePerf.isAlive) {
+  console.log(instancePerf.isAlive);
+}
+
+console.log(instancePerf.isAlive);
+console.log(instancePerf.perf);
 ```
 
 ---
 
-### closeRedis(instance: Instance = "publisher", redisInstance?: Redis, forceExit: boolean = false): Promise< void >
-
-This function is used to close a single local instance.
-
----
-
-### closeAllRedis(redisInstance?: [Redis, Redis], forceExit: boolean = false): Promise< void >
-
-This function is used to close every local instances.
-
----
-
-### clearAllKeys(instance: Instance = "publisher", redis?: Redis): Promise< void >
-
-This function is used to clear all keys from redis db (it doesn't clean up streams or pubsub !).
+### closeRedis(forceExit: boolean = false): Promise< CloseResponse >
 
 ```ts
-await clearAllKeys();
+type AssertDisconnectionErrorMessage = "Failed at closing the Redis connection";
+
+type CloseResponse = Result<null, AssertDisconnectionErrorMessage | "Redis connection already closed">;
 ```
+
+This function is used to close the Redis connection related to the instance.
+
+---
 
 The package also exports many classes listed below.
 
