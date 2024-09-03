@@ -22,6 +22,7 @@ IsMetadataDefined<T, K> : T;
 export type KVMapper<T extends StringOrObject, K extends Record<string, any> | null = null> = (value: T) => MappedValue<T, K>;
 
 export class KVPeer<T extends StringOrObject = StringOrObject, K extends Record<string, any> | null = null> extends EventEmitter {
+  connection: Connection;
   prefix?: string;
   type?: KVType;
   mapValue?: KVMapper<T, K>;
@@ -41,7 +42,7 @@ export interface SetValueOptions<T> {
 ## 📚 Usage
 
 ```ts
-import { RedisKV } from "@myunisoft/redis";
+import { RedisKV, Connection } from "@myunisoft/redis";
 
 interface MyCustomObject {
   foo: string;
@@ -51,7 +52,12 @@ interface Metadata {
   bar: string;
 }
 
+const connection = new Connection();
+
+await connection.initialize();
+
 const options: KVOptions<MyCustomObject, Metadata> = {
+  connection,
   prefix: "local",
   type: "object",
   mapValue: (value: MyCustomObject) => {

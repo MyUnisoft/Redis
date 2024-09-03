@@ -187,11 +187,7 @@ export class Interpersonal extends Stream {
   override async groupExist(): Promise<boolean> {
     const groups = await this.getGroupsData();
 
-    if (!groups.ok) {
-      throw new Error(groups.val);
-    }
-
-    return groups.unwrap().some((group) => group.name === this.groupName);
+    return groups.some((group) => group.name === this.groupName);
   }
 
   override async createGroup(): Promise<void> {

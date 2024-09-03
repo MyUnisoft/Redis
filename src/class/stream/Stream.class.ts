@@ -53,7 +53,6 @@ export interface PushOptions {
   metadata?: string;
 }
 
-export type GetGroupsDataResponse = Result<utils.XINFOGroupData[], "Stream not initialized yet">;
 export type DelEntryResponse = Result<void, string>;
 
 export interface StreamOptions {
@@ -140,15 +139,10 @@ export class Stream extends EventEmitter {
     return await this.connection.xlen(this.streamName);
   }
 
-  public async getGroupsData(): Promise<GetGroupsDataResponse> {
-    try {
-      const groups = await this.connection.xinfo("GROUPS", this.streamName) as utils.XINFOGroups;
+  public async getGroupsData(): Promise<utils.XINFOGroupData[]> {
+    const groups = await this.connection.xinfo("GROUPS", this.streamName) as utils.XINFOGroups;
 
-      return Ok(utils.parseXINFOGroups(groups));
-    }
-    catch {
-      return Err("Stream not initialized yet");
-    }
+    return utils.parseXINFOGroups(groups);
   }
 
   /**
@@ -310,13 +304,9 @@ export class Stream extends EventEmitter {
    * @returns {Promise<boolean>}
    */
   public async groupExist(name: string): Promise<boolean> {
-    const getGroupsResult = await this.getGroupsData();
+    const groups = await this.getGroupsData();
 
-    if (!getGroupsResult.ok) {
-      throw new Error(getGroupsResult.val);
-    }
-
-    return getGroupsResult.unwrap().some((group) => group.name === name);
+    return groups.some((group) => group.name === name);
   }
 
   /**
