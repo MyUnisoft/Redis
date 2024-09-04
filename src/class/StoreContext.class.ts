@@ -110,17 +110,11 @@ export class StoreContext<T extends Store = Store> extends TimedKVPeer<T> {
   }
 
   async destroySession(ctx: FrameworkContext): Promise<void> {
-    const getSessionResult = this.getSessionId(ctx);
-
-    if (!getSessionResult.ok) {
-      throw new Error(getSessionResult.val);
-    }
-
-    const val = getSessionResult.unwrap();
+    const sessionId = this.getSessionId(ctx).unwrap();
 
     ctx.setCookie(kStoreContextSessionName, null);
 
-    await this.deleteValue(val);
+    await this.deleteValue(sessionId);
   }
 
   getSession(ctx: FrameworkContext): Promise<T | null> {
