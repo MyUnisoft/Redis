@@ -20,15 +20,13 @@ const kDefaultTimeout = 500;
 type AssertDisconnectionErrorMessage = "Failed at closing the Redis connection";
 
 export type GetConnectionPerfResponse = {
-  isAlive: false;
-} | {
-  isAlive: true;
+  isAlive: boolean;
   perf: number;
 };
 
-export type AssertConnectionResponse = Result<null, "Failed at initializing the Redis connection">;
-export type AssertDisconnectionResponse = Result<null, AssertDisconnectionErrorMessage>;
-export type CloseResponse = Result<null, AssertDisconnectionErrorMessage | "Redis connection already closed">;
+export type AssertConnectionResponse = Result<void, "Failed at initializing the Redis connection">;
+export type AssertDisconnectionResponse = Result<void, AssertDisconnectionErrorMessage>;
+export type CloseResponse = Result<void, AssertDisconnectionErrorMessage | "Redis connection already closed">;
 
 export type ConnectionOptions = Partial<RedisOptions> & {
   port?: number;
@@ -70,7 +68,7 @@ export class Connection extends Redis {
     catch {
       this.isAlive = false;
 
-      return { isAlive: false };
+      return { isAlive: false, perf: performance.now() - start };
     }
 
     return { isAlive: true, perf: performance.now() - start };
@@ -80,12 +78,12 @@ export class Connection extends Redis {
     const { isAlive } = await this.getConnectionPerf();
 
     if (!isAlive) {
-      return Err("Redis connection already closed");
+      return Ok(void 0);
     }
 
     await this.assertDisconnection(forceExit);
 
-    return Ok(null);
+    return Ok(void 0);
   }
 
   private async assertConnection(attempt = this.#attempt): Promise<AssertConnectionResponse> {
@@ -101,7 +99,7 @@ export class Connection extends Redis {
 
     this.isAlive = true;
 
-    return Ok(null);
+    return Ok(void 0);
   }
 
   private async assertDisconnection(forceExit: boolean, attempt = this.#attempt): Promise<AssertDisconnectionResponse> {
@@ -127,6 +125,6 @@ export class Connection extends Redis {
 
     this.isAlive = false;
 
-    return Ok(null);
+    return Ok(void 0);
   }
 }
