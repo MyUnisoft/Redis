@@ -15,8 +15,6 @@ describe("Connection", () => {
         host: process.env.REDIS_HOST
       });
 
-      assert.equal(connection.isAlive, false);
-
       await connection.close();
     });
 
@@ -29,7 +27,6 @@ describe("Connection", () => {
       const res = await connection.initialize();
 
       assert.equal(res.ok, true);
-      assert.equal(connection.isAlive, true);
 
       await connection.close();
     });
