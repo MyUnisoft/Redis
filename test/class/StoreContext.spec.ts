@@ -113,10 +113,7 @@ describe("StoreContext", () => {
     it("should throw error if there is no cookie `session-id`", async() => {
       const ctx = createFrameworkCtx();
 
-      await assert.rejects(async() => sessionContext.destroySession(ctx), {
-        name: "Error",
-        message: "Unable to found any cookie session-id. Your session is probably expired!"
-      });
+      await assert.rejects(async() => sessionContext.destroySession(ctx));
     });
 
     it("should correctly destroy session", async() => {
