@@ -24,9 +24,9 @@ export type GetConnectionPerfResponse = {
   perf: number;
 };
 
-export type AssertConnectionResponse = Result<void, "Failed at initializing the Redis connection">;
-export type AssertDisconnectionResponse = Result<void, AssertDisconnectionErrorMessage>;
-export type CloseResponse = Result<void, AssertDisconnectionErrorMessage | "Redis connection already closed">;
+export type AssertConnectionErr = "Failed at initializing the Redis connection";
+export type AssertDisconnectionErr = AssertDisconnectionErrorMessage;
+export type CloseErr = AssertDisconnectionErrorMessage | "Redis connection already closed";
 
 export type ConnectionOptions = Partial<RedisOptions> & {
   port?: number;
@@ -55,7 +55,7 @@ export class Connection extends Redis {
     this.#disconnectionTimeout = options.disconnectionTimeout ?? kDefaultTimeout;
   }
 
-  async initialize(): Promise<AssertConnectionResponse> {
+  async initialize(): Promise<Result<void, AssertConnectionErr>> {
     return this.assertConnection();
   }
 
@@ -74,7 +74,7 @@ export class Connection extends Redis {
     return { isAlive: true, perf: performance.now() - start };
   }
 
-  async close(forceExit: boolean = false): Promise<CloseResponse> {
+  async close(forceExit: boolean = false): Promise<Result<void, CloseErr>> {
     const { isAlive } = await this.getConnectionPerf();
 
     if (!isAlive) {
@@ -86,7 +86,7 @@ export class Connection extends Redis {
     return Ok(void 0);
   }
 
-  private async assertConnection(attempt = this.#attempt): Promise<AssertConnectionResponse> {
+  private async assertConnection(attempt = this.#attempt): Promise<Result<void, AssertConnectionErr>> {
     if (attempt <= 0) {
       return Err("Failed at initializing the Redis connection");
     }
@@ -102,7 +102,7 @@ export class Connection extends Redis {
     return Ok(void 0);
   }
 
-  private async assertDisconnection(forceExit: boolean, attempt = this.#attempt): Promise<AssertDisconnectionResponse> {
+  private async assertDisconnection(forceExit: boolean, attempt = this.#attempt): Promise<Result<void, AssertDisconnectionErr>> {
     if (attempt <= 0) {
       return Err("Failed at closing the Redis connection");
     }

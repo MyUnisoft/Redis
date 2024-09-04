@@ -38,8 +38,10 @@ export interface FrameworkContext {
   setCookie: (cookieName: string, cookieValue: string | null, opts?: CookieSerializeOptions) => void;
 }
 
-export type InitSessionResponse = Result<string, "id must not be an empty string">;
-export type GetSessionIdResponse = Result<string, "Unable to found any cookie session-id. Your session is probably expired!">;
+export type InitSessionErr = "id must not be an empty string";
+export type GetSessionIdErr = "Unable to found any cookie session-id. Your session is probably expired!";
+
+type InitSessionResponse = Result<string, InitSessionErr>;
 
 export interface StoreContextOptions<T extends Store> extends TimedKVPeerOptions<T> {
   /** Property name used in isUserAuthenticated() method to define if the user is authenticated or not **/
@@ -181,7 +183,7 @@ export class StoreContext<T extends Store = Store> extends TimedKVPeer<T> {
   /**
   * @param ctx http context object
   */
-  private getSessionId(ctx: FrameworkContext): GetSessionIdResponse {
+  private getSessionId(ctx: FrameworkContext): Result<string, GetSessionIdErr> {
     const sessionId = ctx.getCookie(kStoreContextSessionName);
     if (!sessionId) {
       return Err("Unable to found any cookie session-id. Your session is probably expired!");
