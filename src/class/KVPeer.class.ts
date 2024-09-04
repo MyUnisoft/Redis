@@ -62,10 +62,6 @@ export class KVPeer<T extends StringOrObject = StringOrObject, K extends Record<
 
     this.connection = connection;
 
-    if (!this.connection.isAlive) {
-      throw new Error("Redis connection not initialized");
-    }
-
     this.prefix = prefix ? `${prefix}-` : "";
     this.type = type ?? kDefaultKVType;
     this.mapValue = mapValue ?? this.defaultMapValue;

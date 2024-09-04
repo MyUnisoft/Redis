@@ -28,10 +28,6 @@ export class Channel<
 
     this.name = `${prefix ? `${prefix}-` : ""}` + name;
     this.#connection = options.connection;
-
-    if (!this.#connection.isAlive) {
-      throw new Error("Redis connection not initialized");
-    }
   }
 
   public async publish(options: PublishOptions<T, K>) {

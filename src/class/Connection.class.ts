@@ -39,8 +39,6 @@ export class Connection extends Redis {
   #attempt: number;
   #disconnectionTimeout: number;
 
-  isAlive: boolean = false;
-
   constructor(options: ConnectionOptions = {}) {
     const { port, host, password } = options;
 
@@ -66,8 +64,6 @@ export class Connection extends Redis {
       await this.ping();
     }
     catch {
-      this.isAlive = false;
-
       return { isAlive: false, perf: performance.now() - start };
     }
 
@@ -97,8 +93,6 @@ export class Connection extends Redis {
       await this.assertConnection(attempt - 1);
     }
 
-    this.isAlive = true;
-
     return Ok(void 0);
   }
 
@@ -122,8 +116,6 @@ export class Connection extends Redis {
     catch {
       await this.assertDisconnection(forceExit, attempt - 1);
     }
-
-    this.isAlive = false;
 
     return Ok(void 0);
   }
