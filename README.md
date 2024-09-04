@@ -76,13 +76,13 @@ assert(isAlive, true);
 await connection.close();
 ```
 
-### initialize(): Promise< AssertConnectionResponse >
+### initialize(): Promise< Result< null, AssertConnectionErr > >
 
 ```ts
-type AssertConnectionResponse = Result<null, "Failed at initializing the Redis connection">;
+type AssertConnectionErr = "Failed at initializing the Redis connection";
 ```
 
-This function either return null, or an error;
+This function either return void, or an error;
 
 ---
 
@@ -90,9 +90,7 @@ This function either return null, or an error;
 
 ```ts
 type GetConnectionPerfResponse = {
-  isAlive: false;
-} | {
-  isAlive: true;
+  isAlive: boolean;
   perf: number;
 };
 ```
@@ -104,6 +102,7 @@ const instancePerf = await getConnectionPerf();
 
 if (!instancePerf.isAlive) {
   console.log(instancePerf.isAlive);
+  console.log(instancePerf.perf);
 }
 
 console.log(instancePerf.isAlive);
@@ -112,12 +111,11 @@ console.log(instancePerf.perf);
 
 ---
 
-### closeRedis(forceExit: boolean = false): Promise< CloseResponse >
+### closeRedis(forceExit: boolean = false): Promise< Result< null, CloseErr > >
 
 ```ts
-type AssertDisconnectionErrorMessage = "Failed at closing the Redis connection";
-
-type CloseResponse = Result<null, AssertDisconnectionErrorMessage | "Redis connection already closed">;
+type AssertDisconnectionErr = AssertDisconnectionErrorMessage;
+type CloseErr = AssertDisconnectionErrorMessage | "Redis connection already closed";
 ```
 
 This function is used to close the Redis connection related to the instance.
