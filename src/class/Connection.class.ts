@@ -13,6 +13,15 @@ import {
   type Result
 } from "@openally/result";
 
+// Import Internal Dependencies
+import {
+  AssertConnectionError,
+  AssertDisconnectionError
+} from "./Error/Connection.error.class.js";
+
+// Export Types
+export * from "./Error/Connection.error.class.js";
+
 // CONSTANTS
 const kDefaultAttempt = 4;
 const kDefaultTimeout = 500;
@@ -21,10 +30,6 @@ export type GetConnectionPerfResponse = {
   isAlive: boolean;
   perf: number;
 };
-
-export type AssertConnectionErr = "Failed at initializing the Redis connection";
-export type AssertDisconnectionErr = "Failed at closing the Redis connection";
-export type CloseErr = "Redis connection already closed";
 
 export type ConnectionOptions = Partial<RedisOptions> & {
   port?: number;
@@ -51,7 +56,7 @@ export class Connection extends Redis {
     this.#disconnectionTimeout = options.disconnectionTimeout ?? kDefaultTimeout;
   }
 
-  async initialize(): Promise<Result<void, AssertConnectionErr>> {
+  async initialize(): Promise<Result<void, AssertConnectionError>> {
     return this.assertConnection();
   }
 
@@ -69,7 +74,7 @@ export class Connection extends Redis {
     return { isAlive, perf: performance.now() - start };
   }
 
-  async close(forceExit: boolean = false): Promise<Result<void, AssertDisconnectionErr | CloseErr>> {
+  async close(forceExit: boolean = false): Promise<Result<void, AssertDisconnectionError>> {
     const { isAlive } = await this.getConnectionPerf();
 
     if (!isAlive) {
@@ -81,9 +86,9 @@ export class Connection extends Redis {
     return Ok(void 0);
   }
 
-  private async assertConnection(attempt = this.#attempt): Promise<Result<void, AssertConnectionErr>> {
+  private async assertConnection(attempt = this.#attempt): Promise<Result<void, AssertConnectionError>> {
     if (attempt <= 0) {
-      return Err("Failed at initializing the Redis connection");
+      return Err(new AssertConnectionError());
     }
 
     const { isAlive } = await this.getConnectionPerf();
@@ -95,9 +100,11 @@ export class Connection extends Redis {
     return Ok(void 0);
   }
 
-  private async assertDisconnection(forceExit: boolean, attempt = this.#attempt): Promise<Result<void, AssertDisconnectionErr>> {
+  private async assertDisconnection(forceExit: boolean, attempt = this.#attempt): Promise<
+    Result<void, AssertDisconnectionError>
+  > {
     if (attempt <= 0) {
-      return Err("Failed at closing the Redis connection");
+      return Err(new AssertDisconnectionError());
     }
 
     if (forceExit) {
