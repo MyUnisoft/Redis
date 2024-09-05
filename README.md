@@ -61,19 +61,12 @@ import {
 
 const connection = new Connection();
 
-
-const res = await connection.initialize();
-
-if (!res.ok) {
-  assert(res.err, true);
-  assert(connection.val, "Failed at initializing the Redis connection");
+try {
+  (await connection.initialize()).unwrap();
 }
-
-const { isAlive } = res.unwrap();
-
-assert(isAlive, true);
-
-await connection.close();
+finally {
+  await connection.close();
+}
 ```
 
 ### initialize(): Promise< Result< null, AssertConnectionErr > >

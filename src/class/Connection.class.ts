@@ -17,16 +17,14 @@ import {
 const kDefaultAttempt = 4;
 const kDefaultTimeout = 500;
 
-type AssertDisconnectionErrorMessage = "Failed at closing the Redis connection";
-
 export type GetConnectionPerfResponse = {
   isAlive: boolean;
   perf: number;
 };
 
 export type AssertConnectionErr = "Failed at initializing the Redis connection";
-export type AssertDisconnectionErr = AssertDisconnectionErrorMessage;
-export type CloseErr = AssertDisconnectionErrorMessage | "Redis connection already closed";
+export type AssertDisconnectionErr = "Failed at closing the Redis connection";
+export type CloseErr = "Redis connection already closed";
 
 export type ConnectionOptions = Partial<RedisOptions> & {
   port?: number;
@@ -59,18 +57,19 @@ export class Connection extends Redis {
 
   async getConnectionPerf(): Promise<GetConnectionPerfResponse> {
     const start = performance.now();
+    let isAlive = true;
 
     try {
       await this.ping();
     }
     catch {
-      return { isAlive: false, perf: performance.now() - start };
+      isAlive = false;
     }
 
-    return { isAlive: true, perf: performance.now() - start };
+    return { isAlive, perf: performance.now() - start };
   }
 
-  async close(forceExit: boolean = false): Promise<Result<void, CloseErr>> {
+  async close(forceExit: boolean = false): Promise<Result<void, AssertDisconnectionErr | CloseErr>> {
     const { isAlive } = await this.getConnectionPerf();
 
     if (!isAlive) {
@@ -90,7 +89,7 @@ export class Connection extends Redis {
     const { isAlive } = await this.getConnectionPerf();
 
     if (!isAlive) {
-      await this.assertConnection(attempt - 1);
+      return this.assertConnection(attempt - 1);
     }
 
     return Ok(void 0);
@@ -112,11 +111,11 @@ export class Connection extends Redis {
       await once(this, "end", {
         signal: AbortSignal.timeout(this.#disconnectionTimeout)
       });
+
+      return Ok(void 0);
     }
     catch {
-      await this.assertDisconnection(forceExit, attempt - 1);
+      return this.assertDisconnection(forceExit, attempt - 1);
     }
-
-    return Ok(void 0);
   }
 }
