@@ -19,9 +19,6 @@ import {
   AssertDisconnectionError
 } from "./Error/Connection.error.class.js";
 
-// Export Types
-export * from "./Error/Connection.error.class.js";
-
 // CONSTANTS
 const kDefaultAttempt = 4;
 const kDefaultTimeout = 500;
@@ -100,9 +97,10 @@ export class Connection extends Redis {
     return Ok(void 0);
   }
 
-  private async assertDisconnection(forceExit: boolean, attempt = this.#attempt): Promise<
-    Result<void, AssertDisconnectionError>
-  > {
+  private async assertDisconnection(
+    forceExit: boolean,
+    attempt = this.#attempt
+  ): Promise<Result<void, AssertDisconnectionError>> {
     if (attempt <= 0) {
       return Err(new AssertDisconnectionError());
     }

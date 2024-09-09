@@ -7,4 +7,7 @@ export * from "./class/KVPeer.class.js";
 export * from "./class/TimedKVPeer.class.js";
 export * from "./class/RestrictedKV.class.js";
 export * from "./class/StoreContext.class.js";
+
+// Export Types
+export * from "./class/Error/Connection.error.class.js";
 export * as Types from "./types/index.js";
