@@ -3,8 +3,8 @@
 import { EventEmitter } from "node:events";
 
 // Import Internal Dependencies
-import type { KeyType, Value } from "../types/index.js";
-import { Connection } from "../index.js";
+import type { KeyType } from "../types/index.js";
+import { Connection } from "./Connection.class.js";
 
 // CONSTANTS
 const kDefaultKVType = "raw";
@@ -71,132 +71,125 @@ export class KVPeer<T extends StringOrObject = StringOrObject, K extends Record<
     return value as MappedValue<T, K>;
   }
 
-  async setValue(options: SetValueOptions<T>): Promise<KeyType> {
-    const { key, value, expiresIn } = options;
+  // async setValue(options: SetValueOptions<T>): Promise<KeyType> {
+  //   const { key, value, expiresIn } = options;
 
-    const finalKey = typeof key === "object" ? Buffer.from(this.prefix + key) : this.prefix + key;
-    const multiRedis = this.connection.multi();
+  //   const finalKey = typeof key === "object" ? Buffer.from(this.prefix + key) : this.prefix + key;
+  //   const multiRedis = this.connection.multi();
 
-    function booleanStringToBuffer(value: string): string | Buffer {
-      return value === "false" || value === "true" ? Buffer.from(value) : value;
-    }
+  //   function booleanStringToBuffer(value: string): string | Buffer {
+  //     return value === "false" || value === "true" ? Buffer.from(value) : value;
+  //   }
 
-    if (this.type === "raw") {
-      const payload = typeof value === "object" ? JSON.stringify(value) : booleanStringToBuffer(value);
-      multiRedis.set(finalKey, payload);
-    }
-    else {
-      const propsMap = new Map(Object.entries(this.parseInput(value)).map(([key, value]) => {
-        if (typeof value === "object") {
-          return [key, JSON.stringify(value)];
-        }
+  //   if (this.type === "raw") {
+  //     const payload = typeof value === "object" ? JSON.stringify(value) : booleanStringToBuffer(value);
+  //     multiRedis.set(finalKey, payload);
+  //   }
+  //   else {
+  //     const propsMap = new Map(Object.entries(this.parseInput(value)).map(([key, value]) => {
+  //       if (typeof value === "object") {
+  //         return [key, JSON.stringify(value)];
+  //       }
 
-        return [key, booleanStringToBuffer(value)];
-      })) as Map<string, Value>;
+  //       return [key, booleanStringToBuffer(value)];
+  //     })) as Map<string, Value>;
 
-      multiRedis.hmset(finalKey, propsMap);
-    }
+  //     multiRedis.hmset(finalKey, propsMap);
+  //   }
 
-    if (expiresIn) {
-      multiRedis.pexpire(finalKey, expiresIn);
-    }
+  //   if (expiresIn) {
+  //     multiRedis.pexpire(finalKey, expiresIn);
+  //   }
 
-    await multiRedis.exec();
+  //   await multiRedis.exec();
 
-    return finalKey;
-  }
+  //   return finalKey;
+  // }
 
   async getValue(key: KeyType): Promise<MappedValue<T, K> | null> {
-    const finalKey = typeof key === "object" ? Buffer.from(this.prefix + key) : this.prefix + key;
-    const result = this.type === "raw" ?
-      await this.connection.get(finalKey) :
-      this.parseOutput(await this.connection.hgetall(finalKey));
-
-    if (this.type === "object" && result && Object.keys(result).length === 0) {
-      return null;
-    }
+    const result = await this.connection.instance.getValue(key, this.prefix, this.type);
 
     return result === null ? null : this.mapValue(result as T);
   }
 
-  async deleteValue(key: KeyType): Promise<number> {
-    const finalKey = typeof key === "object" ? Buffer.from(this.prefix + key) : this.prefix + key;
+  // async deleteValue(key: KeyType): Promise<number> {
+  //   const finalKey = typeof key === "object" ? Buffer.from(this.prefix + key) : this.prefix + key;
 
-    return this.connection.del(finalKey);
-  }
+  //   return this.connection.instance.del(finalKey);
+  // }
 
-  private* deepParseInput(input: Record<string, any> | any[]) {
-    if (Array.isArray(input)) {
-      for (const value of input) {
-        if (typeof value === "object" && value !== null) {
-          if (Buffer.isBuffer(value)) {
-            yield value.toString();
-          }
-          else if (Array.isArray(value)) {
-            yield [...this.deepParseInput(value)];
-          }
-          else {
-            yield Object.fromEntries(this.deepParseInput(value));
-          }
-        }
-        else {
-          yield value;
-        }
-      }
-    }
-    else {
-      for (const [key, value] of Object.entries(input)) {
-        if (typeof value === "object" && value !== null) {
-          if (Buffer.isBuffer(value)) {
-            yield [key, value.toString()];
-          }
-          else if (Array.isArray(value)) {
-            yield [key, [...this.deepParseInput(value)]];
-          }
-          else {
-            yield [key, JSON.stringify(Object.fromEntries(this.deepParseInput(value)))];
-          }
-        }
-        else {
-          yield [key, value];
-        }
-      }
-    }
-  }
+  // private* deepParseInput(input: Record<string, any> | any[]) {
+  //   if (Array.isArray(input)) {
+  //     for (const value of input) {
+  //       if (typeof value === "object" && value !== null) {
+  //         if (Buffer.isBuffer(value)) {
+  //           yield value.toString();
+  //         }
+  //         else if (Array.isArray(value)) {
+  //           yield [...this.deepParseInput(value)];
+  //         }
+  //         else {
+  //           yield Object.fromEntries(this.deepParseInput(value));
+  //         }
+  //       }
+  //       else {
+  //         yield value;
+  //       }
+  //     }
+  //   }
+  //   else {
+  //     for (const [key, value] of Object.entries(input)) {
+  //       if (typeof value === "object" && value !== null) {
+  //         if (Buffer.isBuffer(value)) {
+  //           yield [key, value.toString()];
+  //         }
+  //         else if (Array.isArray(value)) {
+  //           yield [key, [...this.deepParseInput(value)]];
+  //         }
+  //         else {
+  //           yield [key, JSON.stringify(Object.fromEntries(this.deepParseInput(value)))];
+  //         }
+  //       }
+  //       else {
+  //         yield [key, value];
+  //       }
+  //     }
+  //   }
+  // }
 
-  private parseInput(object: Record<string, any>) {
-    return Object.fromEntries(this.deepParseInput(object));
-  }
+  // private parseInput(object: Record<string, any>) {
+  //   return Object.fromEntries(this.deepParseInput(object));
+  // }
 
-  private parseOutput(object: Record<string, any>) {
-    if (typeof object === "string") {
-      if (!Number.isNaN(Number(object))) {
-        return object;
-      }
-      else if (object === "false" || object === "true") {
-        return object;
-      }
+  // private parseOutput(object: Record<string, any>) {
+  //   if (typeof object === "string") {
+  //     if (!Number.isNaN(Number(object))) {
+  //       return object;
+  //     }
+  //     else if (object === "false" || object === "true") {
+  //       return object;
+  //     }
 
-      try {
-        return this.parseOutput(JSON.parse(object));
-      }
-      catch {
-        return object;
-      }
-    }
+  //     try {
+  //       return this.parseOutput(JSON.parse(object));
+  //     }
+  //     catch {
+  //       return object;
+  //     }
+  //   }
 
-    if (Array.isArray(object)) {
-      return object.map((val) => this.parseOutput(val));
-    }
+  //   if (Array.isArray(object)) {
+  //     return object.map((val) => this.parseOutput(val));
+  //   }
 
-    if (typeof object === "object" && object !== null) {
-      return Object.keys(object).reduce(
-        (obj, key) => Object.assign(obj, { [key]: this.parseOutput(object[key]) }),
-        {}
-      );
-    }
+  //   if (typeof object === "object" && object !== null) {
+  //     return Object.keys(object).reduce(
+  //       (obj, key) => Object.assign(obj, { [key]: this.parseOutput(object[key]) }),
+  //       {}
+  //     );
+  //   }
 
-    return object;
-  }
+  //   return object;
+  // }
 }
 
