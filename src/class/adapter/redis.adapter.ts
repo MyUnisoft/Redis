@@ -7,7 +7,7 @@ import { Err, Ok, Result } from "@openally/result";
 
 // Import Internal Dependencies
 import { SetValueOptions } from "../KVPeer.class.js";
-import { AssertConnectionError, AssertDisconnectionError } from "../Error/Connection.error.class.js";
+import { AssertConnectionError, AssertDisconnectionError } from "../error/connection.error.js";
 import type { DatabaseConnection, KeyType, Value } from "../../types";
 
 // CONSTANTS

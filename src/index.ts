@@ -9,5 +9,5 @@ export * from "./class/RestrictedKV.class.js";
 export * from "./class/StoreContext.class.js";
 
 // Export Types
-export * from "./class/Error/Connection.error.class.js";
+export * from "./class/error/connection.error.js";
 export * as Types from "./types/index.js";
