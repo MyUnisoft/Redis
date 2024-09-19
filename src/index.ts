@@ -1,6 +1,5 @@
 export { Redis } from "ioredis";
 
-export * from "./class/Connection.class.js";
 export * from "./class/stream/index.js";
 export * from "./class/pubSub/Channel.class.js";
 export * from "./class/KVPeer.class.js";
