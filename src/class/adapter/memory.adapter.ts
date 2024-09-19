@@ -1,12 +1,8 @@
 // Import Internal Dependencies
-import { DatabaseConnection } from "../Connection.class.js";
+import type { DatabaseConnection, GetConnectionPerfResponse } from "../../types";
 
-export interface MemoryDatabaseConnection extends DatabaseConnection {
-  getValue(): Promise<any>;
-}
-
-export class MemoryAdapter implements MemoryDatabaseConnection {
-  async connect(): Promise<void> {
+export class MemoryAdapter implements DatabaseConnection {
+  async initialize(): Promise<void> {
     // Simple connection logic
   }
 
@@ -18,8 +14,8 @@ export class MemoryAdapter implements MemoryDatabaseConnection {
     return true;
   }
 
-  async getPerformance(): Promise<number> {
-    return 100;
+  async getPerformance(): Promise<GetConnectionPerfResponse> {
+    return { isAlive: true, perf: 100 };
   }
 
   async setValue(): Promise<any> {

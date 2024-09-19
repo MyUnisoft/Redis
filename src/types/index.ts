@@ -30,3 +30,19 @@ export interface Group {
   pending: Pending[];
   consumers: Consumer[];
 }
+
+export type GetConnectionPerfResponse = {
+  isAlive: boolean;
+  perf: number;
+};
+
+export interface DatabaseConnection {
+  close(forceExit?: boolean): Promise<void>;
+  isAlive(): Promise<boolean>;
+  getPerformance(): Promise<GetConnectionPerfResponse>;
+
+  initialize(...unknown): Promise<unknown>;
+  setValue(...unknown): Promise<unknown>;
+  deleteValue(...unknown): Promise<unknown>;
+  getValue(...unknown): Promise<unknown>;
+}
