@@ -53,7 +53,7 @@ export class RestrictedKV extends KVPeer<Partial<Attempt>> {
           const connectionPerf = await this.adapter.getPerformance();
 
           if (connectionPerf.isAlive) {
-            await this.clearExpired();
+            await this.adapter.clearExpired();
           }
         }
         catch (error) {
@@ -139,56 +139,5 @@ export class RestrictedKV extends KVPeer<Partial<Attempt>> {
     if (rawStored !== null) {
       await this.adapter.deleteValue(key);
     }
-  }
-
-  /**
-  * @description Searches for all keys where the last attempt exceeds an allocated lifetime and clear (delete) them.
-  *
-  * @example
-  * ```ts
-  * handler.clearExpired()
-  * ```
-  */
-  async clearExpired(): Promise<void> {
-    const promises = [(this.adapter as any).keysBuffer(`${this.prefix}*`), (this.adapter as any).keys(`${this.prefix}*`)];
-
-    const data = [...await Promise.all(promises)].flat();
-    if (data.length === 0) {
-      return;
-    }
-
-    const results = await Promise.all(data.map(async(key) => {
-      const expired = await this.isKeyExpired(key);
-
-      return { key, expired };
-    }));
-
-    const expiredKeys = results
-      .filter((row) => row.expired)
-      .map((row) => row.key);
-
-    if (expiredKeys.length > 0) {
-      const pipeline = (this.adapter as any).pipeline();
-      this.emit("expiredKeys", expiredKeys);
-      expiredKeys.forEach((key) => pipeline.del(key));
-
-      await pipeline.exec();
-    }
-  }
-
-  private async isKeyExpired(key: KeyType): Promise<boolean> {
-    let finalKey: string | Buffer;
-
-    if (typeof key === "object") {
-      finalKey = Buffer.from(key.toString().slice(this.prefix.length));
-    }
-    else {
-      finalKey = key.slice(this.prefix.length);
-    }
-
-    const attempt = await this.getValue(finalKey) as Attempt;
-    const lastTry = "lastTry" in attempt ? Number(attempt.lastTry) : null;
-
-    return lastTry === null ? false : (Date.now() - lastTry) / 1000 >= this.banTimeInSecond;
   }
 }

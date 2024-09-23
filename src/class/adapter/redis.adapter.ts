@@ -9,6 +9,7 @@ import { Err, Ok, Result } from "@openally/result";
 import { SetValueOptions } from "../KVPeer.class.js";
 import { AssertConnectionError, AssertDisconnectionError } from "../error/connection.error.js";
 import type { DatabaseConnection, KeyType, Value } from "../../types";
+import { Attempt } from "../RestrictedKV.class.js";
 
 // CONSTANTS
 const kDefaultAttempt = 4;
@@ -18,9 +19,18 @@ export type KVType = "raw" | "object";
 
 export type StringOrObject = string | Record<string, any>;
 
-export type GetConnectionPerfResponse = {
+export interface GetConnectionPerfResponse {
   isAlive: boolean;
   perf: number;
+}
+
+export interface ClearExpiredOptions {
+  prefix: string;
+  banTimeInSecond: number;
+}
+
+export type IsKeyExpiredOptions = ClearExpiredOptions & {
+  key: KeyType;
 };
 
 export type RedisAdapterOptions = Partial<RedisOptions> & {
@@ -115,7 +125,7 @@ export class RedisAdapter extends Redis implements DatabaseConnection {
     return finalKey;
   }
 
-  async getValue(key: KeyType, prefix: string, type: KVType): Promise<any> {
+  async getValue<T extends unknown>(key: KeyType, prefix: string, type: KVType): Promise<T | null> {
     const finalKey = typeof key === "object" ? Buffer.from(prefix + key) : prefix + key;
     const result = type === "raw" ?
       await this.get(finalKey) :
@@ -132,6 +142,61 @@ export class RedisAdapter extends Redis implements DatabaseConnection {
     const finalKey = typeof key === "object" ? Buffer.from(prefix + key) : prefix + key;
 
     return this.del(finalKey);
+  }
+
+  async clearExpired(options: ClearExpiredOptions): Promise<void> {
+    const { prefix } = options;
+
+    const promises = [this.keysBuffer(`${prefix}*`), this.keys(`${prefix}*`)];
+
+    const data = [...await Promise.all(promises)].flat();
+    if (data.length === 0) {
+      return;
+    }
+
+    const results = await Promise.all(data.map(async(key) => {
+      const expired = await this.isKeyExpired({
+        ...options,
+        key
+      });
+
+      return { key, expired };
+    }));
+
+    const expiredKeys = results
+      .filter((row) => row.expired)
+      .map((row) => row.key);
+
+    if (expiredKeys.length > 0) {
+      const pipeline = this.pipeline();
+      this.emit("expiredKeys", expiredKeys);
+
+      expiredKeys.forEach((key) => pipeline.del(key));
+
+      await pipeline.exec();
+    }
+  }
+
+  private async isKeyExpired(options: IsKeyExpiredOptions): Promise<boolean> {
+    const { prefix, banTimeInSecond, key } = options;
+
+    let finalKey: string | Buffer;
+
+    if (typeof key === "object") {
+      finalKey = Buffer.from(key.toString().slice(prefix.length));
+    }
+    else {
+      finalKey = key.slice(prefix.length);
+    }
+
+    const attempt = await this.getValue<Attempt>(
+      finalKey,
+      prefix,
+      "raw"
+    ) as Attempt;
+    const lastTry = "lastTry" in attempt ? Number(attempt.lastTry) : null;
+
+    return lastTry === null ? false : (Date.now() - lastTry) / 1000 >= banTimeInSecond;
   }
 
   private* deepParseInput(input: Record<string, any> | any[]) {

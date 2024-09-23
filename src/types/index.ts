@@ -44,5 +44,6 @@ export interface DatabaseConnection {
   initialize(...unknown): Promise<unknown>;
   setValue(...unknown): Promise<unknown>;
   deleteValue(...unknown): Promise<unknown>;
+  clearExpired(...unknown): Promise<unknown>;
   getValue(...unknown): Promise<unknown>;
 }
