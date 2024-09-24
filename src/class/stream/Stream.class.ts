@@ -1,18 +1,15 @@
-// Import Node.js Dependencies
-import { EventEmitter } from "node:events";
-
 // Import Third-party Dependencies
 import { RedisValue } from "ioredis";
 import { Result, Ok, Err } from "@openally/result";
 
 // Import Internal Dependencies
-import { Connection } from "../../index.js";
 import * as utils from "../../utils/stream/index.js";
 import type {
   Data,
   Entry,
   Group
 } from "../../types/index.js";
+import { RedisAdapter, RedisAdapterOptions } from "../adapter/redis.adapter.js";
 
 // CONSTANTS
 const kDefaultRangeOptions = { min: "-", max: "+" };
@@ -55,8 +52,7 @@ export interface PushOptions {
 
 export type DelEntryResponse = Result<void, string>;
 
-export interface StreamOptions {
-  connection: Connection;
+export type StreamOptions = RedisAdapterOptions & {
   streamName: string;
   /**
    * Interval of time between two iteration on the stream
@@ -70,24 +66,21 @@ export interface StreamOptions {
    * Number of entries it must pull at each iteration
    */
   count?: number;
-}
+};
 
 /**
  *
  * @description Shared method used to work on a Redis Stream
  */
-export class Stream extends EventEmitter {
+export class Stream extends RedisAdapter {
   public streamName: string;
   public lastId: string;
 
-  protected connection: Connection;
   protected frequency: number;
   protected count?: number;
 
   constructor(options: StreamOptions) {
-    super();
-
-    this.connection = options.connection;
+    super({ ...options });
 
     this.streamName = options.streamName;
     this.frequency = options.frequency;
@@ -97,7 +90,7 @@ export class Stream extends EventEmitter {
 
   public async streamExist(): Promise<boolean> {
     try {
-      await this.connection.xinfo("STREAM", this.streamName);
+      await this.xinfo("STREAM", this.streamName);
 
       return true;
     }
@@ -115,14 +108,14 @@ export class Stream extends EventEmitter {
       return;
     }
 
-    await this.connection.xadd(this.streamName, "0-1", "init", "stream");
-    await this.connection.xdel(this.streamName, "0-1");
+    await this.xadd(this.streamName, "0-1", "init", "stream");
+    await this.xdel(this.streamName, "0-1");
   }
 
   public async getInfo(): Promise<XINFOStreamData> {
     const formattedStreamData = {};
 
-    const streamData = await this.connection.xinfo("STREAM", this.streamName, "FULL", "COUNT", 0) as utils.XRedisData;
+    const streamData = await this.xinfo("STREAM", this.streamName, "FULL", "COUNT", 0) as utils.XRedisData;
 
     for (const [key, value] of utils.parseData(streamData)) {
       formattedStreamData[key as string] = value;
@@ -132,11 +125,11 @@ export class Stream extends EventEmitter {
   }
 
   public async getLength(): Promise<number> {
-    return await this.connection.xlen(this.streamName);
+    return await this.xlen(this.streamName);
   }
 
   public async getGroupsData(): Promise<utils.XINFOGroupData[]> {
-    const groups = await this.connection.xinfo("GROUPS", this.streamName) as utils.XINFOGroups;
+    const groups = await this.xinfo("GROUPS", this.streamName) as utils.XINFOGroups;
 
     return utils.parseXINFOGroups(groups);
   }
@@ -175,11 +168,11 @@ export class Stream extends EventEmitter {
 
     const formattedId = id ?? "*";
 
-    return await this.connection.xadd(this.streamName, formattedId, ...entries) as string;
+    return await this.xadd(this.streamName, formattedId, ...entries) as string;
   }
 
   public async delEntry(entryId: string): Promise<DelEntryResponse> {
-    const res = await this.connection.xdel(this.streamName, entryId);
+    const res = await this.xdel(this.streamName, entryId);
 
     if (res !== 1) {
       return Err(`Failed entry deletion for ${entryId}`);
@@ -226,7 +219,7 @@ export class Stream extends EventEmitter {
     const { min, max, count } = options;
     const redisOptions = utils.createRedisOptions(this.streamName, min, max, { count }) as unknown;
 
-    return utils.parseEntries(await this.connection.xrange(...redisOptions as utils.FormattedRedisOptions));
+    return utils.parseEntries(await this.xrange(...redisOptions as utils.FormattedRedisOptions));
   }
 
   /**
@@ -262,7 +255,7 @@ export class Stream extends EventEmitter {
     const { min, max, count } = options;
     const redisOptions = utils.createRedisOptions(this.streamName, max, min, { count }) as unknown;
 
-    return utils.parseEntries(await this.connection.xrevrange(...redisOptions as utils.FormattedRedisOptions));
+    return utils.parseEntries(await this.xrevrange(...redisOptions as utils.FormattedRedisOptions));
   }
 
   /**
@@ -281,12 +274,12 @@ export class Stream extends EventEmitter {
    */
   public async trim(threshold: number | string): Promise<number> {
     return typeof threshold === "number" ?
-      await this.connection.xtrim(
+      await this.xtrim(
         this.streamName,
         "MAXLEN",
         threshold
       ) :
-      await this.connection.xtrim(
+      await this.xtrim(
         this.streamName,
         "MINID",
         threshold
@@ -317,7 +310,7 @@ export class Stream extends EventEmitter {
       return;
     }
 
-    await this.connection.xgroup("CREATE", this.streamName, name, "$", "MKSTREAM");
+    await this.xgroup("CREATE", this.streamName, name, "$", "MKSTREAM");
   }
 
   /**
@@ -332,7 +325,7 @@ export class Stream extends EventEmitter {
       return;
     }
 
-    await this.connection.xgroup("DESTROY", this.streamName, name);
+    await this.xgroup("DESTROY", this.streamName, name);
   }
 
   /**
@@ -343,7 +336,7 @@ export class Stream extends EventEmitter {
    * @returns {Promise<utils.XINFOConsumerData | undefined>}
    */
   public async getConsumerData(groupName: string, consumerName: string): Promise<utils.XINFOConsumerData | undefined> {
-    const consumers = await this.connection.xinfo("CONSUMERS", this.streamName, groupName);
+    const consumers = await this.xinfo("CONSUMERS", this.streamName, groupName);
 
     const formattedConsumers = utils.parseXINFOConsumers(consumers as utils.XINFOConsumers);
 
@@ -376,7 +369,7 @@ export class Stream extends EventEmitter {
       return;
     }
 
-    await this.connection.xgroup("CREATECONSUMER", this.streamName, groupName, consumerName);
+    await this.xgroup("CREATECONSUMER", this.streamName, groupName, consumerName);
   }
 
   /**
@@ -392,6 +385,6 @@ export class Stream extends EventEmitter {
       return;
     }
 
-    await this.connection.xgroup("DELCONSUMER", this.streamName, groupName, consumerName);
+    await this.xgroup("DELCONSUMER", this.streamName, groupName, consumerName);
   }
 }

@@ -102,7 +102,7 @@ export class Interpersonal extends Stream {
         ...args: RedisValue[]
       ];
 
-      streamResults = await this.connection.xreadgroup(...optionsWithCount);
+      streamResults = await this.xreadgroup(...optionsWithCount);
     }
     else {
       const optionsWithoutCount = [...redisOptions] as [
@@ -113,7 +113,7 @@ export class Interpersonal extends Stream {
         ...args: RedisValue[]
       ];
 
-      streamResults = await this.connection.xreadgroup(...optionsWithoutCount);
+      streamResults = await this.xreadgroup(...optionsWithoutCount);
     }
 
     if (!streamResults) {
@@ -144,7 +144,7 @@ export class Interpersonal extends Stream {
         count: number | string
       ];
 
-      streamResults = await this.connection.xautoclaim(...optionsWithCount);
+      streamResults = await this.xautoclaim(...optionsWithCount);
     }
     else {
       const optionsWithoutCount = [...redisOptions] as [
@@ -155,7 +155,7 @@ export class Interpersonal extends Stream {
         start: RedisKey | number
       ];
 
-      streamResults = await this.connection.xautoclaim(...optionsWithoutCount);
+      streamResults = await this.xautoclaim(...optionsWithoutCount);
     }
 
     const [cursor, entries] = streamResults;
@@ -172,12 +172,12 @@ export class Interpersonal extends Stream {
   }
 
   public async claimEntry(entryId: string): Promise<void> {
-    await this.connection.xack(this.streamName, this.groupName, entryId);
+    await this.xack(this.streamName, this.groupName, entryId);
     await this.delEntry(entryId);
   }
 
   override async getConsumerData(): Promise<utils.XINFOConsumerData | undefined> {
-    const consumers = await this.connection.xinfo("CONSUMERS", this.streamName, this.groupName);
+    const consumers = await this.xinfo("CONSUMERS", this.streamName, this.groupName);
 
     const formattedConsumers = utils.parseXINFOConsumers(consumers as utils.XINFOConsumers);
 
@@ -196,7 +196,7 @@ export class Interpersonal extends Stream {
       return;
     }
 
-    await this.connection.xgroup("CREATE", this.streamName, this.groupName, "$", "MKSTREAM");
+    await this.xgroup("CREATE", this.streamName, this.groupName, "$", "MKSTREAM");
   }
 
   override async deleteGroup() {
@@ -205,7 +205,7 @@ export class Interpersonal extends Stream {
       return;
     }
 
-    await this.connection.xgroup("DESTROY", this.streamName, this.groupName);
+    await this.xgroup("DESTROY", this.streamName, this.groupName);
   }
 
   override async consumerExist(): Promise<boolean> {
@@ -220,7 +220,7 @@ export class Interpersonal extends Stream {
       return;
     }
 
-    await this.connection.xgroup("CREATECONSUMER", this.streamName, this.groupName, this.consumerName);
+    await this.xgroup("CREATECONSUMER", this.streamName, this.groupName, this.consumerName);
   }
 
   override async deleteConsumer(): Promise<void> {
@@ -229,6 +229,6 @@ export class Interpersonal extends Stream {
       return;
     }
 
-    await this.connection.xgroup("DELCONSUMER", this.streamName, this.groupName, this.consumerName);
+    await this.xgroup("DELCONSUMER", this.streamName, this.groupName, this.consumerName);
   }
 }

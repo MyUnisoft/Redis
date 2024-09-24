@@ -1,11 +1,11 @@
 // Import Internal Dependencies
-import { Connection } from "../../index.js";
+// import { Connection } from "../../index.js";
+import { RedisAdapter, RedisAdapterOptions } from "../adapter/redis.adapter.js";
 
-export interface ChannelOptions {
+export type ChannelOptions = RedisAdapterOptions & {
   name: string;
-  connection: Connection;
   prefix?: string;
-}
+};
 
 export type MessageWithMetadata<T, K> = T & {
   metadata: K;
@@ -18,19 +18,18 @@ export type PublishOptions<
 
 export class Channel<
   T extends Record<string, any> = Record<string, any>,
-  K extends Record<string, any> | null = null> {
+  K extends Record<string, any> | null = null> extends RedisAdapter {
   readonly name: string;
-
-  #connection: Connection;
 
   constructor(options: ChannelOptions) {
     const { name, prefix } = options;
 
+    super({ ...options });
+
     this.name = `${prefix ? `${prefix}-` : ""}` + name;
-    this.#connection = options.connection;
   }
 
-  public async publish(options: PublishOptions<T, K>) {
-    await this.#connection.publish(this.name, JSON.stringify(options));
+  public async pub(options: PublishOptions<T, K>) {
+    await this.publish(this.name, JSON.stringify(options));
   }
 }

@@ -38,7 +38,7 @@ export class Intrapersonal extends Stream {
         ...args: RedisValue[]
       ];
 
-      streamResults = await this.connection.xread(...optionsWithCount);
+      streamResults = await this.xread(...optionsWithCount);
     }
     else if (block) {
       const optionsWithBlock = [...redisOptions] as [
@@ -48,7 +48,7 @@ export class Intrapersonal extends Stream {
         ...args: RedisValue[]
       ];
 
-      streamResults = await this.connection.xread(...optionsWithBlock);
+      streamResults = await this.xread(...optionsWithBlock);
     }
     else {
       const optionsWithoutCount = [...redisOptions] as [
@@ -56,7 +56,7 @@ export class Intrapersonal extends Stream {
         ...args: RedisValue[]
       ];
 
-      streamResults = await this.connection.xread(...optionsWithoutCount);
+      streamResults = await this.xread(...optionsWithoutCount);
     }
 
     if (!streamResults) {
