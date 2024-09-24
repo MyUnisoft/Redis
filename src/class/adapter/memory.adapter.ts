@@ -26,9 +26,12 @@ export class MemoryAdapter implements DatabaseConnection {
     // Delete value logic
   }
 
+  async clearExpired(...unknown: any[]): Promise<any> {
+    //
+  }
+
   // Implement the no-argument version of getValue
   async getValue(): Promise<any> {
     // Simple getValue logic with no arguments
-    return {};
   }
 }
