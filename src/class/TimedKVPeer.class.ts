@@ -37,12 +37,12 @@ export class TimedKVPeer<T extends object, K extends Record<string, any> | null 
     this.randomKeyGenerator = options.randomKeyCallback ?? kDefaultRandomKeyGenerator;
   }
 
-  override async setValue(options: TimedSetValueOptions<T>): Promise<KeyType> {
+  async setValue(options: TimedSetValueOptions<T>): Promise<KeyType> {
     const { key, value } = options;
 
     const finalKey = key ?? this.randomKeyGenerator();
 
-    await super.setValue({ key: finalKey, value, expiresIn: this.ttl });
+    await this.adapter.setValue({ key: finalKey, value, expiresIn: this.ttl });
 
     return finalKey;
   }
