@@ -106,7 +106,12 @@ export class StoreContext<T extends Store = Store> extends TimedKVPeer<T> {
       payload.returnTo = "false";
     }
 
-    await this.setValue({ key: id, value: payload });
+    await this.setValue({
+      key: id,
+      value: payload,
+      prefix: this.prefix,
+      type: this.type
+    });
 
     return Ok(id);
   }
@@ -116,7 +121,7 @@ export class StoreContext<T extends Store = Store> extends TimedKVPeer<T> {
 
     ctx.setCookie(kStoreContextSessionName, null);
 
-    await this.deleteValue(sessionId);
+    await this.adapter.deleteValue(sessionId);
   }
 
   getSession(ctx: FrameworkContext): Promise<T | null> {
@@ -146,7 +151,12 @@ export class StoreContext<T extends Store = Store> extends TimedKVPeer<T> {
 
     const val = getSessionResult.unwrap();
 
-    await this.setValue({ key: val, value: payload });
+    await this.setValue({
+      key: val,
+      value: payload,
+      prefix: this.prefix,
+      type: this.type
+    });
   }
 
   /**
