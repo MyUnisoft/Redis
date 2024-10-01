@@ -54,7 +54,7 @@ export class RedisAdapter extends Redis implements DatabaseConnection {
   }
 
   async close(
-    forceExit: boolean,
+    forceExit: boolean = false,
     attempt = this.#attempt
   ) {
     await this.assertDisconnection(forceExit, attempt);
