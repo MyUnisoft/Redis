@@ -20,14 +20,6 @@ type MappedValue<T extends StringOrObject, K extends Record<string, any> | null 
 
 export type KVMapper<T extends StringOrObject, K extends Record<string, any> | null = null> = (value: T) => MappedValue<T, K>;
 
-export interface SetValueOptions<T extends StringOrObject = Record<string, any>> {
-  key: KeyType;
-  value: Partial<T>;
-  prefix: string;
-  type: KVType;
-  expiresIn?: number;
-}
-
 export interface KVOptions<T extends StringOrObject = Record<string, any>, K extends Record<string, any> | null = null> {
   adapter: DatabaseConnection;
   prefix?: string;

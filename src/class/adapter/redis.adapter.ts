@@ -6,7 +6,6 @@ import { Redis, RedisOptions } from "ioredis";
 import { Err, Ok, Result } from "@openally/result";
 
 // Import Internal Dependencies
-import { SetValueOptions } from "../KVPeer.class.js";
 import { AssertConnectionError, AssertDisconnectionError } from "../error/connection.error.js";
 import type { DatabaseConnection, KeyType, Value } from "../../types";
 import { Attempt } from "../RestrictedKV.class.js";
@@ -32,6 +31,14 @@ export interface ClearExpiredOptions {
 export type IsKeyExpiredOptions = ClearExpiredOptions & {
   key: KeyType;
 };
+
+export interface SetValueOptions<T extends StringOrObject = Record<string, any>> {
+  key: KeyType;
+  value: Partial<T>;
+  prefix: string;
+  type: KVType;
+  expiresIn?: number;
+}
 
 export type RedisAdapterOptions = Partial<RedisOptions> & {
   attempt?: number;
@@ -90,7 +97,7 @@ export class RedisAdapter extends Redis implements DatabaseConnection {
     };
   }
 
-  async setValue(options: SetValueOptions): Promise<KeyType> {
+  async setValue<T extends StringOrObject = Record<string, any>>(options: SetValueOptions<T>): Promise<KeyType> {
     const { key, value, expiresIn, prefix, type } = options;
 
     const finalKey = typeof key === "object" ? Buffer.from(prefix + key) : prefix + key;

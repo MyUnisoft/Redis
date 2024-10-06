@@ -2,8 +2,9 @@
 import { randomBytes } from "node:crypto";
 
 // Import Internal Dependencies
-import { KVPeer, type KVOptions, type SetValueOptions } from "./KVPeer.class.js";
+import { KVPeer, type KVOptions } from "./KVPeer.class.js";
 import type { KeyType } from "../types/index.js";
+import type { SetValueOptions } from "./adapter/redis.adapter.js";
 
 // CONSTANTS
 const kDefaultTtl = 1_000 * 60 * 10;
