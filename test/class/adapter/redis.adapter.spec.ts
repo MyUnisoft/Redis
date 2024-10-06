@@ -1,6 +1,6 @@
 // Import Node.js Dependencies
 import assert from "node:assert/strict";
-import { describe, before, after, it } from "node:test";
+import { describe, before, after, it, test } from "node:test";
 
 // Import Internal Dependencies
 import { RedisAdapter } from "../../../src/class/adapter/redis.adapter";
@@ -127,6 +127,185 @@ describe("RedisAdapter", () => {
         assert.equal(isAlive, false);
         assert.ok(perf);
       });
+    });
+  });
+
+  describe("setValue", () => {
+    describe("Working with object type", () => {
+      let redisAdapter: RedisAdapter;
+
+      before(async() => {
+        redisAdapter = new RedisAdapter({
+          port: Number(process.env.REDIS_PORT),
+          host: process.env.REDIS_HOST
+        });
+
+        await redisAdapter.initialize();
+      });
+
+      after(async() => {
+        await redisAdapter.flushdb();
+
+        await redisAdapter.close();
+      });
+
+      test("Given a buffer, then it should store a buffer", async() => {
+        const customKey = "nested-buffer";
+        const value = {
+          foo: {
+            buffer: Buffer.from("string")
+          }
+        };
+
+        const finalKey = await redisAdapter.setValue({
+          key: customKey,
+          value,
+          type: "object",
+          prefix: ""
+        });
+
+        assert.equal(finalKey, customKey);
+        const finalValue = await redisAdapter.getValue(customKey, "", "object");
+        // eslint-disable-next-line dot-notation
+        assert.equal(finalValue!["foo"]["buffer"].toString(), value.foo.buffer.toString());
+      });
+    });
+
+    describe("Working with raw type", () => {
+      let redisAdapter: RedisAdapter;
+
+      const [firstKey, secondKey] = ["foo", "bar"];
+
+      before(async() => {
+        redisAdapter = new RedisAdapter({
+          port: Number(process.env.REDIS_PORT),
+          host: process.env.REDIS_HOST
+        });
+
+        await redisAdapter.initialize();
+      });
+
+      after(async() => {
+        await redisAdapter.flushdb();
+
+        await redisAdapter.close();
+      });
+
+      test("Given a valid value, it should return the initial key", async() => {
+        const firstResultedKey = await redisAdapter.setValue<string>({
+          key: firstKey,
+          value: "bar",
+          type: "raw",
+          prefix: ""
+        });
+
+        assert.equal(firstKey, firstResultedKey);
+
+        const secondResultedKey = await redisAdapter.setValue({
+          key: firstKey,
+          value: {
+            foo: "bar"
+          },
+          type: "raw",
+          prefix: ""
+        });
+
+        assert.equal(secondKey, secondResultedKey);
+      });
+    });
+  });
+
+  describe("getValue", () => {
+    let redisAdapter: RedisAdapter;
+
+    const [firstKey, firstValue] = ["key", "value"];
+    const [secondKey, secondValue] = ["secondKey", {
+      foo: "bar"
+    }];
+
+    before(async() => {
+      redisAdapter = new RedisAdapter({
+        port: Number(process.env.REDIS_PORT),
+        host: process.env.REDIS_HOST
+      });
+
+      await redisAdapter.initialize();
+
+      await redisAdapter.flushdb();
+
+      await Promise.all([
+        redisAdapter.setValue<string>({
+          key: firstKey,
+          value: firstValue,
+          type: "object",
+          prefix: ""
+        }),
+        redisAdapter.setValue({
+          key: secondKey,
+          value: secondValue,
+          type: "object",
+          prefix: ""
+        })
+      ]);
+    });
+
+    after(async() => {
+      await redisAdapter.close();
+    });
+
+    test("Given a valid key, it should return the associated value", async() => {
+      const firstResultedValue = await redisAdapter.getValue(firstKey, "", "object");
+
+      assert.equal(firstValue, firstResultedValue);
+
+      const secondResultedKey = await redisAdapter.getValue(secondKey, "", "object");
+
+      assert.equal(secondValue, secondResultedKey);
+    });
+
+    test("Given an invalid key, it should return null", async() => {
+      const val = await redisAdapter.getValue("fake-key", "", "object");
+      assert.equal(val, null);
+    });
+  });
+
+  describe("deleteValue", () => {
+    let redisAdapter: RedisAdapter;
+
+    const key = "key";
+
+    before(async() => {
+      redisAdapter = new RedisAdapter({
+        port: Number(process.env.REDIS_PORT),
+        host: process.env.REDIS_HOST
+      });
+
+      await redisAdapter.initialize();
+
+      await redisAdapter.flushdb();
+
+      await redisAdapter.setValue<string>({
+        key,
+        value: "bar",
+        type: "object",
+        prefix: ""
+      });
+    });
+
+    after(async() => {
+      await redisAdapter.close();
+    });
+
+    test("Given an invalid key, then it should return 0", async() => {
+      const deletedEntries = await redisAdapter.deleteValue("fake-key", "");
+
+      assert.equal(deletedEntries, 0);
+    });
+
+    test("Given a valid key, then it should return 1", async() => {
+      const deletedEntries = await redisAdapter.deleteValue(key, "");
+
+      assert.equal(deletedEntries, 1);
     });
   });
 });
