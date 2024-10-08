@@ -42,8 +42,8 @@ export interface DatabaseConnection {
   getPerformance(): Promise<GetConnectionPerfResponse>;
 
   initialize(...unknown): Promise<unknown>;
-  setValue(...unknown): Promise<unknown>;
-  deleteValue(...unknown): Promise<unknown>;
+  setValue(...unknown): Promise<KeyType>;
+  deleteValue(...unknown): Promise<number>;
   clearExpired(...unknown): Promise<unknown>;
   getValue(...unknown): Promise<unknown>;
 }

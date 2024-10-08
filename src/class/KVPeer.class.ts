@@ -4,13 +4,10 @@ import { EventEmitter } from "node:events";
 
 // Import Internal Dependencies
 import type { KeyType, DatabaseConnection } from "../types/index.js";
+import type { KVType, SetValueOptions, StringOrObject } from "./adapter/redis.adapter.js";
 
 // CONSTANTS
 const kDefaultKVType = "raw";
-
-export type KVType = "raw" | "object";
-
-export type StringOrObject = string | Record<string, any>;
 
 type IsMetadataDefined<T extends Record<string, any>, K extends Record<string, any> | null = null> =
   K extends Record<string, any> ? T & { customData: K; } : T;
@@ -26,6 +23,11 @@ export interface KVOptions<T extends StringOrObject = Record<string, any>, K ext
   type?: KVType;
   mapValue?: KVMapper<T, K>;
 }
+
+export type KVPeerSetValueOptions<T extends StringOrObject = StringOrObject> = Omit<
+  SetValueOptions<T>,
+  "prefix" | "type"
+>;
 
 /**
 * @class KVPeer
@@ -60,14 +62,26 @@ export class KVPeer<T extends StringOrObject = StringOrObject, K extends Record<
     this.mapValue = mapValue ?? this.defaultMapValue;
   }
 
-  private defaultMapValue(value: T): MappedValue<T, K> {
-    return value as MappedValue<T, K>;
+  async setValue(options: KVPeerSetValueOptions<T>): Promise<KeyType> {
+    return this.adapter.setValue({
+      ...options,
+      prefix: this.prefix,
+      type: this.type
+    });
   }
 
   async getValue(key: KeyType): Promise<MappedValue<T, K> | null> {
     const result = await this.adapter.getValue(key, this.prefix, this.type);
 
     return result === null ? null : this.mapValue(result as T);
+  }
+
+  async deleteValue(key: KeyType): Promise<number> {
+    return this.adapter.deleteValue(key, this.prefix);
+  }
+
+  private defaultMapValue(value: T): MappedValue<T, K> {
+    return value as MappedValue<T, K>;
   }
 }
 

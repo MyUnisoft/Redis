@@ -108,9 +108,7 @@ export class StoreContext<T extends Store = Store> extends TimedKVPeer<T> {
 
     await this.setValue({
       key: id,
-      value: payload,
-      prefix: this.prefix,
-      type: this.type
+      value: payload
     });
 
     return Ok(id);
@@ -153,9 +151,7 @@ export class StoreContext<T extends Store = Store> extends TimedKVPeer<T> {
 
     await this.setValue({
       key: val,
-      value: payload,
-      prefix: this.prefix,
-      type: this.type
+      value: payload
     });
   }
 
