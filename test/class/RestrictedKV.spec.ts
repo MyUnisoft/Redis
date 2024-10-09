@@ -8,7 +8,7 @@ import { EventEmitter } from "node:events";
 import MockDate from "mockdate";
 
 // Import Internal Dependencies
-import { RestrictedKV, Connection } from "../../src";
+import { RedisAdapter, RestrictedKV } from "../../src";
 import { randomValue } from "../fixtures/utils/randomValue";
 
 // Internal Dependencies Mock
@@ -17,20 +17,20 @@ mock.method(RestrictedKV.prototype, "deleteValue", async() => "deleteValue");
 MockDate.set(Date.now());
 
 describe("RestrictedKV", () => {
-  let connection: Connection;
+  let redisAdapter: RedisAdapter;
 
   before(async() => {
-    connection = new Connection({
+    redisAdapter = new RedisAdapter({
       port: Number(process.env.REDIS_PORT),
       host: process.env.REDIS_HOST
     });
 
-    await connection.initialize();
-    await connection.flushdb();
+    await redisAdapter.initialize();
+    await redisAdapter.flushdb();
   });
 
   after(async() => {
-    await connection.close();
+    await redisAdapter.close();
   });
 
   describe("Instantiated with default options", () => {
@@ -38,7 +38,7 @@ describe("RestrictedKV", () => {
 
     before(() => {
       restrictedKV = new RestrictedKV({
-        connection
+        adapter: redisAdapter
       });
     });
 
@@ -217,7 +217,7 @@ describe("RestrictedKV", () => {
       restrictedKV = new RestrictedKV({
         prefix: "auth-",
         allowedAttempt,
-        connection
+        adapter: redisAdapter
       });
     });
 
@@ -254,7 +254,7 @@ describe("RestrictedKV", () => {
         prefix: "auth-",
         allowedAttempt,
         banTimeInSecond: banTime,
-        connection
+        adapter: redisAdapter
       });
 
       await restrictedKV.setValue({ key, value: payload });
@@ -280,12 +280,12 @@ describe("RestrictedKV", () => {
       restrictedKV = new RestrictedKV({
         prefix: "auth-",
         autoClearExpired: 20,
-        connection
+        adapter: redisAdapter
       });
     });
 
     beforeEach(async() => {
-      await connection.flushdb();
+      await redisAdapter.flushdb();
     });
 
     after(async() => {
