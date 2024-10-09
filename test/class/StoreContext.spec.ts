@@ -5,9 +5,9 @@ import EventEmitter from "node:events";
 
 // Import Internal Dependencies
 import {
-  Connection,
   StoreContext,
-  Store
+  Store,
+  RedisAdapter
 } from "../../src/index";
 import { randomValue } from "../fixtures/utils/randomValue";
 
@@ -20,20 +20,20 @@ interface CustomStore extends Store {
 }
 
 describe("StoreContext", () => {
-  let connection: Connection;
+  let redisAdapter: RedisAdapter;
 
   before(async() => {
-    connection = new Connection({
+    redisAdapter = new RedisAdapter({
       port: Number(process.env.REDIS_PORT),
       host: process.env.REDIS_HOST
     });
 
-    await connection.initialize();
-    await connection.flushdb();
+    await redisAdapter.initialize();
+    await redisAdapter.flushdb();
   });
 
   after(async() => {
-    await connection.close();
+    await redisAdapter.close();
   });
 
   describe("Store Context initialization's suite", () => {
@@ -41,7 +41,7 @@ describe("StoreContext", () => {
 
     it("should be instance of EventEmitter & StoreContext", () => {
       sessionContext = new StoreContext<CustomStore>({
-        connection,
+        adapter: redisAdapter,
         authenticationField: "mail",
         ttl: 3600,
         randomKeyCallback: () => "randomKey"
@@ -64,7 +64,7 @@ describe("StoreContext", () => {
 
     before(() => {
       sessionContext = new StoreContext<CustomStore>({
-        connection,
+        adapter: redisAdapter,
         authenticationField: "mail",
         prefix: "store-context-"
       });
@@ -105,7 +105,7 @@ describe("StoreContext", () => {
 
     before(() => {
       sessionContext = new StoreContext<CustomStore>({
-        connection,
+        adapter: redisAdapter,
         authenticationField: "mail"
       });
     });
@@ -137,7 +137,7 @@ describe("StoreContext", () => {
     before(() => {
       sessionContext = new StoreContext<CustomStore>({
         authenticationField: "mail",
-        connection
+        adapter: redisAdapter
       });
     });
 
@@ -162,7 +162,7 @@ describe("StoreContext", () => {
     before(() => {
       sessionContext = new StoreContext<CustomStore>({
         authenticationField: "mail",
-        connection
+        adapter: redisAdapter
       });
     });
 
@@ -185,7 +185,7 @@ describe("StoreContext", () => {
 
     it("should return true for a `session-id` cookie having data stored", async() => {
       const noAuthOptionsContext = new StoreContext({
-        connection
+        adapter: redisAdapter
       });
       const ctx = createFrameworkCtx();
 
@@ -207,7 +207,7 @@ describe("StoreContext", () => {
 
       sessionWithCtx = new StoreContext<any>({
         authenticationField: "mail",
-        connection
+        adapter: redisAdapter
       }).useContext(ctx);
     });
 
@@ -238,7 +238,7 @@ describe("StoreContext", () => {
     before(() => {
       sessionContext = new StoreContext<any>({
         authenticationField: "mail",
-        connection
+        adapter: redisAdapter
       });
     });
 
