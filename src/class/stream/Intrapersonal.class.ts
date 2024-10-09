@@ -4,12 +4,10 @@ import timers from "node:timers/promises";
 // Import Third-party Dependencies
 import { RedisValue } from "ioredis";
 
-// Import Internal Depencencies
-import { Stream, ConsumeOptions } from "./Stream.class";
-import { createRedisOptions } from "../../utils/stream/index";
-
-// Import Types
-import { Entry } from "../../types/index";
+// Import Internal Dependencies
+import { Stream, type ConsumeOptions } from "./Stream.class.js";
+import { createRedisOptions } from "../../utils/stream/index.js";
+import type { Entry } from "../../types/index.js";
 
 /**
  *
@@ -40,7 +38,7 @@ export class Intrapersonal extends Stream {
         ...args: RedisValue[]
       ];
 
-      streamResults = await this.redis.xread(...optionsWithCount);
+      streamResults = await this.xread(...optionsWithCount);
     }
     else if (block) {
       const optionsWithBlock = [...redisOptions] as [
@@ -50,7 +48,7 @@ export class Intrapersonal extends Stream {
         ...args: RedisValue[]
       ];
 
-      streamResults = await this.redis.xread(...optionsWithBlock);
+      streamResults = await this.xread(...optionsWithBlock);
     }
     else {
       const optionsWithoutCount = [...redisOptions] as [
@@ -58,7 +56,7 @@ export class Intrapersonal extends Stream {
         ...args: RedisValue[]
       ];
 
-      streamResults = await this.redis.xread(...optionsWithoutCount);
+      streamResults = await this.xread(...optionsWithoutCount);
     }
 
     if (!streamResults) {

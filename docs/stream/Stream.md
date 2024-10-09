@@ -65,7 +65,14 @@ interface ConsumeOptions {
 ## 📚 Usage
 
 ```ts
+import { Stream, Connection } from "@myunisoft/redis";
+
+const connection = new Connection();
+
+await connection.initialize();
+
 const redisStream = new Stream({
+  connection,
   streamName: "my-stream-name",
   frequency: 10000, 
   lastId: "0-0",
@@ -124,7 +131,11 @@ console.log(entryId) // "any-custom-id"
 Use this method to delete an entry on the connected stream.
 
 ```ts
-await redisStream.delEntry("any-id");
+const res = await redisStream.delEntry("any-id");
+
+if (!res.ok) {
+  console.error(res.val) // `Failed entry deletion for any-id`
+}
 ```
 
 ### getRange

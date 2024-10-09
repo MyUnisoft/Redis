@@ -10,7 +10,14 @@
 ## 📚 Usage
 
 ```ts
+import { Intrapersonal, Connection } from "@myunisoft/redis";
+
+const connection = new Connection();
+
+await connection.initialize();
+
 const consumer = new Intrapersonal({
+  connection,
   streamName: "my-stream-name",
   frequency: 10000, 
   lastId: "0-0",
