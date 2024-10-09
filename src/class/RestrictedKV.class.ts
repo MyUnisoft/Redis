@@ -1,6 +1,7 @@
 // Import Internal dependencies
 import { KVPeer, type KVOptions } from "./KVPeer.class.js";
 import type { KeyType } from "../types/index.js";
+import { ClearExpiredOptions } from "./adapter/redis.adapter.js";
 
 // CONSTANTS
 const kDefaultAllowedAttempt = 6;
@@ -69,6 +70,17 @@ export class RestrictedKV extends KVPeer<Partial<Attempt>> {
       lastTry: Number(data.lastTry ?? Date.now()),
       locked: (data.locked ?? "false") === "true"
     };
+  }
+
+  async clearExpired(
+    options: ClearExpiredOptions = { banTimeInSecond: this.banTimeInSecond, prefix: this.prefix }
+  ): Promise<void> {
+    const { banTimeInSecond, prefix } = options;
+
+    await this.adapter.clearExpired({
+      banTimeInSecond,
+      prefix
+    });
   }
 
   clearAutoClearInterval() {
