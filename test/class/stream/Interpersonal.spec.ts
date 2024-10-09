@@ -6,7 +6,7 @@ import { Readable } from "node:stream";
 import { once } from "node:events";
 
 // Import Internal Dependencies
-import { Connection, Interpersonal } from "../../../src/index";
+import { Interpersonal } from "../../../src/index";
 import { randomValue } from "../../fixtures/utils/randomValue";
 
 // Import Types
@@ -43,7 +43,6 @@ const kDiff = 1000;
 const kCount = 2;
 
 describe("Consumer", () => {
-  let connection: Connection;
   let firstConsumer: Interpersonal;
   let secondConsumer: Interpersonal;
   let thirdConsumer: Interpersonal;
@@ -54,15 +53,7 @@ describe("Consumer", () => {
   let thirdConsumerReadable: Readable;
 
   before(async() => {
-    connection = new Connection({
-      port: Number(process.env.REDIS_PORT),
-      host: process.env.REDIS_HOST
-    });
-
-    await connection.initialize();
-
     firstConsumer = new Interpersonal({
-      connection,
       streamName: kStreamName,
       claimOptions: {
         idleTime: 1000
@@ -75,7 +66,6 @@ describe("Consumer", () => {
     });
 
     secondConsumer = new Interpersonal({
-      connection,
       streamName: kStreamName,
       claimOptions: {
         idleTime: 1000
@@ -88,7 +78,6 @@ describe("Consumer", () => {
     });
 
     thirdConsumer = new Interpersonal({
-      connection,
       streamName: kStreamName,
       groupName: kGroupName,
       consumerName: kThirdConsumerName,
@@ -96,8 +85,11 @@ describe("Consumer", () => {
       frequency: kTimer + kDiff
     });
 
+    await firstConsumer.initialize();
     await firstConsumer.init();
+    await secondConsumer.initialize();
     await secondConsumer.init();
+    await thirdConsumer.initialize();
     await thirdConsumer.init();
 
     for (let index = 0; index < (kLength / 3); index++) {
@@ -147,7 +139,9 @@ describe("Consumer", () => {
     const promises = [once(secondConsumerReadable, "close"), once(thirdConsumerReadable, "close")];
     await Promise.all(promises);
 
-    await connection.close();
+    await firstConsumer.close();
+    await secondConsumer.close();
+    await thirdConsumer.close();
   });
 
   test(`WHEN calling init()
