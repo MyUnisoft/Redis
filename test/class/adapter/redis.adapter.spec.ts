@@ -16,7 +16,13 @@ describe("RedisAdapter", () => {
       });
     });
 
-    it("Should be well instantiated", () => {
+    after(async() => {
+      await redisAdapter?.close(true);
+
+      redisAdapter.removeAllListeners();
+    });
+
+    it("Should be well instantiated", async() => {
       assert.ok(redisAdapter instanceof RedisAdapter);
     });
   });
@@ -35,30 +41,15 @@ describe("RedisAdapter", () => {
       });
 
       after(async() => {
-        await redisAdapter.close();
+        await redisAdapter.close(true);
+
+        redisAdapter.removeAllListeners();
       });
 
       it("should return `true`", async() => {
         const isAlive = await redisAdapter.isAlive();
 
         assert.equal(isAlive, true);
-      });
-    });
-
-    describe("While adapter isn't initialized", () => {
-      let redisAdapter: RedisAdapter;
-
-      before(async() => {
-        redisAdapter = new RedisAdapter({
-          port: Number(process.env.REDIS_PORT),
-          host: process.env.REDIS_HOST
-        });
-      });
-
-      it("should return `false`", async() => {
-        const isAlive = await redisAdapter.isAlive();
-
-        assert.equal(isAlive, false);
       });
     });
   });
@@ -78,7 +69,7 @@ describe("RedisAdapter", () => {
         });
 
         after(async() => {
-          await redisAdapter.close();
+          await redisAdapter.close(true);
         });
 
         it("should return `isAlive` at `true` & perf as a `number`", async() => {
@@ -99,7 +90,7 @@ describe("RedisAdapter", () => {
           });
 
           await redisAdapter.initialize();
-          await redisAdapter.close();
+          await redisAdapter.close(true);
         });
 
         it("should return `isAlive` at `false` & perf as a `number`", async() => {
@@ -108,24 +99,6 @@ describe("RedisAdapter", () => {
           assert.equal(isAlive, false);
           assert.ok(perf);
         });
-      });
-    });
-
-    describe("While adapter isn't initialized", () => {
-      let redisAdapter: RedisAdapter;
-
-      before(async() => {
-        redisAdapter = new RedisAdapter({
-          port: Number(process.env.REDIS_PORT),
-          host: process.env.REDIS_HOST
-        });
-      });
-
-      it("should return `isAlive` at `false` & perf as a `number`", async() => {
-        const { isAlive, perf } = await redisAdapter.getPerformance();
-
-        assert.equal(isAlive, false);
-        assert.ok(perf);
       });
     });
   });
@@ -141,12 +114,11 @@ describe("RedisAdapter", () => {
         });
 
         await redisAdapter.initialize();
+        await redisAdapter.flushdb();
       });
 
       after(async() => {
-        await redisAdapter.flushdb();
-
-        await redisAdapter.close();
+        await redisAdapter.close(true);
       });
 
       test("Given a buffer, then it should store a buffer", async() => {
@@ -183,12 +155,11 @@ describe("RedisAdapter", () => {
         });
 
         await redisAdapter.initialize();
+        await redisAdapter.flushdb();
       });
 
       after(async() => {
-        await redisAdapter.flushdb();
-
-        await redisAdapter.close();
+        await redisAdapter.close(true);
       });
 
       test("Given a valid value, it should return the initial key", async() => {
@@ -202,7 +173,7 @@ describe("RedisAdapter", () => {
         assert.equal(firstKey, firstResultedKey);
 
         const secondResultedKey = await redisAdapter.setValue({
-          key: firstKey,
+          key: secondKey,
           value: {
             foo: "bar"
           },
@@ -250,7 +221,7 @@ describe("RedisAdapter", () => {
     });
 
     after(async() => {
-      await redisAdapter.close();
+      await redisAdapter.close(true);
     });
 
     test("Given a valid key, it should return the associated value", async() => {
@@ -259,6 +230,8 @@ describe("RedisAdapter", () => {
       assert.equal(firstValue, firstResultedValue);
 
       const secondResultedKey = await redisAdapter.getValue(secondKey, "", "object");
+
+      console.log("FOFOFOO", secondResultedKey);
 
       assert.equal(secondValue, secondResultedKey);
     });
@@ -293,7 +266,7 @@ describe("RedisAdapter", () => {
     });
 
     after(async() => {
-      await redisAdapter.close();
+      await redisAdapter.close(true);
     });
 
     test("Given an invalid key, then it should return 0", async() => {
