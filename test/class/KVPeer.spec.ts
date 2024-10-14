@@ -24,7 +24,7 @@ describe("KVPeer", () => {
   });
 
   after(async() => {
-    await redisAdapter.close();
+    await redisAdapter.close(true);
   });
 
   describe("Working with prefixed keys", () => {
@@ -35,11 +35,13 @@ describe("KVPeer", () => {
     const prefix = "test_runner";
     const prefixedKey = `${prefix}-${key}`;
 
-    before(() => {
+    before(async() => {
       kvPeer = new KVPeer({
         prefix,
         adapter: redisAdapter
       });
+
+      await redisAdapter.flushall();
     });
 
     test("should be well instantiated", () => {
@@ -106,11 +108,13 @@ describe("KVPeer", () => {
       }
     }];
 
-    before(() => {
+    before(async() => {
       kvPeer = new KVPeer({
         type: "object",
         adapter: redisAdapter
       });
+
+      await redisAdapter.flushall();
     });
 
     test("should be well instantiated", () => {
@@ -122,7 +126,10 @@ describe("KVPeer", () => {
           WHEN calling getValue
           THEN it should return the associated value`,
     async() => {
+      await kvPeer.setValue({ key, value });
+
       const relatedValue = await kvPeer.getValue(key);
+
       assert.deepStrictEqual(relatedValue, value);
     });
   });
@@ -151,14 +158,17 @@ describe("KVPeer", () => {
           adapter: redisAdapter
         });
 
-        await kvPeer.setValue({ key, value });
+        await redisAdapter.flushall();
       });
 
       test(`GIVEN a valid key
             WHEN calling getValue
             THEN it should return a mapped object according to the mapValue fn`,
       async() => {
+        await kvPeer.setValue({ key, value });
+
         const finalValue = await kvPeer.getValue(key);
+
         assert.ok(finalValue!.mapped);
       });
     });
@@ -195,16 +205,18 @@ describe("KVPeer", () => {
           adapter: redisAdapter
         });
 
-        await kvPeer.setValue({ key, value });
+        await redisAdapter.flushall();
       });
 
       test(`GIVEN a valid key
             WHEN calling getValue
             THEN it should return a mapped object according to the mapValue fn`,
       async() => {
-        const value = await kvPeer.getValue(key);
+        await kvPeer.setValue({ key, value });
 
-        assert.deepStrictEqual(value, { ...value, customData: { meta: "foo" } });
+        const result = await kvPeer.getValue(key);
+
+        assert.deepStrictEqual(result, { ...value, customData: { meta: "foo" } });
       });
     });
 
@@ -226,13 +238,14 @@ describe("KVPeer", () => {
           adapter: redisAdapter
         });
 
-        await kvPeer.setValue({ key, value });
+        await redisAdapter.flushall();
       });
 
       test(`GIVEN a valid key
             WHEN calling getValue
             THEN it should return a mapped object according to the mapValue fn`,
       async() => {
+        await kvPeer.setValue({ key, value });
         const finalValue = await kvPeer.getValue(key);
         assert.equal(finalValue, `foo-${value}`);
       });
