@@ -208,7 +208,7 @@ describe("RedisAdapter", () => {
         redisAdapter.setValue<string>({
           key: firstKey,
           value: firstValue,
-          type: "object",
+          type: "raw",
           prefix: ""
         }),
         redisAdapter.setValue({
@@ -225,15 +225,11 @@ describe("RedisAdapter", () => {
     });
 
     test("Given a valid key, it should return the associated value", async() => {
-      const firstResultedValue = await redisAdapter.getValue(firstKey, "", "object");
-
+      const firstResultedValue = await redisAdapter.getValue(firstKey, "", "raw");
       assert.equal(firstValue, firstResultedValue);
 
-      const secondResultedKey = await redisAdapter.getValue(secondKey, "", "object");
-
-      console.log("FOFOFOO", secondResultedKey);
-
-      assert.equal(secondValue, secondResultedKey);
+      const secondResultedValue = await redisAdapter.getValue(secondKey, "", "object");
+      assert.deepEqual(secondValue, secondResultedValue);
     });
 
     test("Given an invalid key, it should return null", async() => {

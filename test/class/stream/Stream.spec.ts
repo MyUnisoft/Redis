@@ -554,4 +554,3 @@ describe("RedisStream instance", () => {
     assert.ok(await stream.getInfo());
   });
 });
-
