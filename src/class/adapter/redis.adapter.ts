@@ -154,7 +154,7 @@ export class RedisAdapter extends Redis implements DatabaseConnection {
   async clearExpired(options: ClearExpiredOptions): Promise<string[]> {
     const { prefix } = options;
 
-    const promises = [this.keys(`${prefix}*`)];
+    const promises = [this.keysBuffer(`${prefix}*`), this.keys(`${prefix}*`)];
 
     const data = [...await Promise.all(promises)].flat();
     if (data.length === 0) {
