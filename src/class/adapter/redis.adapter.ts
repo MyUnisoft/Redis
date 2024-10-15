@@ -151,14 +151,14 @@ export class RedisAdapter extends Redis implements DatabaseConnection {
     return this.del(finalKey);
   }
 
-  async clearExpired(options: ClearExpiredOptions): Promise<void> {
+  async clearExpired(options: ClearExpiredOptions): Promise<string[]> {
     const { prefix } = options;
 
-    const promises = [this.keysBuffer(`${prefix}*`), this.keys(`${prefix}*`)];
+    const promises = [this.keys(`${prefix}*`)];
 
     const data = [...await Promise.all(promises)].flat();
     if (data.length === 0) {
-      return;
+      return [];
     }
 
     const results = await Promise.all(data.map(async(key) => {
@@ -176,12 +176,13 @@ export class RedisAdapter extends Redis implements DatabaseConnection {
 
     if (expiredKeys.length > 0) {
       const pipeline = this.pipeline();
-      this.emit("expiredKeys", expiredKeys);
 
       expiredKeys.forEach((key) => pipeline.del(key));
 
       await pipeline.exec();
     }
+
+    return expiredKeys;
   }
 
   private async isKeyExpired(options: IsKeyExpiredOptions): Promise<boolean> {
@@ -199,7 +200,7 @@ export class RedisAdapter extends Redis implements DatabaseConnection {
     const attempt = await this.getValue<Attempt>(
       finalKey,
       prefix,
-      "raw"
+      "object"
     ) as Attempt;
     const lastTry = "lastTry" in attempt ? Number(attempt.lastTry) : null;
 

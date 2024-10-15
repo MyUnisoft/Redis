@@ -77,10 +77,14 @@ export class RestrictedKV extends KVPeer<Partial<Attempt>> {
   ): Promise<void> {
     const { banTimeInSecond, prefix } = options;
 
-    await this.adapter.clearExpired({
+    const expiredKeys = await this.adapter.clearExpired({
       banTimeInSecond,
       prefix
     });
+
+    if (expiredKeys.length > 0) {
+      this.emit("expiredKeys", expiredKeys);
+    }
   }
 
   clearAutoClearInterval() {
