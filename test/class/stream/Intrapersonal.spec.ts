@@ -29,7 +29,7 @@ const kLastId = "0-0";
 const kCount = 3;
 const kFrequency = 300;
 
-describe("basicStream instance", () => {
+describe("Intrapersonal", () => {
   let intrapersonalStream: Intrapersonal;
   let readable: Readable;
 
@@ -38,7 +38,9 @@ describe("basicStream instance", () => {
       streamName: kStreamName,
       lastId: kLastId,
       count: kCount,
-      frequency: kFrequency
+      frequency: kFrequency,
+      port: Number(process.env.REDIS_PORT),
+      host: process.env.REDIS_HOST
     });
 
     await intrapersonalStream.initialize();
@@ -65,7 +67,7 @@ describe("basicStream instance", () => {
     readable.destroy();
 
     await once(readable, "close");
-    await intrapersonalStream.close();
+    await intrapersonalStream.close(true);
   });
 
   test("reading data", async() => {

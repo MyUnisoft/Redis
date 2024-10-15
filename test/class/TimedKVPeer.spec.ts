@@ -33,7 +33,7 @@ describe("TimedKVPeer", () => {
   });
 
   after(async() => {
-    await redisAdapter.close();
+    await redisAdapter.close(true);
   });
 
   describe("SetValue", () => {

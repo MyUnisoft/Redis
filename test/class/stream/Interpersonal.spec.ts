@@ -42,7 +42,7 @@ const kTimer = 2000;
 const kDiff = 1000;
 const kCount = 2;
 
-describe("Consumer", () => {
+describe("Interpersonal", () => {
   let firstConsumer: Interpersonal;
   let secondConsumer: Interpersonal;
   let thirdConsumer: Interpersonal;
@@ -62,7 +62,9 @@ describe("Consumer", () => {
       consumerName: kFirstConsumerName,
       lastId: kLastId,
       count: kCount,
-      frequency: kTimer
+      frequency: kTimer,
+      port: Number(process.env.REDIS_PORT),
+      host: process.env.REDIS_HOST
     });
 
     secondConsumer = new Interpersonal({
@@ -74,7 +76,9 @@ describe("Consumer", () => {
       consumerName: kSecondConsumerName,
       lastId: kLastId,
       count: kCount,
-      frequency: kTimer
+      frequency: kTimer,
+      port: Number(process.env.REDIS_PORT),
+      host: process.env.REDIS_HOST
     });
 
     thirdConsumer = new Interpersonal({
@@ -82,7 +86,9 @@ describe("Consumer", () => {
       groupName: kGroupName,
       consumerName: kThirdConsumerName,
       lastId: kLastId,
-      frequency: kTimer + kDiff
+      frequency: kTimer + kDiff,
+      port: Number(process.env.REDIS_PORT),
+      host: process.env.REDIS_HOST
     });
 
     await firstConsumer.initialize();
@@ -139,9 +145,9 @@ describe("Consumer", () => {
     const promises = [once(secondConsumerReadable, "close"), once(thirdConsumerReadable, "close")];
     await Promise.all(promises);
 
-    await firstConsumer.close();
-    await secondConsumer.close();
-    await thirdConsumer.close();
+    await firstConsumer.close(true);
+    await secondConsumer.close(true);
+    await thirdConsumer.close(true);
   });
 
   test(`WHEN calling init()

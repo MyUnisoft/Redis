@@ -33,7 +33,7 @@ describe("StoreContext", () => {
   });
 
   after(async() => {
-    await redisAdapter.close();
+    await redisAdapter.close(true);
   });
 
   describe("Store Context initialization's suite", () => {

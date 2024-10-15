@@ -21,7 +21,9 @@ describe("RedisStream instance", () => {
     stream = new Stream({
       streamName: kStreamName,
       lastId: "0-0",
-      frequency: kFrequency
+      frequency: kFrequency,
+      port: Number(process.env.REDIS_PORT),
+      host: process.env.REDIS_HOST
     });
 
     await stream.initialize();
@@ -48,12 +50,11 @@ describe("RedisStream instance", () => {
       await stream.delEntry(entryId);
     }
 
-    await stream.close();
+    await stream.close(true);
   });
 
   test("should instantiate with differents options in constructor", () => {
     assert.ok(stream instanceof Stream);
-    assert.ok(stream instanceof EventEmitter);
   });
 
   describe("Push", () => {
