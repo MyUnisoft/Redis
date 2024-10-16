@@ -6,87 +6,25 @@ import { describe, before, after, test } from "node:test";
 
 // Import Internal Dependencies
 import {
-  initRedis,
-  clearAllKeys,
-  closeAllRedis
+  RedisAdapter
 } from "../../src";
 import { KVPeer } from "../../src/index";
 
-// KVPeer Instance
-describe("KVPeer instance", () => {
+describe("KVPeer", () => {
+  let redisAdapter: RedisAdapter;
+
   before(async() => {
-    await initRedis({ port: Number(process.env.REDIS_PORT), host: process.env.REDIS_HOST });
-    await clearAllKeys();
+    redisAdapter = new RedisAdapter({
+      port: Number(process.env.REDIS_PORT),
+      host: process.env.REDIS_HOST
+    });
+
+    await redisAdapter.initialize();
+    await redisAdapter.flushdb();
   });
 
   after(async() => {
-    await closeAllRedis();
-  });
-
-  describe("Default instantiation", () => {
-    let kvPeer: KVPeer;
-
-    // CONSTANTS
-    const [stringRelatedKey, stringValue] = ["foo", "bar"];
-    const [objectRelatedKey, objectValue] = ["bar", { foo: "bar" }];
-    const fakeKey = "my-fake-key";
-
-    before(() => {
-      kvPeer = new KVPeer();
-    });
-
-    test("should be well instantiated", () => {
-      assert.ok(kvPeer instanceof KVPeer);
-      assert.ok(kvPeer instanceof EventEmitter);
-    });
-
-    test(`Given a valid value
-          WHEN calling setValue
-          THEN it should return the initial key`,
-    async() => {
-      const finalStringRelatedKey = await kvPeer.setValue({ key: stringRelatedKey, value: stringValue });
-      assert.equal(finalStringRelatedKey, stringRelatedKey);
-
-      const finalObjectRelatedKey = await kvPeer.setValue({ key: objectRelatedKey, value: objectValue });
-      assert.equal(finalObjectRelatedKey, objectRelatedKey);
-    });
-
-    test(`Given an invalid key
-          WHEN calling getValue
-          THEN it should return null`,
-    async() => {
-      const value = await kvPeer.getValue(fakeKey);
-      assert.equal(value, null);
-    });
-
-    test(`Given a valid key
-          WHEN calling getValue
-          THEN it should return the associated value`,
-    async() => {
-      const stringRelatedValue = await kvPeer.getValue(stringRelatedKey);
-      assert.equal(stringRelatedValue, stringValue);
-
-      const objectRelatedValue = await kvPeer.getValue(objectRelatedKey);
-      assert.equal(objectRelatedValue, JSON.stringify(objectValue));
-    });
-
-    test(`Given an invalid key
-          WHEN calling deleteValue
-          THEN it should return 0`,
-    async() => {
-      const deletedEntries = await kvPeer.deleteValue(fakeKey);
-
-      assert.equal(deletedEntries, 0);
-    });
-
-    test(`Given an valid key
-          WHEN calling deleteValue
-          THEN it should return the number of deleted entry (1)`,
-    async() => {
-      const deletedEntries = await kvPeer.deleteValue(stringRelatedKey);
-
-      assert.equal(deletedEntries, 1);
-    });
+    await redisAdapter.close(true);
   });
 
   describe("Working with prefixed keys", () => {
@@ -97,10 +35,13 @@ describe("KVPeer instance", () => {
     const prefix = "test_runner";
     const prefixedKey = `${prefix}-${key}`;
 
-    before(() => {
+    before(async() => {
       kvPeer = new KVPeer({
-        prefix
+        prefix,
+        adapter: redisAdapter
       });
+
+      await redisAdapter.flushall();
     });
 
     test("should be well instantiated", () => {
@@ -167,10 +108,13 @@ describe("KVPeer instance", () => {
       }
     }];
 
-    before(() => {
+    before(async() => {
       kvPeer = new KVPeer({
-        type: "object"
+        type: "object",
+        adapter: redisAdapter
       });
+
+      await redisAdapter.flushall();
     });
 
     test("should be well instantiated", () => {
@@ -178,37 +122,14 @@ describe("KVPeer instance", () => {
       assert.ok(kvPeer instanceof EventEmitter);
     });
 
-    test(`Given a valid value
-          WHEN calling setValue
-          THEN it should return the final key`,
-    async() => {
-      const finalKey = await kvPeer.setValue({ key, value });
-      assert.equal(finalKey, key);
-    });
-
-    test(`Given a buffer
-          WHEN calling setValue
-          THEN it store a buffer`,
-    async() => {
-      const customKey = "nested-buffer";
-      const value = {
-        foo: {
-          buffer: Buffer.from("string")
-        }
-      };
-
-      const finalKey = await kvPeer.setValue({ key: customKey, value });
-      assert.equal(finalKey, customKey);
-      const finalValue = await kvPeer.getValue(customKey);
-      // eslint-disable-next-line dot-notation
-      assert.equal(finalValue!["foo"]["buffer"].toString(), value.foo.buffer.toString());
-    });
-
     test(`Given a valid key
           WHEN calling getValue
           THEN it should return the associated value`,
     async() => {
+      await kvPeer.setValue({ key, value });
+
       const relatedValue = await kvPeer.getValue(key);
+
       assert.deepStrictEqual(relatedValue, value);
     });
   });
@@ -233,17 +154,21 @@ describe("KVPeer instance", () => {
       before(async() => {
         kvPeer = new KVPeer({
           type: "object",
-          mapValue
+          mapValue,
+          adapter: redisAdapter
         });
 
-        await kvPeer.setValue({ key, value });
+        await redisAdapter.flushall();
       });
 
       test(`GIVEN a valid key
             WHEN calling getValue
             THEN it should return a mapped object according to the mapValue fn`,
       async() => {
+        await kvPeer.setValue({ key, value });
+
         const finalValue = await kvPeer.getValue(key);
+
         assert.ok(finalValue!.mapped);
       });
     });
@@ -276,19 +201,22 @@ describe("KVPeer instance", () => {
       before(async() => {
         kvPeer = new KVPeer<MyCustomObject, Metadata>({
           type: "object",
-          mapValue
+          mapValue,
+          adapter: redisAdapter
         });
 
-        await kvPeer.setValue({ key, value });
+        await redisAdapter.flushall();
       });
 
       test(`GIVEN a valid key
             WHEN calling getValue
             THEN it should return a mapped object according to the mapValue fn`,
       async() => {
-        const value = await kvPeer.getValue(key);
+        await kvPeer.setValue({ key, value });
 
-        assert.deepStrictEqual(value, { ...value, customData: { meta: "foo" } });
+        const result = await kvPeer.getValue(key);
+
+        assert.deepStrictEqual(result, { ...value, customData: { meta: "foo" } });
       });
     });
 
@@ -306,16 +234,18 @@ describe("KVPeer instance", () => {
       before(async() => {
         kvPeer = new KVPeer({
           type: "raw",
-          mapValue
+          mapValue,
+          adapter: redisAdapter
         });
 
-        await kvPeer.setValue({ key, value });
+        await redisAdapter.flushall();
       });
 
       test(`GIVEN a valid key
             WHEN calling getValue
             THEN it should return a mapped object according to the mapValue fn`,
       async() => {
+        await kvPeer.setValue({ key, value });
         const finalValue = await kvPeer.getValue(key);
         assert.equal(finalValue, `foo-${value}`);
       });

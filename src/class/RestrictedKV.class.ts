@@ -1,16 +1,13 @@
-// Import Third-party requirement
-import dayjs from "dayjs";
-
 // Import Internal dependencies
-import { KVPeer, KVOptions } from "./KVPeer.class";
-import { getConnectionPerf } from "..";
-import { KeyType } from "../types/index";
+import { KVPeer, type KVOptions } from "./KVPeer.class.js";
+import type { KeyType } from "../types/index.js";
+import { ClearExpiredOptions } from "./adapter/redis.adapter.js";
 
 // CONSTANTS
 const kDefaultAllowedAttempt = 6;
 const kDefaultBanTime = 60 * 5;
 
-export type RestrictedKVOptions = Pick<KVOptions<Attempt>, "prefix"> & {
+export type RestrictedKVOptions = Pick<KVOptions<Attempt>, "prefix" | "adapter"> & {
   autoClearExpired?: number;
   allowedAttempt?: number;
   banTimeInSecond?: number;
@@ -39,10 +36,11 @@ export class RestrictedKV extends KVPeer<Partial<Attempt>> {
     return { failure: 0, lastTry: Date.now(), locked: false };
   }
 
-  constructor(options: RestrictedKVOptions = {}) {
-    const { prefix, autoClearExpired, allowedAttempt, banTimeInSecond } = options;
+  constructor(options: RestrictedKVOptions) {
+    const { prefix, autoClearExpired, allowedAttempt, banTimeInSecond, adapter } = options;
 
     super({
+      adapter,
       prefix: prefix ?? "limited-",
       type: "object"
     });
@@ -53,10 +51,10 @@ export class RestrictedKV extends KVPeer<Partial<Attempt>> {
     if (autoClearExpired) {
       this.autoClearInterval = setInterval(async() => {
         try {
-          const connectionPerf = await getConnectionPerf("publisher");
+          const connectionPerf = await this.adapter.getPerformance();
 
           if (connectionPerf.isAlive) {
-            await this.clearExpired();
+            await this.adapter.clearExpired();
           }
         }
         catch (error) {
@@ -72,6 +70,21 @@ export class RestrictedKV extends KVPeer<Partial<Attempt>> {
       lastTry: Number(data.lastTry ?? Date.now()),
       locked: (data.locked ?? "false") === "true"
     };
+  }
+
+  async clearExpired(
+    options: ClearExpiredOptions = { banTimeInSecond: this.banTimeInSecond, prefix: this.prefix }
+  ): Promise<void> {
+    const { banTimeInSecond, prefix } = options;
+
+    const expiredKeys = await this.adapter.clearExpired({
+      banTimeInSecond,
+      prefix
+    });
+
+    if (expiredKeys.length > 0) {
+      this.emit("expiredKeys", expiredKeys);
+    }
   }
 
   clearAutoClearInterval() {
@@ -113,7 +126,7 @@ export class RestrictedKV extends KVPeer<Partial<Attempt>> {
     const attempt: Attempt = { failure: 1, lastTry: Date.now(), locked: false };
 
     if (stored !== null) {
-      const diff = dayjs().diff(stored.lastTry, "second");
+      const diff = (Date.now() - stored.lastTry) / 1000;
       if (diff < this.banTimeInSecond) {
         attempt.failure = stored.failure + 1;
       }
@@ -122,7 +135,7 @@ export class RestrictedKV extends KVPeer<Partial<Attempt>> {
       }
     }
 
-    await this.setValue({ key, value: attempt });
+    await this.adapter.setValue({ key, value: attempt });
 
     return attempt;
   }
@@ -140,58 +153,7 @@ export class RestrictedKV extends KVPeer<Partial<Attempt>> {
   async success(key: KeyType) {
     const rawStored = await this.getValue(key);
     if (rawStored !== null) {
-      await this.deleteValue(key);
+      await this.adapter.deleteValue(key);
     }
-  }
-
-  /**
-  * @description Searches for all keys where the last attempt exceeds an allocated lifetime and clear (delete) them.
-  *
-  * @example
-  * ```ts
-  * handler.clearExpired()
-  * ```
-  */
-  async clearExpired(): Promise<void> {
-    const promises = [this.redis.keysBuffer(`${this.prefix}*`), this.redis.keys(`${this.prefix}*`)];
-
-    const data = [...await Promise.all(promises)].flat();
-    if (data.length === 0) {
-      return;
-    }
-
-    const results = await Promise.all(data.map(async(key) => {
-      const expired = await this.isKeyExpired(key);
-
-      return { key, expired };
-    }));
-
-    const expiredKeys = results
-      .filter((row) => row.expired)
-      .map((row) => row.key);
-
-    if (expiredKeys.length > 0) {
-      const pipeline = this.redis.pipeline();
-      this.emit("expiredKeys", expiredKeys);
-      expiredKeys.forEach((key) => pipeline.del(key));
-
-      await pipeline.exec();
-    }
-  }
-
-  private async isKeyExpired(key: KeyType): Promise<boolean> {
-    let finalKey: string | Buffer;
-
-    if (typeof key === "object") {
-      finalKey = Buffer.from(key.toString().slice(this.prefix.length));
-    }
-    else {
-      finalKey = key.slice(this.prefix.length);
-    }
-
-    const attempt = await this.getValue(finalKey) as Attempt;
-    const lastTry = "lastTry" in attempt ? Number(attempt.lastTry) : null;
-
-    return lastTry === null ? false : dayjs().diff(lastTry, "second") >= this.banTimeInSecond;
   }
 }

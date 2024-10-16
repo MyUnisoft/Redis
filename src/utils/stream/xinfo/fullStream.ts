@@ -1,22 +1,20 @@
 // Import Internal Dependencies
 import {
   kParseRegex,
-  XRedisData,
-  XEntries,
-  XEntry,
-  XPending,
-  XConsumers,
-  XGroups
-} from "../index";
-
-// Import Types
-import {
+  type XRedisData,
+  type XEntries,
+  type XEntry,
+  type XPending,
+  type XConsumers,
+  type XGroups
+} from "../index.js";
+import type {
   Group,
   Consumer,
   Entry,
   Pending,
   Value
-} from "../../../types/index";
+} from "../../../types/index.js";
 
 export function* parseFullStreamData(arr: XRedisData): IterableIterator<
   Array<string | Value |

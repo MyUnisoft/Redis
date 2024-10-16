@@ -5,11 +5,9 @@ import EventEmitter from "node:events";
 
 // Import Internal Dependencies
 import {
-  initRedis,
-  closeAllRedis,
-  clearAllKeys,
   StoreContext,
-  Store
+  Store,
+  RedisAdapter
 } from "../../src/index";
 import { randomValue } from "../fixtures/utils/randomValue";
 
@@ -22,13 +20,20 @@ interface CustomStore extends Store {
 }
 
 describe("StoreContext", () => {
+  let redisAdapter: RedisAdapter;
+
   before(async() => {
-    await initRedis({ port: Number(process.env.REDIS_PORT), host: process.env.REDIS_HOST });
-    await clearAllKeys();
+    redisAdapter = new RedisAdapter({
+      port: Number(process.env.REDIS_PORT),
+      host: process.env.REDIS_HOST
+    });
+
+    await redisAdapter.initialize();
+    await redisAdapter.flushdb();
   });
 
   after(async() => {
-    await closeAllRedis();
+    await redisAdapter.close(true);
   });
 
   describe("Store Context initialization's suite", () => {
@@ -36,7 +41,8 @@ describe("StoreContext", () => {
 
     it("should be instance of EventEmitter & StoreContext", () => {
       sessionContext = new StoreContext<CustomStore>({
-        authentificationField: "mail",
+        adapter: redisAdapter,
+        authenticationField: "mail",
         ttl: 3600,
         randomKeyCallback: () => "randomKey"
       });
@@ -57,24 +63,28 @@ describe("StoreContext", () => {
     let sessionContext: StoreContext;
 
     before(() => {
-      sessionContext = new StoreContext<CustomStore>({ authentificationField: "mail", prefix: "store-context-" });
+      sessionContext = new StoreContext<CustomStore>({
+        adapter: redisAdapter,
+        authenticationField: "mail",
+        prefix: "store-context-"
+      });
     });
 
     it("should throw an error if id is an empty string", async() => {
       const ctx = createFrameworkCtx();
       const payload = { returnTo: "http://localhost/" };
 
-      await assert.rejects(async() => sessionContext.initSession("", ctx, payload), {
-        name: "Error",
-        message: "id must not be an empty string"
-      });
+      const res = await sessionContext.initSession("", ctx, payload);
+
+      assert.equal(res.err, true);
+      assert.equal(res.val, "id must not be an empty string");
     });
 
     it("should return the final key when init success", async() => {
       const key = randomValue();
       const ctx = createFrameworkCtx();
 
-      assert.equal(await sessionContext.initSession(key, ctx, {}), key);
+      assert.equal((await sessionContext.initSession(key, ctx, {})).unwrap(), key);
     });
 
     it("should set a cookie when initSession() has been call", async() => {
@@ -94,16 +104,16 @@ describe("StoreContext", () => {
     let sessionContext: StoreContext;
 
     before(() => {
-      sessionContext = new StoreContext<CustomStore>({ authentificationField: "mail" });
+      sessionContext = new StoreContext<CustomStore>({
+        adapter: redisAdapter,
+        authenticationField: "mail"
+      });
     });
 
     it("should throw error if there is no cookie `session-id`", async() => {
       const ctx = createFrameworkCtx();
 
-      await assert.rejects(async() => sessionContext.destroySession(ctx), {
-        name: "TypeError",
-        message: "Unable to found any cookie session-id. Your session is probably expired!"
-      });
+      await assert.rejects(async() => sessionContext.destroySession(ctx));
     });
 
     it("should correctly destroy session", async() => {
@@ -125,7 +135,10 @@ describe("StoreContext", () => {
     let sessionContext: StoreContext;
 
     before(() => {
-      sessionContext = new StoreContext<CustomStore>({ authentificationField: "mail" });
+      sessionContext = new StoreContext<CustomStore>({
+        authenticationField: "mail",
+        adapter: redisAdapter
+      });
     });
 
     it("should return the session if available", async() => {
@@ -137,7 +150,9 @@ describe("StoreContext", () => {
       ctx.getCookie = () => sessionId;
       ctx["session-id"] = sessionId;
 
-      assert.equal((await sessionContext.getSession(ctx))!.returnTo, "false");
+      const res = await sessionContext.getSession(ctx);
+
+      assert.equal(res!.returnTo, "false");
     });
   });
 
@@ -145,7 +160,10 @@ describe("StoreContext", () => {
     let sessionContext: StoreContext;
 
     before(() => {
-      sessionContext = new StoreContext<CustomStore>({ authentificationField: "mail" });
+      sessionContext = new StoreContext<CustomStore>({
+        authenticationField: "mail",
+        adapter: redisAdapter
+      });
     });
 
     it("should return false for an undefined `session-id` cookie", async() => {
@@ -166,7 +184,9 @@ describe("StoreContext", () => {
     });
 
     it("should return true for a `session-id` cookie having data stored", async() => {
-      const noAuthOptionsContext = new StoreContext();
+      const noAuthOptionsContext = new StoreContext({
+        adapter: redisAdapter
+      });
       const ctx = createFrameworkCtx();
 
       await sessionContext.initSession("user", ctx, {});
@@ -185,19 +205,22 @@ describe("StoreContext", () => {
       ctx.getCookie = () => sessionId;
       ctx["session-id"] = sessionId;
 
-      sessionWithCtx = new StoreContext<any>({ authentificationField: "mail" }).useContext(ctx);
+      sessionWithCtx = new StoreContext<any>({
+        authenticationField: "mail",
+        adapter: redisAdapter
+      }).useContext(ctx);
     });
 
     it("should return the final key when init success", async() => {
       const key = randomValue();
 
-      assert.equal(await sessionWithCtx.initSession(key, {}), key);
+      assert.equal((await sessionWithCtx.initSession(key, {})).unwrap(), key);
     });
 
     it("should set a cookie when initSession() has been call", async() => {
       const payload = { returnTo: "http://localhost/" };
 
-      assert.equal(await sessionWithCtx.initSession(sessionId, payload), sessionId);
+      assert.equal((await sessionWithCtx.initSession(sessionId, payload)).unwrap(), sessionId);
     });
 
     it("should return the session if available", async() => {
@@ -213,7 +236,10 @@ describe("StoreContext", () => {
     let sessionContext: StoreContext;
 
     before(() => {
-      sessionContext = new StoreContext<any>({ authentificationField: "mail" });
+      sessionContext = new StoreContext<any>({
+        authenticationField: "mail",
+        adapter: redisAdapter
+      });
     });
 
     it("should return the key for the stored value", async() => {

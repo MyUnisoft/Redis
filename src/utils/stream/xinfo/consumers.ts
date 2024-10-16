@@ -1,5 +1,5 @@
 // Import Internal Dependencies
-import { parseData } from "..";
+import { parseData } from "../index.js";
 
 export type XINFOConsumers = (string | number)[][];
 

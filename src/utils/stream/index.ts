@@ -1,10 +1,8 @@
 // Import Internal Dependencies
-export * from "./xinfo/groups";
-export * from "./xinfo/consumers";
-export * from "./xinfo/fullStream";
-
-// Import Types
-import {
+export * from "./xinfo/groups.js";
+export * from "./xinfo/consumers.js";
+export * from "./xinfo/fullStream.js";
+import type {
   Entry,
   Value,
   Consumer,
