@@ -6,7 +6,8 @@ import timers from "node:timers/promises";
 // Import Internal Dependencies
 import {
   Channel,
-  PublishOptions
+  PublishOptions,
+  RedisAdapter
 } from "../../../src/index";
 
 // Mocks
@@ -24,14 +25,16 @@ describe("Channel", () => {
 
     before(async() => {
       channel = new Channel({
-        name
+        name,
+        port: Number(process.env.REDIS_PORT),
+        host: process.env.REDIS_HOST
       });
 
       await channel.initialize();
     });
 
     after(async() => {
-      await channel.close();
+      await channel.close(true);
     });
 
     test("channel should be instance of Channel", async() => {
@@ -43,23 +46,33 @@ describe("Channel", () => {
   describe("Channel with local instance", () => {
     describe("Channel without prefix & metadata", () => {
       let channel: Channel;
+      let subscriber: RedisAdapter;
 
       // CONSTANTS
       const name = "channel";
 
       before(async() => {
         channel = new Channel({
-          name
+          name,
+          port: Number(process.env.REDIS_PORT),
+          host: process.env.REDIS_HOST
+        });
+
+        subscriber = new RedisAdapter({
+          port: Number(process.env.REDIS_PORT),
+          host: process.env.REDIS_HOST
         });
 
         await channel.initialize();
+        await subscriber.initialize();
 
-        await channel.subscribe(name);
-        channel.on("message", (channel, message) => mockedEvents(channel, message));
+        await subscriber.subscribe(name);
+        subscriber.on("message", (channel, message) => mockedEvents(channel, message));
       });
 
       after(async() => {
-        await channel.close();
+        await channel.close(true);
+        await subscriber.close(true);
       });
 
       test("channel should be instance of Channel", async() => {
@@ -86,6 +99,7 @@ describe("Channel", () => {
 
     describe("Channel with prefix", () => {
       let channel: Channel;
+      let subscriber: RedisAdapter;
 
       // CONSTANTS
       const name = "channel";
@@ -95,17 +109,26 @@ describe("Channel", () => {
       before(async() => {
         channel = new Channel({
           name,
-          prefix
+          prefix,
+          port: Number(process.env.REDIS_PORT),
+          host: process.env.REDIS_HOST
+        });
+
+        subscriber = new RedisAdapter({
+          port: Number(process.env.REDIS_PORT),
+          host: process.env.REDIS_HOST
         });
 
         await channel.initialize();
+        await subscriber.initialize();
 
-        await channel.subscribe(prefixedName);
-        channel.on("message", (channel, message) => mockedEvents(channel, message));
+        await subscriber.subscribe(prefixedName);
+        subscriber.on("message", (channel, message) => mockedEvents(channel, message));
       });
 
       after(async() => {
-        await channel.close();
+        await channel.close(true);
+        await subscriber.close(true);
       });
 
       test("channel should be instance of Channel", async() => {
@@ -136,23 +159,33 @@ describe("Channel", () => {
       }
 
       let channel: Channel<Record<string, any>, Metadata>;
+      let subscriber: RedisAdapter;
 
       // CONSTANTS
       const name = "channel";
 
       before(async() => {
         channel = new Channel<Record<string, any>, Metadata>({
-          name
+          name,
+          port: Number(process.env.REDIS_PORT),
+          host: process.env.REDIS_HOST
+        });
+
+        subscriber = new RedisAdapter({
+          port: Number(process.env.REDIS_PORT),
+          host: process.env.REDIS_HOST
         });
 
         await channel.initialize();
+        await subscriber.initialize();
 
-        await channel.subscribe(name);
-        channel.on("message", (channel, message) => mockedEvents(channel, message));
+        await subscriber.subscribe(name);
+        subscriber.on("message", (channel, message) => mockedEvents(channel, message));
       });
 
       after(async() => {
-        await channel.close();
+        await channel.close(true);
+        await subscriber.close(true);
       });
 
       test("channel should be instance of Channel", async() => {
