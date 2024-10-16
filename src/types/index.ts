@@ -44,6 +44,6 @@ export interface DatabaseConnection {
   initialize(...unknown): Promise<unknown>;
   setValue(...unknown): Promise<KeyType>;
   deleteValue(...unknown): Promise<number>;
-  clearExpired(...unknown): Promise<string[]>;
+  clearExpired(...unknown): Promise<(string | Buffer)[]>;
   getValue(...unknown): Promise<unknown>;
 }
