@@ -1,5 +1,4 @@
 // Import Internal Dependencies
-// import { Connection } from "../../index.js";
 import { RedisAdapter, RedisAdapterOptions } from "../adapter/redis.adapter.js";
 
 export type ChannelOptions = RedisAdapterOptions & {

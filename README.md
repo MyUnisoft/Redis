@@ -43,7 +43,7 @@ $ yarn add @myunisoft/redis
 </p>
 
 ```ts
-type ConnectionOptions: Partial<RedisOptions> & {
+type ConnectionOptions = Partial<RedisOptions> & {
   port?: number;
   host?: string;
   attempt?: number;

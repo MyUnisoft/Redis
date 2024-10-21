@@ -7,7 +7,7 @@ import { Err, Ok, Result } from "@openally/result";
 
 // Import Internal Dependencies
 import { AssertConnectionError, AssertDisconnectionError } from "../error/connection.error.js";
-import type { DatabaseConnection, KeyType, Value } from "../../types";
+import type { DatabaseConnection, KeyType, Value } from "../../types/index.js";
 import { Attempt } from "../RestrictedKV.class.js";
 
 // CONSTANTS
@@ -53,7 +53,7 @@ export class RedisAdapter extends Redis implements DatabaseConnection {
     super(options);
 
     this.#attempt = options.attempt ?? kDefaultAttempt;
-    this.#attempt = options.disconnectTimeout ?? kDefaultTimeout;
+    this.#disconnectionTimeout = options.disconnectTimeout ?? kDefaultTimeout;
   }
 
   async initialize() {
