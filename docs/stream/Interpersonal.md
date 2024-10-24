@@ -26,7 +26,14 @@ interface GroupConsumerOptions extends BasementOptions {
 ## 📚 Usage
 
 ```ts
+import { GroupConsumer, Connection } from "@myunisoft/redis";
+
+const connection = new Connection();
+
+await connection.initialize();
+
 const consumer = new GroupConsumer({
+  connection,
   streamName: "my-stream-name",
   groupName: "my-group-name",
   consumerName: "my-consumer-name",

@@ -4,11 +4,8 @@ import { describe, before, after, test } from "node:test";
 import EventEmitter from "node:events";
 
 // Import Internal Dependencies
-import { initRedis, Stream, closeAllRedis } from "../../../src";
+import { Stream } from "../../../src";
 import { randomValue } from "../../fixtures/utils/randomValue";
-
-// Import Types
-import { Entry } from "../../../src/types/index";
 
 // CONSTANTS
 const kStreamName = randomValue();
@@ -21,8 +18,15 @@ describe("RedisStream instance", () => {
   let stream: Stream;
 
   before(async() => {
-    await initRedis({ port: Number(process.env.REDIS_PORT), host: process.env.REDIS_HOST });
-    stream = new Stream({ streamName: kStreamName, lastId: "0-0", frequency: kFrequency });
+    stream = new Stream({
+      streamName: kStreamName,
+      lastId: "0-0",
+      frequency: kFrequency,
+      port: Number(process.env.REDIS_PORT),
+      host: process.env.REDIS_HOST
+    });
+
+    await stream.initialize();
 
     const streamExist = await stream.streamExist();
 
@@ -46,12 +50,11 @@ describe("RedisStream instance", () => {
       await stream.delEntry(entryId);
     }
 
-    await closeAllRedis();
+    await stream.close(true);
   });
 
   test("should instantiate with differents options in constructor", () => {
     assert.ok(stream instanceof Stream);
-    assert.ok(stream instanceof EventEmitter);
   });
 
   describe("Push", () => {
@@ -127,10 +130,10 @@ describe("RedisStream instance", () => {
     async() => {
       const id = "00";
 
-      await assert.rejects(async() => stream.delEntry(id), {
-        name: "Error",
-        message: `Failed entry deletion for ${id}`
-      });
+      const res = await stream.delEntry(id);
+
+      assert.equal(res.err, true);
+      assert.equal(res.val, `Failed entry deletion for ${id}`);
     });
   });
 
@@ -551,4 +554,3 @@ describe("RedisStream instance", () => {
     assert.ok(await stream.getInfo());
   });
 });
-

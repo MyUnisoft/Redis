@@ -23,7 +23,7 @@ interface FrameworkContext {
 
 interface StoreContextOptions<T extends Store> extends TimedKVPeerOptions<T> {
   /** Property name used in isUserAuthenticated() method to define if the user is authenticated or not **/
-  authentificationField: keyof T;
+  authenticationField?: keyof T;
   /** HTTP Cookies options. Will be used when creating the session cookie. **/
   setCookiesOptions?: CookieSerializeOptions;
 }
@@ -32,9 +32,14 @@ interface StoreContextOptions<T extends Store> extends TimedKVPeerOptions<T> {
 ## 📚 Usage
 
 ```ts
-import { StoreContext } from "@myunisoft/redis";
+import { StoreContext, Connection } from "@myunisoft/redis";
+
+const connection = new Connection();
+
+await connection.initialize();
 
 const options = {
+  connection,
   authenticationField: keyof T | null;
   cookiesOptions: SetOption;
 }
@@ -44,17 +49,23 @@ const store: StoreContext = new StoreContext(options);
 
 ## 📜 API
 
-### initSession(id: string, ctx: FrameworkContext, payload: Store & T): Promise< string >
+### initSession(id: string, ctx: FrameworkContext, payload: Store & T): Promise< InitSessionResponse >
 
 this method is used to initialize a session.
 
 ```ts
+type InitSessionResponse = Result<string, "id must not be an empty string">;
+
 const id = "foo";
 const payload = {
   returnTo =  "theCallbackUrl";
 }
 
-await store.initSession(id, ctx, payload);
+const sessionResult = await store.initSession(id, ctx, payload);
+
+if (sessionResult.ok) {
+  const id = sessionResult.unwrap(); // "foo"
+}
 ```
 
 ### destroySession(ctx: FrameworkContext): Promise< void >

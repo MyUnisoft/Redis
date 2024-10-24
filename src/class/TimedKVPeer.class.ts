@@ -2,8 +2,9 @@
 import { randomBytes } from "node:crypto";
 
 // Import Internal Dependencies
-import { KVPeer, KVOptions, SetValueOptions } from "./KVPeer.class";
-import { KeyType } from "../types/index";
+import { KVPeer, type KVOptions } from "./KVPeer.class.js";
+import type { KeyType } from "../types/index.js";
+import type { SetValueOptions } from "./adapter/redis.adapter.js";
 
 // CONSTANTS
 const kDefaultTtl = 1_000 * 60 * 10;
@@ -18,7 +19,10 @@ export interface TimedKVPeerOptions<T extends object, K extends Record<string, a
   randomKeyCallback?: () => string;
 }
 
-interface TimedSetValueOptions<T extends object> extends Omit<SetValueOptions<T>, "expiresIn" | "key"> {
+interface TimedSetValueOptions<T extends object> extends Omit<
+  SetValueOptions<T>,
+  "expiresIn" | "key" | "prefix" | "type"
+> {
   key?: string | Buffer;
 }
 
@@ -30,7 +34,7 @@ export class TimedKVPeer<T extends object, K extends Record<string, any> | null 
   protected randomKeyGenerator: () => string;
   private ttl: number;
 
-  constructor(options: TimedKVPeerOptions<T, K> = {}) {
+  constructor(options: TimedKVPeerOptions<T, K>) {
     super({ ...options, type: "object" });
 
     this.ttl = options.ttl ?? kDefaultTtl;
@@ -38,11 +42,15 @@ export class TimedKVPeer<T extends object, K extends Record<string, any> | null 
   }
 
   override async setValue(options: TimedSetValueOptions<T>): Promise<KeyType> {
-    const { key, value } = options;
+    const { key, ...restOptions } = options;
 
     const finalKey = key ?? this.randomKeyGenerator();
 
-    await super.setValue({ key: finalKey, value, expiresIn: this.ttl });
+    await super.setValue({
+      ...restOptions,
+      key: finalKey,
+      expiresIn: this.ttl
+    });
 
     return finalKey;
   }

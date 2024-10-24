@@ -1,6 +1,8 @@
+// Import Third-party Dependencies
+import { Result, Ok, Err } from "@openally/result";
+
 // Import Internal Dependencies
-import { TimedKVPeer, TimedKVPeerOptions } from "./TimedKVPeer.class";
-import { getRedis } from "../index";
+import { TimedKVPeer, type TimedKVPeerOptions } from "./TimedKVPeer.class.js";
 
 // CONSTANTS
 const kDefaultCookiesOptions: CookieSerializeOptions = { sameSite: "none", secure: true };
@@ -19,7 +21,7 @@ export interface CookieSerializeOptions {
 }
 
 export interface UseContext<T> {
-  initSession: (id: string, payload: T) => Promise<string>;
+  initSession: (id: string, payload: T) => Promise<InitSessionResponse>;
   destroySession: () => Promise<void>;
   getSession: () => Promise<T | null>;
   updateSession: (payload: Partial<T>) => Promise<void>;
@@ -36,9 +38,14 @@ export interface FrameworkContext {
   setCookie: (cookieName: string, cookieValue: string | null, opts?: CookieSerializeOptions) => void;
 }
 
+export type InitSessionErr = "id must not be an empty string";
+export type GetSessionIdErr = "Unable to found any cookie session-id. Your session is probably expired!";
+
+type InitSessionResponse = Result<string, InitSessionErr>;
+
 export interface StoreContextOptions<T extends Store> extends TimedKVPeerOptions<T> {
   /** Property name used in isUserAuthenticated() method to define if the user is authenticated or not **/
-  authentificationField: keyof T;
+  authenticationField?: keyof T;
   /** HTTP Cookies options. Will be used when creating the session cookie. **/
   setCookiesOptions?: CookieSerializeOptions;
 }
@@ -58,7 +65,7 @@ export interface StoreContextOptions<T extends Store> extends TimedKVPeerOptions
 * }
 *
 * export const store = new StoreContext<DextStore>({
-*   authentificationField: "mail"
+*   authenticationField: "mail"
 * });
 * ```
 */
@@ -66,22 +73,12 @@ export class StoreContext<T extends Store = Store> extends TimedKVPeer<T> {
   protected authenticationField: keyof T | null;
   protected cookiesOptions: CookieSerializeOptions;
 
-  constructor(options?: Partial<StoreContextOptions<T>>) {
+  constructor(options: StoreContextOptions<T>) {
     super(options);
 
-    this.authenticationField = options?.authentificationField ?? null;
-    this.cookiesOptions = typeof options?.setCookiesOptions === "undefined" ? Object.assign({}, kDefaultCookiesOptions) :
+    this.authenticationField = options.authenticationField ?? null;
+    this.cookiesOptions = typeof options.setCookiesOptions === "undefined" ? Object.assign({}, kDefaultCookiesOptions) :
       Object.assign({}, kDefaultCookiesOptions, options.setCookiesOptions);
-  }
-
-  override get redis() {
-    const redis = getRedis();
-
-    if (!redis) {
-      throw new Error("Redis must be init");
-    }
-
-    return redis;
   }
 
   /**
@@ -98,9 +95,9 @@ export class StoreContext<T extends Store = Store> extends TimedKVPeer<T> {
   * const sessionId = await handler.initSession(randomUUID(), ctx, { returnTo: "http://localhost:3000/" });
   * ```
   */
-  async initSession(id: string, ctx: FrameworkContext, payload: T): Promise<string> {
+  async initSession(id: string, ctx: FrameworkContext, payload: T): Promise<InitSessionResponse> {
     if (!id) {
-      throw new Error("id must not be an empty string");
+      return Err("id must not be an empty string");
     }
 
     ctx.setCookie(kStoreContextSessionName, id, this.cookiesOptions);
@@ -109,22 +106,32 @@ export class StoreContext<T extends Store = Store> extends TimedKVPeer<T> {
       payload.returnTo = "false";
     }
 
-    await this.setValue({ key: id, value: payload });
+    await this.setValue({
+      key: id,
+      value: payload
+    });
 
-    return id;
+    return Ok(id);
   }
 
   async destroySession(ctx: FrameworkContext): Promise<void> {
-    const sessionId = this.getSessionId(ctx);
+    const sessionId = this.getSessionId(ctx).unwrap();
+
     ctx.setCookie(kStoreContextSessionName, null);
 
-    await this.deleteValue(sessionId);
+    await this.adapter.deleteValue(sessionId);
   }
 
   getSession(ctx: FrameworkContext): Promise<T | null> {
-    const sessionId = this.getSessionId(ctx);
+    const getSessionResult = this.getSessionId(ctx);
 
-    return this.getValue(sessionId);
+    if (!getSessionResult.ok) {
+      throw new Error(getSessionResult.val);
+    }
+
+    const val = getSessionResult.unwrap();
+
+    return this.getValue(val);
   }
 
   /**
@@ -134,9 +141,18 @@ export class StoreContext<T extends Store = Store> extends TimedKVPeer<T> {
   * @param payload - the new property to assign at the session
   */
   async updateSession(ctx: FrameworkContext, payload: Partial<T>) {
-    const sessionId = this.getSessionId(ctx);
+    const getSessionResult = this.getSessionId(ctx);
 
-    await this.setValue({ key: sessionId, value: payload });
+    if (!getSessionResult.ok) {
+      throw new Error(getSessionResult.val);
+    }
+
+    const val = getSessionResult.unwrap();
+
+    await this.setValue({
+      key: val,
+      value: payload
+    });
   }
 
   /**
@@ -173,12 +189,12 @@ export class StoreContext<T extends Store = Store> extends TimedKVPeer<T> {
   /**
   * @param ctx http context object
   */
-  private getSessionId(ctx: FrameworkContext): string {
+  private getSessionId(ctx: FrameworkContext): Result<string, GetSessionIdErr> {
     const sessionId = ctx.getCookie(kStoreContextSessionName);
     if (!sessionId) {
-      throw new TypeError("Unable to found any cookie session-id. Your session is probably expired!");
+      return Err("Unable to found any cookie session-id. Your session is probably expired!");
     }
 
-    return sessionId;
+    return Ok(sessionId);
   }
 }
