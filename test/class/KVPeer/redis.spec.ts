@@ -7,8 +7,8 @@ import { describe, before, after, test } from "node:test";
 // Import Internal Dependencies
 import {
   RedisAdapter
-} from "../../src";
-import { KVPeer } from "../../src/index";
+} from "../../../src";
+import { KVPeer } from "../../../src/index";
 
 describe("KVPeer", () => {
   let redisAdapter: RedisAdapter;
@@ -53,8 +53,9 @@ describe("KVPeer", () => {
           WHEN calling setValue
           THEN it should return the final key`,
     async() => {
-      const finalKey = await kvPeer.setValue({ key, value });
-      assert.equal(finalKey, prefixedKey);
+      const result = await kvPeer.setValue({ key, value });
+
+      assert.equal(result.val, prefixedKey);
     });
 
     test(`Given a valid key
