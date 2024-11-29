@@ -46,25 +46,25 @@ describe("TimedKVPeer", () => {
     it("Given an expired key, it should return null", async() => {
       await timers.setTimeout(3_600);
 
-      assert.equal(await timedKVPeer.getValue("key"), null);
+      assert.equal(await timedKVPeer.getValue("foo"), null);
     });
   });
 
   describe("deleteValue", () => {
     it("Given a valid key", async() => {
-      const key = await timedKVPeer.setValue({ key: "foo", value: { mail: "bar" } });
+      const result = await timedKVPeer.setValue({ key: "foo", value: { mail: "bar" } });
 
-      const deletedValues = await timedKVPeer.deleteValue(key);
+      const deletedValues = await timedKVPeer.deleteValue(result.val as KeyType);
 
       assert.equal(deletedValues, 1);
     });
 
     it("Given a expired key", async() => {
-      const key = await timedKVPeer.setValue({ key: "foo", value: { mail: "bar" } });
+      const result = await timedKVPeer.setValue({ key: "foo", value: { mail: "bar" } });
 
       await timers.setTimeout(3_600);
 
-      const deletedValues = await timedKVPeer.deleteValue(key);
+      const deletedValues = await timedKVPeer.deleteValue(result.val as KeyType);
 
       assert.equal(deletedValues, 0);
     });
