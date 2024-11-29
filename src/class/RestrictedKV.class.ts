@@ -51,7 +51,7 @@ export class RestrictedKV extends KVPeer<Partial<Attempt>> {
     if (autoClearExpired) {
       this.autoClearInterval = setInterval(async() => {
         try {
-          const connectionPerf = await this.adapter.getPerformance();
+          const connectionPerf = this.adapter.getPerformance ? (await this.adapter.getPerformance()) : { isAlive: true };
 
           if (connectionPerf.isAlive) {
             await this.adapter.clearExpired();

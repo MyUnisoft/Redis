@@ -1,3 +1,6 @@
+// Import Third-party Dependencies
+import { Result } from "@openally/result";
+
 export type KeyType = string | Buffer;
 
 export type Value = string | Buffer | number;
@@ -33,17 +36,17 @@ export interface Group {
 
 export type GetConnectionPerfResponse = {
   isAlive: boolean;
-  perf: number;
+  perf?: number;
 };
 
 export interface DatabaseConnection {
-  close(forceExit?: boolean): Promise<void>;
-  isAlive(): Promise<boolean>;
-  getPerformance(): Promise<GetConnectionPerfResponse>;
+  initialize?(...unknown): Promise<unknown>;
+  close?(forceExit?: boolean): Promise<void>;
+  isAlive?(): Promise<boolean>;
+  getPerformance?(): Promise<GetConnectionPerfResponse>;
 
-  initialize(...unknown): Promise<unknown>;
-  setValue(...unknown): Promise<KeyType>;
-  deleteValue(...unknown): Promise<number>;
-  clearExpired(...unknown): Promise<(string | Buffer)[]>;
-  getValue(...unknown): Promise<unknown>;
+  setValue(...unknown): Promise<Result<KeyType, Error>> | Result<KeyType, Error>;
+  deleteValue(...unknown): Promise<number> | number;
+  clearExpired(...unknown): Promise<(string | Buffer)[]> | (string | Buffer)[];
+  getValue(...unknown): Promise<unknown> | unknown;
 }
