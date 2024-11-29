@@ -8,8 +8,8 @@ import {
   StoreContext,
   Store,
   RedisAdapter
-} from "../../src/index";
-import { randomValue } from "../fixtures/utils/randomValue";
+} from "../../../src/index";
+import { randomValue } from "../../fixtures/utils/randomValue";
 
 // Constants & variables
 const kDefaultCookieOptions = { sameSite: "none", secure: true };
