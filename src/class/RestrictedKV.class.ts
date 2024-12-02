@@ -78,12 +78,7 @@ export class RestrictedKV extends KVPeer<Partial<Attempt>> {
   async clearExpired(
     options: ClearExpiredOptions = { banTimeInSecond: this.banTimeInSecond, prefix: this.prefix }
   ): Promise<void> {
-    const { banTimeInSecond, prefix } = options;
-
-    const expiredKeys = await this.adapter.clearExpired({
-      banTimeInSecond,
-      prefix
-    });
+    const expiredKeys = await this.adapter.clearExpired(options);
 
     if (expiredKeys.length > 0) {
       this.emit("expiredKeys", expiredKeys);

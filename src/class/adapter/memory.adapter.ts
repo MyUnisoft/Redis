@@ -45,11 +45,16 @@ export class MemoryAdapter implements DatabaseConnection {
     return isDelete ? 1 : 0;
   }
 
-  clearExpired(banTimeInSecond: number): (string | Buffer)[] {
+  clearExpired(options: { banTimeInSecond: number; }): (string | Buffer)[] {
+    const { banTimeInSecond } = options;
+
     const expired: string[] = [];
 
     for (const [key, value] of this.#values) {
-      if (this.isKeyExpired({ value: value as any, banTimeInSecond })) {
+      if (this.isKeyExpired({
+        banTimeInSecond,
+        value: value as Record<string, unknown>
+      })) {
         expired.push(key);
         this.#values.delete(key);
       }
