@@ -54,7 +54,10 @@ export class RestrictedKV extends KVPeer<Partial<Attempt>> {
           const connectionPerf = this.adapter.getPerformance ? (await this.adapter.getPerformance()) : { isAlive: true };
 
           if (connectionPerf.isAlive) {
-            await this.adapter.clearExpired();
+            await this.adapter.clearExpired({
+              banTimeInSecond: this.banTimeInSecond,
+              prefix: this.prefix
+            });
           }
         }
         catch (error) {
