@@ -70,7 +70,7 @@ describe("MemoryAdapter", () => {
 
       await timers.setTimeout(100);
 
-      const result = memoryAdapter.clearExpired(0);
+      const result = memoryAdapter.clearExpired({ banTimeInSecond: 0 });
 
       assert.equal(result[0], key);
     });

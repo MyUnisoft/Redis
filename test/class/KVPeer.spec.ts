@@ -8,8 +8,8 @@ import { describe, before, after, test } from "node:test";
 import {
   MemoryAdapter,
   RedisAdapter
-} from "../../../src";
-import { KVPeer } from "../../../src/index";
+} from "../../src";
+import { KVPeer } from "../../src/index";
 
 describe("KVPeer", () => {
   describe("RedisAdapter", () => {
