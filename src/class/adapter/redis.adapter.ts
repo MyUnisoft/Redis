@@ -28,14 +28,13 @@ export interface ClearExpiredOptions {
   banTimeInSecond: number;
 }
 
-export type IsKeyExpiredOptions = ClearExpiredOptions & {
+export type RedisIsKeyExpiredOptions = ClearExpiredOptions & {
   key: KeyType;
 };
 
-export interface SetValueOptions<T extends StringOrObject = Record<string, any>> {
+export interface RedisSetValueOptions<T extends StringOrObject = Record<string, any>> {
   key: KeyType;
   value: Partial<T>;
-  prefix: string;
   type: KVType;
   expiresIn?: number;
 }
@@ -97,10 +96,12 @@ export class RedisAdapter extends Redis implements DatabaseConnection {
     };
   }
 
-  async setValue<T extends StringOrObject = Record<string, any>>(options: SetValueOptions<T>): Promise<KeyType> {
-    const { key, value, expiresIn, prefix, type } = options;
+  async setValue<T extends StringOrObject = Record<string, any>>(
+    options: RedisSetValueOptions<T>
+  ): Promise<Result<KeyType, Error>> {
+    const { key, value, expiresIn, type } = options;
 
-    const finalKey = typeof key === "object" ? Buffer.from(prefix + key) : prefix + key;
+    const finalKey = typeof key === "object" ? Buffer.from(key) : key;
     const multiRedis = this.multi();
 
     function booleanStringToBuffer(value: string): string | Buffer {
@@ -129,11 +130,11 @@ export class RedisAdapter extends Redis implements DatabaseConnection {
 
     await multiRedis.exec();
 
-    return finalKey;
+    return Ok(finalKey);
   }
 
-  async getValue<T extends unknown>(key: KeyType, prefix: string, type: KVType): Promise<T | null> {
-    const finalKey = typeof key === "object" ? Buffer.from(prefix + key) : prefix + key;
+  async getValue<T extends unknown>(key: KeyType, type: KVType): Promise<T | null> {
+    const finalKey = typeof key === "object" ? Buffer.from(key) : key;
     const result = type === "raw" ?
       await this.get(finalKey) :
       this.parseOutput(await this.hgetall(finalKey));
@@ -145,8 +146,8 @@ export class RedisAdapter extends Redis implements DatabaseConnection {
     return result;
   }
 
-  async deleteValue(key: KeyType, prefix: string): Promise<number> {
-    const finalKey = typeof key === "object" ? Buffer.from(prefix + key) : prefix + key;
+  async deleteValue(key: KeyType): Promise<number> {
+    const finalKey = typeof key === "object" ? Buffer.from(key) : key;
 
     return this.del(finalKey);
   }
@@ -185,7 +186,7 @@ export class RedisAdapter extends Redis implements DatabaseConnection {
     return expiredKeys;
   }
 
-  private async isKeyExpired(options: IsKeyExpiredOptions): Promise<boolean> {
+  private async isKeyExpired(options: RedisIsKeyExpiredOptions): Promise<boolean> {
     const { prefix, banTimeInSecond, key } = options;
 
     let finalKey: string | Buffer;
@@ -198,8 +199,7 @@ export class RedisAdapter extends Redis implements DatabaseConnection {
     }
 
     const attempt = await this.getValue<Attempt>(
-      finalKey,
-      prefix,
+      `${prefix}${finalKey}`,
       "object"
     ) as Attempt;
     const lastTry = "lastTry" in attempt ? Number(attempt.lastTry) : null;

@@ -2,9 +2,12 @@
 // Import Node.js Dependencies
 import { EventEmitter } from "node:events";
 
+// Import Third-party Dependencies
+import { Result } from "@openally/result";
+
 // Import Internal Dependencies
 import type { KeyType, DatabaseConnection } from "../types/index.js";
-import type { KVType, SetValueOptions, StringOrObject } from "./adapter/redis.adapter.js";
+import type { KVType, RedisSetValueOptions, StringOrObject } from "./adapter/redis.adapter.js";
 
 // CONSTANTS
 const kDefaultKVType = "raw";
@@ -25,7 +28,7 @@ export interface KVOptions<T extends StringOrObject = Record<string, any>, K ext
 }
 
 export type KVPeerSetValueOptions<T extends StringOrObject = StringOrObject> = Omit<
-  SetValueOptions<T>,
+  RedisSetValueOptions<T>,
   "prefix" | "type"
 >;
 
@@ -62,22 +65,26 @@ export class KVPeer<T extends StringOrObject = StringOrObject, K extends Record<
     this.mapValue = mapValue ?? this.defaultMapValue;
   }
 
-  async setValue(options: KVPeerSetValueOptions<T>): Promise<KeyType> {
+  async setValue(options: KVPeerSetValueOptions<T>): Promise<Result<KeyType, Error>> {
+    const { key, value, ...rest } = options;
+
     return this.adapter.setValue({
-      ...options,
+      key: `${this.prefix}${key}`,
+      value,
       prefix: this.prefix,
-      type: this.type
+      type: this.type,
+      ...rest
     });
   }
 
   async getValue(key: KeyType): Promise<MappedValue<T, K> | null> {
-    const result = await this.adapter.getValue(key, this.prefix, this.type);
+    const result = await this.adapter.getValue(`${this.prefix}${key}`, this.type);
 
     return result === null ? null : this.mapValue(result as T);
   }
 
   async deleteValue(key: KeyType): Promise<number> {
-    return this.adapter.deleteValue(key, this.prefix);
+    return this.adapter.deleteValue(`${this.prefix}${key}`);
   }
 
   private defaultMapValue(value: T): MappedValue<T, K> {

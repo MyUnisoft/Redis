@@ -1,37 +1,86 @@
+// Import Third-party Dependencies
+import { Result, Err, Ok } from "@openally/result";
+import EphemeralMap, { tSv } from "@openally/ephemeral-map";
+
 // Import Internal Dependencies
-import type { DatabaseConnection, GetConnectionPerfResponse } from "../../types";
+import type {
+  DatabaseConnection,
+  KeyType
+} from "../../types";
+import { SetValueError } from "../error/memory.adapter.error";
+
+export interface InMemSetValueOptions {
+  key: string;
+  value: unknown;
+  expiresIn?: number;
+}
+
+export interface InMemIsKeyExpiredOptions {
+  value: Record<string, unknown>;
+  banTimeInSecond: number;
+}
 
 export class MemoryAdapter implements DatabaseConnection {
-  async initialize(): Promise<void> {
-    // Simple connection logic
+  #values: EphemeralMap<string, unknown> = new EphemeralMap();
+
+  flushall() {
+    this.#values = new EphemeralMap();
   }
 
-  async close(forceExit?: boolean): Promise<void> {
-    // Simple close connection logic
+  setValue(options: InMemSetValueOptions): Result<KeyType, SetValueError> {
+    const { key, value, expiresIn } = options;
+
+    const valueExist = this.#values.has(key);
+
+    if (valueExist) {
+      return Err(new SetValueError(key));
+    }
+
+    this.#values.set(tSv({ ttl: expiresIn })(key), value);
+
+    return Ok(key);
   }
 
-  async isAlive(): Promise<boolean> {
-    return true;
+  deleteValue(key: string) {
+    const isDelete = this.#values.delete(key);
+
+    return isDelete ? 1 : 0;
   }
 
-  async getPerformance(): Promise<GetConnectionPerfResponse> {
-    return { isAlive: true, perf: 100 };
-  }
+  clearExpired(options: { banTimeInSecond: number; }): (string | Buffer)[] {
+    const { banTimeInSecond } = options;
 
-  async setValue(): Promise<any> {
-    // Set value logic
-  }
+    const expired: string[] = [];
 
-  async deleteValue(): Promise<any> {
-    // Delete value logic
-  }
+    for (const [key, value] of this.#values) {
+      if (this.isKeyExpired({
+        banTimeInSecond,
+        value: value as Record<string, unknown>
+      })) {
+        expired.push(key);
+        this.#values.delete(key);
+      }
+    }
 
-  async clearExpired(...unknown: any[]): Promise<any> {
-    //
+    return expired;
   }
 
   // Implement the no-argument version of getValue
-  async getValue(): Promise<any> {
-    // Simple getValue logic with no arguments
+  getValue(key: string): null | unknown {
+    const valueExist = this.#values.has(key);
+
+    if (!valueExist) {
+      return null;
+    }
+
+    return this.#values.get(key);
+  }
+
+  private isKeyExpired(options: InMemIsKeyExpiredOptions) {
+    const { banTimeInSecond, value } = options;
+
+    const lastTry = "lastTry" in value ? Number(value.lastTry) : null;
+
+    return lastTry === null ? false : (Date.now() - lastTry) / 1000 >= banTimeInSecond;
   }
 }

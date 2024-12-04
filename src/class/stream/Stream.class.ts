@@ -211,7 +211,7 @@ export class Stream extends RedisAdapter {
    * ```ts
    * // Return Entry with id 1526985676425-0 & 1526985685298-0
    * await getRange({ min: "-", max: "+", count: 2})
-   * // Return two next Entry, "(" exluding the given id
+   * // Return two next Entry, "(" excluding the given id
    * await getRange({ min: "(1526985685298-0", max: "+", count: 2 })
    * ```
    */
@@ -247,7 +247,7 @@ export class Stream extends RedisAdapter {
    * ```ts
    * // Return Entry with id 1526985676425-0 & 1526985685298-0
    * await getRevRange({ min: "-", max: "+", count: 2})
-   * // Return two next Entry, "(" exluding the given id
+   * // Return two next Entry, "(" excluding the given id
    * await getRevRange({ min: "(1526985685298-0", max: "+", count: 2 })
    * ```
    */
