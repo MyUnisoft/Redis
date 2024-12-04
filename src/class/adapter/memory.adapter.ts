@@ -1,5 +1,6 @@
 // Import Third-party Dependencies
 import { Result, Err, Ok } from "@openally/result";
+import EphemeralMap, { tSv } from "@openally/ephemeral-map";
 
 // Import Internal Dependencies
 import type {
@@ -11,6 +12,7 @@ import { SetValueError } from "../error/memory.adapter.error";
 export interface InMemSetValueOptions {
   key: string;
   value: unknown;
+  expiresIn?: number;
 }
 
 export interface InMemIsKeyExpiredOptions {
@@ -19,14 +21,14 @@ export interface InMemIsKeyExpiredOptions {
 }
 
 export class MemoryAdapter implements DatabaseConnection {
-  #values: Map<string, unknown> = new Map();
+  #values: EphemeralMap<string, unknown> = new EphemeralMap();
 
   flushall() {
-    this.#values = new Map();
+    this.#values = new EphemeralMap();
   }
 
   setValue(options: InMemSetValueOptions): Result<KeyType, SetValueError> {
-    const { key, value } = options;
+    const { key, value, expiresIn } = options;
 
     const valueExist = this.#values.has(key);
 
@@ -34,7 +36,7 @@ export class MemoryAdapter implements DatabaseConnection {
       return Err(new SetValueError(key));
     }
 
-    this.#values.set(key, value);
+    this.#values.set(tSv({ ttl: expiresIn })(key), value);
 
     return Ok(key);
   }
