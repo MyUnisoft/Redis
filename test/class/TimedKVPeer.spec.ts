@@ -5,6 +5,7 @@ import timers from "node:timers/promises";
 
 // Import Internal Dependencies
 import {
+  MemoryAdapter,
   RedisAdapter,
   TimedKVPeer
 } from "../../src";
@@ -14,59 +15,109 @@ interface CustomStore {
 }
 
 describe("TimedKVPeer", () => {
-  let redisAdapter: RedisAdapter;
-  let timedKVPeer: TimedKVPeer<CustomStore>;
+  describe("RedisAdapter", () => {
+    let redisAdapter: RedisAdapter;
+    let timedKVPeer: TimedKVPeer<CustomStore>;
 
-  before(async() => {
-    redisAdapter = new RedisAdapter({
-      port: Number(process.env.REDIS_PORT),
-      host: process.env.REDIS_HOST
+    before(async() => {
+      redisAdapter = new RedisAdapter({
+        port: Number(process.env.REDIS_PORT),
+        host: process.env.REDIS_HOST
+      });
+
+      await redisAdapter.initialize();
+      await redisAdapter.flushdb();
+
+      timedKVPeer = new TimedKVPeer({
+        adapter: redisAdapter,
+        ttl: 3600
+      });
     });
 
-    await redisAdapter.initialize();
-    await redisAdapter.flushdb();
+    after(async() => {
+      await redisAdapter.close(true);
+    });
 
-    timedKVPeer = new TimedKVPeer({
-      adapter: redisAdapter,
-      ttl: 3600
+    describe("SetValue", () => {
+      it("should add the key value", async() => {
+        const key = await timedKVPeer.setValue({ key: "foo", value: { mail: "bar" } });
+
+        assert.ok(key);
+      });
+
+      it("Given an expired key, it should return null", async() => {
+        await timers.setTimeout(3_600);
+
+        assert.equal(await timedKVPeer.getValue("foo"), null);
+      });
+    });
+
+    describe("deleteValue", () => {
+      it("Given a valid key", async() => {
+        const result = await timedKVPeer.setValue({ key: "foo", value: { mail: "bar" } });
+
+        const deletedValues = await timedKVPeer.deleteValue(result.val as KeyType);
+
+        assert.equal(deletedValues, 1);
+      });
+
+      it("Given a expired key", async() => {
+        const result = await timedKVPeer.setValue({ key: "foo", value: { mail: "bar" } });
+
+        await timers.setTimeout(3_600);
+
+        const deletedValues = await timedKVPeer.deleteValue(result.val as KeyType);
+
+        assert.equal(deletedValues, 0);
+      });
     });
   });
 
-  after(async() => {
-    await redisAdapter.close(true);
-  });
+  describe("MemoryAdapter", () => {
+    let memoryAdapter: MemoryAdapter;
+    let timedKVPeer: TimedKVPeer<CustomStore>;
 
-  describe("SetValue", () => {
-    it("should add the key value", async() => {
-      const key = await timedKVPeer.setValue({ key: "foo", value: { mail: "bar" } });
+    before(async() => {
+      memoryAdapter = new MemoryAdapter();
 
-      assert.ok(key);
+      timedKVPeer = new TimedKVPeer({
+        adapter: memoryAdapter,
+        ttl: 3600
+      });
     });
 
-    it("Given an expired key, it should return null", async() => {
-      await timers.setTimeout(3_600);
+    describe("SetValue", () => {
+      it("should add the key value", async() => {
+        const key = await timedKVPeer.setValue({ key: "foo", value: { mail: "bar" } });
 
-      assert.equal(await timedKVPeer.getValue("key"), null);
-    });
-  });
+        assert.ok(key);
+      });
 
-  describe("deleteValue", () => {
-    it("Given a valid key", async() => {
-      const key = await timedKVPeer.setValue({ key: "foo", value: { mail: "bar" } });
+      it("Given an expired key, it should return null", async() => {
+        await timers.setTimeout(3_600);
 
-      const deletedValues = await timedKVPeer.deleteValue(key);
-
-      assert.equal(deletedValues, 1);
+        assert.equal(await timedKVPeer.getValue("foo"), null);
+      });
     });
 
-    it("Given a expired key", async() => {
-      const key = await timedKVPeer.setValue({ key: "foo", value: { mail: "bar" } });
+    describe("deleteValue", () => {
+      it("Given a valid key", async() => {
+        const result = await timedKVPeer.setValue({ key: "foo", value: { mail: "bar" } });
 
-      await timers.setTimeout(3_600);
+        const deletedValues = await timedKVPeer.deleteValue(result.val as KeyType);
 
-      const deletedValues = await timedKVPeer.deleteValue(key);
+        assert.equal(deletedValues, 1);
+      });
 
-      assert.equal(deletedValues, 0);
+      it("Given a expired key", async() => {
+        const result = await timedKVPeer.setValue({ key: "foo", value: { mail: "bar" } });
+
+        await timers.setTimeout(3_600);
+
+        const deletedValues = await timedKVPeer.deleteValue(result.val as KeyType);
+
+        assert.equal(deletedValues, 0);
+      });
     });
   });
 });
