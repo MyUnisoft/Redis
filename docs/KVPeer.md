@@ -21,18 +21,17 @@ IsMetadataDefined<T, K> : T;
 // How to restraint usage of the mapValue fn while T extends string?
 export type KVMapper<T extends StringOrObject, K extends Record<string, any> | null = null> = (value: T) => MappedValue<T, K>;
 
-export class KVPeer<T extends StringOrObject = StringOrObject, K extends Record<string, any> | null = null> extends EventEmitter {
-  connection: Connection;
+export interface KVOptions<T extends StringOrObject = Record<string, any>, K extends Record<string, any> | null = null> {
+  adapter: DatabaseConnection;
   prefix?: string;
   type?: KVType;
   mapValue?: KVMapper<T, K>;
 }
 
-export interface SetValueOptions<T> {
-  key: KeyType;
-  value: T;
-  expiresIn?: number;
-}
+export type KVPeerSetValueOptions<T extends StringOrObject = StringOrObject> = Omit<
+  RedisSetValueOptions<T>,
+  "prefix" | "type"
+>;
 ```
 
 ## Constants
@@ -42,7 +41,7 @@ export interface SetValueOptions<T> {
 ## 📚 Usage
 
 ```ts
-import { RedisKV, Connection } from "@myunisoft/redis";
+import { RedisKV, MemoryAdapter } from "@myunisoft/redis";
 
 interface MyCustomObject {
   foo: string;
@@ -52,12 +51,10 @@ interface Metadata {
   bar: string;
 }
 
-const connection = new Connection();
-
-await connection.initialize();
+const memoryAdapter = new MemoryAdapter();
 
 const options: KVOptions<MyCustomObject, Metadata> = {
-  connection,
+  adapter: memoryAdapter,
   prefix: "local",
   type: "object",
   mapValue: (value: MyCustomObject) => {
@@ -74,7 +71,7 @@ const customKvWrapper = new RedisKV<MyCustomObject, Metadata>(options);
 
 ## 📜 API
 
-### setValue(options: SetValueOptions< T >): Promise< KeyType >
+### setValue(options: KVPeerSetValueOptions< T >): Promise< KeyType >
 
 this method is used to set a key-value pair in Redis
 
@@ -94,7 +91,7 @@ this method is used to get a value from Redis
 ```ts
 const returnValue = await customKvWrapper.getValue(key);
 
-console.Log(returnValue);
+console.log(returnValue);
 /*
   {
     foo: "bar",

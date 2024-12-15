@@ -10,11 +10,7 @@
 ## 📚 Usage
 
 ```ts
-import { Intrapersonal, Connection } from "@myunisoft/redis";
-
-const connection = new Connection();
-
-await connection.initialize();
+import { Intrapersonal } from "@myunisoft/redis";
 
 const consumer = new Intrapersonal({
   connection,
@@ -23,6 +19,8 @@ const consumer = new Intrapersonal({
   lastId: "0-0",
   count: 10
 });
+
+await consumer.initialize();
 
 const readable = Readable.from(basicStream[Symbol.asyncIterator]());
 ```

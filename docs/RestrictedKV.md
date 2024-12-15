@@ -33,12 +33,15 @@ type KeyType = string | Buffer;
 ## 📚 Usage
 
 ```ts
-import { RestrictedKV } from "@myunisoft/redis";
+import { RestrictedKV, MemoryAdapter } from "@myunisoft/redis";
 
 const allowedAttempt = 2;
 const banTime = 60;
 
+const memoryAdapter = new MemoryAdapter();
+
 const restrictedKV = new RestrictedKV({
+  adapter: memoryAdapter,
   prefix: "foo-",
   allowedAttempt,
   banTimeInSecond: banTime

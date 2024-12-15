@@ -26,11 +26,7 @@ interface GroupConsumerOptions extends BasementOptions {
 ## 📚 Usage
 
 ```ts
-import { GroupConsumer, Connection } from "@myunisoft/redis";
-
-const connection = new Connection();
-
-await connection.initialize();
+import { GroupConsumer } from "@myunisoft/redis";
 
 const consumer = new GroupConsumer({
   connection,
@@ -44,6 +40,8 @@ const consumer = new GroupConsumer({
     idleTime: 1000 * 60
   }
 });
+
+await consumer.initialize();
 
 const readable = Readable.from(firstConsumer[Symbol.asyncIterator]());
 readable.on("readable", async() => {

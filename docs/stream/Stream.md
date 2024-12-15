@@ -65,19 +65,16 @@ interface ConsumeOptions {
 ## 📚 Usage
 
 ```ts
-import { Stream, Connection } from "@myunisoft/redis";
-
-const connection = new Connection();
-
-await connection.initialize();
+import { Stream, RedisAdapter } from "@myunisoft/redis";
 
 const redisStream = new Stream({
-  connection,
   streamName: "my-stream-name",
   frequency: 10000, 
   lastId: "0-0",
   count: 10
 });
+
+await redisStream.initialize();
 ```
 
 ## 📜 API
