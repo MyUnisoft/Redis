@@ -3,7 +3,7 @@
 </h1>
 
 <p align="center">
-  This class is a basic in memory database adapter.
+  This class is a basic in-memory database adapter.
 </p>
 
 ## Interface

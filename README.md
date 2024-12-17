@@ -35,7 +35,7 @@ $ yarn add @myunisoft/redis
 ---
 
 <p align="center">
-  There is multiple adapters in order to exploit the different abstractions available.
+  There are multiple adapters to exploit the different abstractions available.
 </p>
 
 - Adapter
