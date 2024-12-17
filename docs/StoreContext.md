@@ -32,14 +32,12 @@ interface StoreContextOptions<T extends Store> extends TimedKVPeerOptions<T> {
 ## 📚 Usage
 
 ```ts
-import { StoreContext, Connection } from "@myunisoft/redis";
+import { StoreContext, MemoryAdapter } from "@myunisoft/redis";
 
-const connection = new Connection();
-
-await connection.initialize();
+const memoryAdapter = new MemoryAdapter();
 
 const options = {
-  connection,
+  adapter: memoryAdapter,
   authenticationField: keyof T | null;
   cookiesOptions: SetOption;
 }

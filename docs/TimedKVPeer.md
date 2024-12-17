@@ -20,7 +20,7 @@ export interface TimedKVPeerOptions<T extends object, K extends Record<string, a
 ## 📚 Usage
 
 ```ts
-import { TimedKVPeer } from "@myunisoft/redis";
+import { TimedKVPeer, MemoryAdapter } from "@myunisoft/redis";
 
 interface MyCustomObject {
   foo: string;
@@ -32,7 +32,10 @@ function randomKeyCallback() {
   return randomBytes(128).toString("hex");
 }
 
+const memoryAdapter = new MemoryAdapter();
+
 const store = new TimedKVPeer<MyCustomObject>({
+  adapter: memoryAdapter,
   sessionDuration: 3600,
   randomKeyCallback
 });

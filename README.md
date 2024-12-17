@@ -32,99 +32,24 @@ $ npm i @myunisoft/redis
 $ yarn add @myunisoft/redis
 ```
 
-## 📜 API
-
-<h1 align="center">
-  Connection
-</h1>
+---
 
 <p align="center">
-  This class is used to instantiate and close connection to Redis. You need to re-use this instance in every other classes.
+  There are multiple adapters to exploit the different abstractions available.
 </p>
 
-```ts
-type ConnectionOptions = Partial<RedisOptions> & {
-  port?: number;
-  host?: string;
-  attempt?: number;
-  disconnectionTimeout?: number;
-};
-```
-
-### 📚 Usage
-
-```js
-import assert from "assert";
-import {
-  Connection
-} from "@myunisoft/redis";
-
-const connection = new Connection();
-
-try {
-  (await connection.initialize()).unwrap();
-}
-finally {
-  await connection.close();
-}
-```
-
-### initialize(): Promise< Result< null, AssertConnectionErr > >
-
-```ts
-type AssertConnectionErr = "Failed at initializing the Redis connection";
-```
-
-This function either return void, or an error;
-
----
-
-### getConnectionPerf(): Promise< GetConnectionPerfResponse >
-
-```ts
-type GetConnectionPerfResponse = {
-  isAlive: boolean;
-  perf: number;
-};
-```
-
-This function is used to check Redis connection state.
-
-```ts
-const instancePerf = await getConnectionPerf();
-
-if (!instancePerf.isAlive) {
-  console.log(instancePerf.isAlive);
-  console.log(instancePerf.perf);
-}
-
-console.log(instancePerf.isAlive);
-console.log(instancePerf.perf);
-```
-
----
-
-### closeRedis(forceExit: boolean = false): Promise< Result< null, CloseErr > >
-
-```ts
-type AssertDisconnectionErr = AssertDisconnectionErrorMessage;
-type CloseErr = AssertDisconnectionErrorMessage | "Redis connection already closed";
-```
-
-This function is used to close the Redis connection related to the instance.
-
----
-
-The package also exports many classes listed below.
-
-- [KVPeer](./docs/KVPeer.md)
-- [TimedKVPeer](./docs/TimedKVPeer.md)
-- [RestrictedKV](./docs/RestrictedKV.md)
-- [StoreContext](./docs/StoreContext.md)
-- [PubSub](./docs/pubsub/Channel.md)
-- [Stream](./docs/stream/Stream.md)
-  - [Intrapersonal](./docs/stream/Intrapersonal.md)
-  - [Interpersonal](./docs/stream/Interpersonal.md)
+- Adapter
+  - [MemoryAdapter](./docs/adapter/memory.adapter.md)
+  - [RedisAdapter](./docs/adapter/redis.adapter.md)
+- Abstraction
+  - [KVPeer](./docs/KVPeer.md)
+  - [TimedKVPeer](./docs/TimedKVPeer.md)
+  - [RestrictedKV](./docs/RestrictedKV.md)
+  - [StoreContext](./docs/StoreContext.md)
+  - [PubSub](./docs/pubsub/Channel.md)
+  - [Stream](./docs/stream/Stream.md)
+    - [Intrapersonal](./docs/stream/Intrapersonal.md)
+    - [Interpersonal](./docs/stream/Interpersonal.md)
 
 
 ## Contributors ✨
