@@ -42,6 +42,7 @@ const consumer = new GroupConsumer({
 });
 
 await consumer.initialize();
+await consumer.init();
 
 const readable = Readable.from(firstConsumer[Symbol.asyncIterator]());
 readable.on("readable", async() => {
