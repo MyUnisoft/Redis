@@ -65,7 +65,7 @@ interface ConsumeOptions {
 ## 📚 Usage
 
 ```ts
-import { Stream, RedisAdapter } from "@myunisoft/redis";
+import { Stream } from "@myunisoft/redis";
 
 const redisStream = new Stream({
   streamName: "my-stream-name",
@@ -75,6 +75,7 @@ const redisStream = new Stream({
 });
 
 await redisStream.initialize();
+await redisStream.init();
 ```
 
 ## 📜 API

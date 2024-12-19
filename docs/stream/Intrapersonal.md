@@ -21,6 +21,7 @@ const consumer = new Intrapersonal({
 });
 
 await consumer.initialize();
+await consumer.init();
 
 const readable = Readable.from(basicStream[Symbol.asyncIterator]());
 ```
