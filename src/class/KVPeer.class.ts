@@ -22,14 +22,13 @@ export type KVMapper<T extends StringOrObject, K extends Record<string, any> | n
 
 export interface KVOptions<T extends StringOrObject = Record<string, any>, K extends Record<string, any> | null = null> {
   adapter: DatabaseConnection;
-  prefix?: string;
   type?: KVType;
   mapValue?: KVMapper<T, K>;
 }
 
 export type KVPeerSetValueOptions<T extends StringOrObject = StringOrObject> = Omit<
   RedisSetValueOptions<T>,
-  "prefix" | "type"
+  "type"
 >;
 
 /**
@@ -38,17 +37,13 @@ export type KVPeerSetValueOptions<T extends StringOrObject = StringOrObject> = O
 * @description This class is used to store and retrieve key-value peers in Redis.
 *
 * @property {Redis} redis - Instance of Redis connection
-* @property {string} [prefix = ""] - prefix for keys
 *
 * @example
 * ```ts
 * new KVPeer();
-* new KVPeer({ prefix: "myPrefix" });
 * ```
 */
 export class KVPeer<T extends StringOrObject = StringOrObject, K extends Record<string, any> | null = null> extends EventEmitter {
-  protected prefix: string;
-  protected prefixedName: string;
   protected type: KVType;
   protected mapValue: KVMapper<T, K>;
   protected adapter: DatabaseConnection;
@@ -56,11 +51,10 @@ export class KVPeer<T extends StringOrObject = StringOrObject, K extends Record<
   constructor(options: KVOptions<T, K>) {
     super();
 
-    const { prefix, type, mapValue, adapter } = options;
+    const { type, mapValue, adapter } = options;
 
     this.adapter = adapter;
 
-    this.prefix = prefix ? `${prefix}-` : "";
     this.type = type ?? kDefaultKVType;
     this.mapValue = mapValue ?? this.defaultMapValue;
   }
@@ -69,22 +63,21 @@ export class KVPeer<T extends StringOrObject = StringOrObject, K extends Record<
     const { key, value, ...rest } = options;
 
     return this.adapter.setValue({
-      key: `${this.prefix}${key}`,
+      key,
       value,
-      prefix: this.prefix,
       type: this.type,
       ...rest
     });
   }
 
   async getValue(key: KeyType): Promise<MappedValue<T, K> | null> {
-    const result = await this.adapter.getValue(`${this.prefix}${key}`, this.type);
+    const result = await this.adapter.getValue(key, this.type);
 
     return result === null ? null : this.mapValue(result as T);
   }
 
   async deleteValue(key: KeyType): Promise<number> {
-    return this.adapter.deleteValue(`${this.prefix}${key}`);
+    return this.adapter.deleteValue(key);
   }
 
   private defaultMapValue(value: T): MappedValue<T, K> {

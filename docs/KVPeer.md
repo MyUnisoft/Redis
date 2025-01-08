@@ -23,14 +23,13 @@ export type KVMapper<T extends StringOrObject, K extends Record<string, any> | n
 
 export interface KVOptions<T extends StringOrObject = Record<string, any>, K extends Record<string, any> | null = null> {
   adapter: DatabaseConnection;
-  prefix?: string;
   type?: KVType;
   mapValue?: KVMapper<T, K>;
 }
 
 export type KVPeerSetValueOptions<T extends StringOrObject = StringOrObject> = Omit<
   RedisSetValueOptions<T>,
-  "prefix" | "type"
+  "type"
 >;
 ```
 
@@ -55,13 +54,12 @@ const memoryAdapter = new MemoryAdapter();
 
 const options: KVOptions<MyCustomObject, Metadata> = {
   adapter: memoryAdapter,
-  prefix: "local",
   type: "object",
   mapValue: (value: MyCustomObject) => {
     value.metadata = {
       bar: "foo"
     };
-    
+
     return value;
   }
 }

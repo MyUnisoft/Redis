@@ -1,7 +1,6 @@
 // Import Node.js Dependencies
 import assert from "node:assert";
 import { describe, before, after, test } from "node:test";
-import EventEmitter from "node:events";
 
 // Import Internal Dependencies
 import { Stream } from "../../../src";

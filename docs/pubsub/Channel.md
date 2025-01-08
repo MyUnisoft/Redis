@@ -3,7 +3,7 @@
 </h1>
 
 <p align="center">
-  This class is used to publish on a prefixed channel using the Redis PubSub.
+  This class is used to publish on a channel using the Redis PubSub.
 </p>
 
 ## Interface
@@ -11,7 +11,6 @@
 ```ts
 export interface ChannelOptions {
   name: string;
-  prefix?: string;
 }
 
 export type MessageWithMetadata<T, K> = T & {

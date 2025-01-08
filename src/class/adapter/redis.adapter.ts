@@ -24,7 +24,6 @@ export interface GetConnectionPerfResponse {
 }
 
 export interface ClearExpiredOptions {
-  prefix: string;
   banTimeInSecond: number;
 }
 
@@ -153,9 +152,7 @@ export class RedisAdapter extends Redis implements DatabaseConnection {
   }
 
   async clearExpired(options: ClearExpiredOptions): Promise<(string | Buffer)[]> {
-    const { prefix } = options;
-
-    const promises = [this.keysBuffer(`${prefix}*`), this.keys(`${prefix}*`)];
+    const promises = [this.keysBuffer("*"), this.keys("*")];
 
     const data = [...await Promise.all(promises)].flat();
     if (data.length === 0) {
@@ -187,19 +184,10 @@ export class RedisAdapter extends Redis implements DatabaseConnection {
   }
 
   private async isKeyExpired(options: RedisIsKeyExpiredOptions): Promise<boolean> {
-    const { prefix, banTimeInSecond, key } = options;
-
-    let finalKey: string | Buffer;
-
-    if (typeof key === "object") {
-      finalKey = Buffer.from(key.toString().slice(prefix.length));
-    }
-    else {
-      finalKey = key.slice(prefix.length);
-    }
+    const { banTimeInSecond, key } = options;
 
     const attempt = await this.getValue<Attempt>(
-      `${prefix}${finalKey}`,
+      key,
       "object"
     ) as Attempt;
     const lastTry = "lastTry" in attempt ? Number(attempt.lastTry) : null;

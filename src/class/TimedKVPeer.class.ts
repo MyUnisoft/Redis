@@ -24,7 +24,7 @@ export interface TimedKVPeerOptions<T extends object, K extends Record<string, a
 
 interface TimedSetValueOptions<T extends object> extends Omit<
   RedisSetValueOptions<T>,
-  "expiresIn" | "key" | "prefix" | "type"
+  "expiresIn" | "key" | "type"
 > {
   key?: string | Buffer;
 }

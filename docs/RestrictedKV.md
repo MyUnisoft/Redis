@@ -10,7 +10,7 @@
 ## Interface
 
 ```ts
-type RestrictedKVOptions = Pick<KVOptions<Attempt>, "prefix"> & {
+type RestrictedKVOptions = {
   autoClearExpired?: number;
   allowedAttempt?: number;
   banTimeInSecond?: number;
@@ -42,7 +42,6 @@ const memoryAdapter = new MemoryAdapter();
 
 const restrictedKV = new RestrictedKV({
   adapter: memoryAdapter,
-  prefix: "foo-",
   allowedAttempt,
   banTimeInSecond: banTime
 });

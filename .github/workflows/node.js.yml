@@ -18,7 +18,8 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [18.x, 20.x]
+        # TODO: use 22.x (https://github.com/testcontainers/testcontainers-node/issues/818#issuecomment-2556830701)
+        node-version: [20.x, 22.11]
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
@@ -29,6 +30,7 @@ jobs:
         node-version: ${{ matrix.node-version }}
     - run: npm i
     - run: npm run build
+    - run: npm run lint
     - run: npm test
   automerge:
     if: >
