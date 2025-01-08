@@ -44,11 +44,10 @@ describe("Channel", () => {
   });
 
   describe("Channel with local instance", () => {
-    describe("Channel without prefix & metadata", () => {
+    describe("Channel without metadata", () => {
       let channel: Channel;
       let subscriber: RedisAdapter;
 
-      // CONSTANTS
       const name = "channel";
 
       before(async() => {
@@ -94,62 +93,6 @@ describe("Channel", () => {
         await timers.setTimeout(1_000);
 
         assert.deepEqual(mockedEventsArgs.shift(), [name, JSON.stringify(options)]);
-      });
-    });
-
-    describe("Channel with prefix", () => {
-      let channel: Channel;
-      let subscriber: RedisAdapter;
-
-      // CONSTANTS
-      const name = "channel";
-      const prefix = "prefix";
-      const prefixedName = `${prefix}-${name}`;
-
-      before(async() => {
-        channel = new Channel({
-          name,
-          prefix,
-          port: Number(process.env.REDIS_PORT),
-          host: process.env.REDIS_HOST
-        });
-
-        subscriber = new RedisAdapter({
-          port: Number(process.env.REDIS_PORT),
-          host: process.env.REDIS_HOST
-        });
-
-        await channel.initialize();
-        await subscriber.initialize();
-
-        await subscriber.subscribe(prefixedName);
-        subscriber.on("message", (channel, message) => mockedEvents(channel, message));
-      });
-
-      after(async() => {
-        await channel.close(true);
-        await subscriber.close(true);
-      });
-
-      test("channel should be instance of Channel", async() => {
-        assert.ok(channel instanceof Channel);
-        assert.ok(channel.name, prefixedName);
-      });
-
-      test(`WHEN calling publish,
-            THEN it should send a new message`, async() => {
-        const options = {
-          data: {
-            event: "foo",
-            foo: "bar"
-          }
-        };
-
-        await channel.pub(options);
-
-        await timers.setTimeout(1_000);
-
-        assert.deepEqual(mockedEventsArgs.shift(), [prefixedName, JSON.stringify(options)]);
       });
     });
 

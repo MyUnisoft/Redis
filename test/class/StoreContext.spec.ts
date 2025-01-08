@@ -67,8 +67,7 @@ describe("StoreContext", () => {
       before(() => {
         sessionContext = new StoreContext<CustomStore>({
           adapter: redisAdapter,
-          authenticationField: "mail",
-          prefix: "store-context-"
+          authenticationField: "mail"
         });
       });
 
@@ -302,8 +301,7 @@ describe("StoreContext", () => {
       before(() => {
         sessionContext = new StoreContext<CustomStore>({
           adapter: redisAdapter,
-          authenticationField: "mail",
-          prefix: "store-context-"
+          authenticationField: "mail"
         });
       });
 

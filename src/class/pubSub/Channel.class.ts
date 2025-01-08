@@ -3,7 +3,6 @@ import { RedisAdapter, RedisAdapterOptions } from "../adapter/redis.adapter.js";
 
 export type ChannelOptions = RedisAdapterOptions & {
   name: string;
-  prefix?: string;
 };
 
 export type MessageWithMetadata<T, K> = T & {
@@ -21,11 +20,11 @@ export class Channel<
   readonly name: string;
 
   constructor(options: ChannelOptions) {
-    const { name, prefix } = options;
+    const { name } = options;
 
     super({ ...options });
 
-    this.name = `${prefix ? `${prefix}-` : ""}` + name;
+    this.name = name;
   }
 
   public async pub(options: PublishOptions<T, K>) {

@@ -7,7 +7,7 @@ import { ClearExpiredOptions } from "./adapter/redis.adapter.js";
 const kDefaultAllowedAttempt = 6;
 const kDefaultBanTime = 60 * 5;
 
-export type RestrictedKVOptions = Pick<KVOptions<Attempt>, "prefix" | "adapter"> & {
+export type RestrictedKVOptions = Pick<KVOptions<Attempt>, "adapter"> & {
   autoClearExpired?: number;
   allowedAttempt?: number;
   banTimeInSecond?: number;
@@ -37,11 +37,10 @@ export class RestrictedKV extends KVPeer<Partial<Attempt>> {
   }
 
   constructor(options: RestrictedKVOptions) {
-    const { prefix, autoClearExpired, allowedAttempt, banTimeInSecond, adapter } = options;
+    const { autoClearExpired, allowedAttempt, banTimeInSecond, adapter } = options;
 
     super({
       adapter,
-      prefix: prefix ?? "limited-",
       type: "object"
     });
 
@@ -55,8 +54,7 @@ export class RestrictedKV extends KVPeer<Partial<Attempt>> {
 
           if (connectionPerf.isAlive) {
             await this.adapter.clearExpired({
-              banTimeInSecond: this.banTimeInSecond,
-              prefix: this.prefix
+              banTimeInSecond: this.banTimeInSecond
             });
           }
         }
@@ -76,7 +74,7 @@ export class RestrictedKV extends KVPeer<Partial<Attempt>> {
   }
 
   async clearExpired(
-    options: ClearExpiredOptions = { banTimeInSecond: this.banTimeInSecond, prefix: this.prefix }
+    options: ClearExpiredOptions = { banTimeInSecond: this.banTimeInSecond }
   ): Promise<void> {
     const expiredKeys = await this.adapter.clearExpired(options);
 
@@ -95,7 +93,7 @@ export class RestrictedKV extends KVPeer<Partial<Attempt>> {
   /**
    * @description Returns the number of attempts (failure, last tentative timestamp ...) for a given key
    *
-   * @param key - key WITHOUT PREFIX
+   * @param key - key
    *
    * @example
    * ```ts
@@ -112,7 +110,7 @@ export class RestrictedKV extends KVPeer<Partial<Attempt>> {
   * @description Increment an access failure for a given key.
   * The method also allows to define whether a key is locked or not (when the number of failures exceeds the defined limitation).
   *
-  * @param key - key WITHOUT PREFIX
+  * @param key - key
   *
   * @example
   * ```ts
@@ -141,7 +139,7 @@ export class RestrictedKV extends KVPeer<Partial<Attempt>> {
   /**
   * @description Notify a successful access for a given key. This will remove all traces of previous failed access.
   *
-  * @param key - WITHOUT PREFIX
+  * @param key - key
   *
   * @example
   * ```ts

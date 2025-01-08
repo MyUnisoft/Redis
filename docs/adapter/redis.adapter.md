@@ -19,7 +19,6 @@ export interface GetConnectionPerfResponse {
 }
 
 export interface ClearExpiredOptions {
-  prefix: string;
   banTimeInSecond: number;
 }
 

@@ -29,55 +29,6 @@ describe("KVPeer", () => {
       await redisAdapter.close(true);
     });
 
-    describe("Working with prefixed keys", () => {
-      let kvPeer: KVPeer;
-
-      // CONSTANTS
-      const [key, value] = ["foo", "bar"];
-      const prefix = "test_runner";
-      const prefixedKey = `${prefix}-${key}`;
-
-      before(async() => {
-        kvPeer = new KVPeer({
-          prefix,
-          adapter: redisAdapter
-        });
-
-        await redisAdapter.flushall();
-      });
-
-      test("should be well instantiated", () => {
-        assert.ok(kvPeer instanceof KVPeer);
-        assert.ok(kvPeer instanceof EventEmitter);
-      });
-
-      test(`Given a valid value
-            WHEN calling setValue
-            THEN it should return the final key`,
-      async() => {
-        const result = await kvPeer.setValue({ key, value });
-
-        assert.equal(result.val, prefixedKey);
-      });
-
-      test(`Given a valid key
-            WHEN calling getValue
-            THEN it should return the associated value`,
-      async() => {
-        const relatedValue = await kvPeer.getValue(key);
-        assert.equal(relatedValue, value);
-      });
-
-      test(`Given an valid key
-            WHEN calling deleteValue
-            THEN it should return the number of deleted entry (1)`,
-      async() => {
-        const deletedEntries = await kvPeer.deleteValue(key);
-
-        assert.equal(deletedEntries, 1);
-      });
-    });
-
     describe("Working with object type", () => {
       let kvPeer: KVPeer;
 
@@ -261,52 +212,6 @@ describe("KVPeer", () => {
 
     before(() => {
       memoryAdapter = new MemoryAdapter();
-    });
-
-    describe("Working with prefixed keys", () => {
-      let kvPeer: KVPeer;
-
-      // CONSTANTS
-      const [key, value] = ["foo", "bar"];
-      const prefix = "test_runner";
-      const prefixedKey = `${prefix}-${key}`;
-
-      before(async() => {
-        kvPeer = new KVPeer({
-          prefix,
-          adapter: memoryAdapter
-        });
-      });
-
-      test("should be well instantiated", () => {
-        assert.ok(kvPeer instanceof KVPeer);
-        assert.ok(kvPeer instanceof EventEmitter);
-      });
-
-      test(`Given a valid value
-            WHEN calling setValue
-            THEN it should return the final key`,
-      async() => {
-        const finalKey = await kvPeer.setValue({ key, value });
-        assert.equal(finalKey.val, prefixedKey);
-      });
-
-      test(`Given a valid key
-            WHEN calling getValue
-            THEN it should return the associated value`,
-      async() => {
-        const relatedValue = await kvPeer.getValue(key);
-        assert.equal(relatedValue, value);
-      });
-
-      test(`Given an valid key
-            WHEN calling deleteValue
-            THEN it should return the number of deleted entry (1)`,
-      async() => {
-        const deletedEntries = await kvPeer.deleteValue(key);
-
-        assert.equal(deletedEntries, 1);
-      });
     });
 
     describe("Working with object type", () => {
