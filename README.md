@@ -44,7 +44,6 @@ $ yarn add @myunisoft/redis
 - Abstraction
   - [KVPeer](./docs/KVPeer.md)
   - [TimedKVPeer](./docs/TimedKVPeer.md)
-  - [RestrictedKV](./docs/RestrictedKV.md)
   - [StoreContext](./docs/StoreContext.md)
   - [PubSub](./docs/pubsub/Channel.md)
   - [Stream](./docs/stream/Stream.md)

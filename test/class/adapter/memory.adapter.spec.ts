@@ -1,7 +1,6 @@
 // Import Node.js Dependencies
 import assert from "node:assert/strict";
 import { describe, before, it, test } from "node:test";
-import timers from "node:timers/promises";
 
 // Import Internal Dependencies
 import { MemoryAdapter } from "../../../src/class/adapter/memory.adapter";
@@ -56,23 +55,6 @@ describe("MemoryAdapter", () => {
       const result = memoryAdapter.deleteValue(key);
 
       assert.equal(result, 0);
-    });
-  });
-
-  describe("clearExpired", () => {
-    const key = "foo";
-    const value = { value: "bar", lastTry: Date.now() };
-
-    const memoryAdapter = new MemoryAdapter();
-
-    it("Should clear expired key for the given banTimeInSecond", async() => {
-      memoryAdapter.setValue({ key, value });
-
-      await timers.setTimeout(100);
-
-      const result = memoryAdapter.clearExpired({ banTimeInSecond: 0 });
-
-      assert.equal(result[0], key);
     });
   });
 
