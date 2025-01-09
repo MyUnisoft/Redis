@@ -56,16 +56,6 @@ const result = await memoryAdapter.deleteValue(key);
 console.log(result); // 0 for Failure, 1 for Success
 ```
 
-### clearExpired(options: { banTimeInSecond: number; }): (string | Buffer)[]
-
-this method is used to clear expired key-value pairs in memory
-
-```ts
-const result = await memoryAdapter.clearExpired({ banTimeInSecond: 10 });
-
-console.log(result); // []
-```
-
 ### getValue(key: string): null | unknown
 
 this method is used to get a value from memory

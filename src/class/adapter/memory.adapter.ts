@@ -47,24 +47,6 @@ export class MemoryAdapter implements DatabaseConnection {
     return isDelete ? 1 : 0;
   }
 
-  clearExpired(options: { banTimeInSecond: number; }): (string | Buffer)[] {
-    const { banTimeInSecond } = options;
-
-    const expired: string[] = [];
-
-    for (const [key, value] of this.#values) {
-      if (this.isKeyExpired({
-        banTimeInSecond,
-        value: value as Record<string, unknown>
-      })) {
-        expired.push(key);
-        this.#values.delete(key);
-      }
-    }
-
-    return expired;
-  }
-
   // Implement the no-argument version of getValue
   getValue(key: string): null | unknown {
     const valueExist = this.#values.has(key);
@@ -74,13 +56,5 @@ export class MemoryAdapter implements DatabaseConnection {
     }
 
     return this.#values.get(key);
-  }
-
-  private isKeyExpired(options: InMemIsKeyExpiredOptions) {
-    const { banTimeInSecond, value } = options;
-
-    const lastTry = "lastTry" in value ? Number(value.lastTry) : null;
-
-    return lastTry === null ? false : (Date.now() - lastTry) / 1000 >= banTimeInSecond;
   }
 }

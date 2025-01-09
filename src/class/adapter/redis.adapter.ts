@@ -8,7 +8,6 @@ import { Err, Ok, Result } from "@openally/result";
 // Import Internal Dependencies
 import { AssertConnectionError, AssertDisconnectionError } from "../error/connection.error.js";
 import type { DatabaseConnection, KeyType, Value } from "../../types/index.js";
-import { Attempt } from "../RestrictedKV.class.js";
 
 // CONSTANTS
 const kDefaultAttempt = 4;
@@ -149,50 +148,6 @@ export class RedisAdapter extends Redis implements DatabaseConnection {
     const finalKey = typeof key === "object" ? Buffer.from(key) : key;
 
     return this.del(finalKey);
-  }
-
-  async clearExpired(options: ClearExpiredOptions): Promise<(string | Buffer)[]> {
-    const promises = [this.keysBuffer("*"), this.keys("*")];
-
-    const data = [...await Promise.all(promises)].flat();
-    if (data.length === 0) {
-      return [];
-    }
-
-    const results = await Promise.all(data.map(async(key) => {
-      const expired = await this.isKeyExpired({
-        ...options,
-        key
-      });
-
-      return { key, expired };
-    }));
-
-    const expiredKeys = results
-      .filter((row) => row.expired)
-      .map((row) => row.key);
-
-    if (expiredKeys.length > 0) {
-      const pipeline = this.pipeline();
-
-      expiredKeys.forEach((key) => pipeline.del(key));
-
-      await pipeline.exec();
-    }
-
-    return expiredKeys;
-  }
-
-  private async isKeyExpired(options: RedisIsKeyExpiredOptions): Promise<boolean> {
-    const { banTimeInSecond, key } = options;
-
-    const attempt = await this.getValue<Attempt>(
-      key,
-      "object"
-    ) as Attempt;
-    const lastTry = "lastTry" in attempt ? Number(attempt.lastTry) : null;
-
-    return lastTry === null ? false : (Date.now() - lastTry) / 1000 >= banTimeInSecond;
   }
 
   private* deepParseInput(input: Record<string, any> | any[]) {

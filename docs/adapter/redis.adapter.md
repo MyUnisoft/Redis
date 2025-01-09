@@ -93,28 +93,6 @@ const result = await redisAdapter.deleteValue(key);
 console.log(result); // 0 for Failure, 1 for Success
 ``` 
 
-### clearExpired(options: ClearExpiredOptions): (string | Buffer)[]
-
-this method is used to clear expired key-value pairs in redis
-
-```ts
-const result = await redisAdapter.clearExpired({ banTimeInSecond: 10 });
-
-console.log(result); // []
-```
-
-### isKeyExpired(options: RedisIsKeyExpiredOptions): boolean
-
-this method is used to check if a key is expired in redis
-
-```ts
-const key = "foo";
-
-const result = await redisAdapter.isKeyExpired({ key, banTimeInSecond: 10 });
-
-console.log(result); // false
-```
-
 ### deepParseInput(input: Record<string, any> | any[]): Generator<string | Record<string, any> | any[]>
 
 this method is used to deep parse input
