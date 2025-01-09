@@ -25,6 +25,8 @@ export interface KVOptions<T extends StringOrObject = Record<string, any>, K ext
   adapter: DatabaseConnection;
   type?: KVType;
   mapValue?: KVMapper<T, K>;
+  prefix?: string;
+  prefixSeparator?: string;
 }
 
 export type KVPeerSetValueOptions<T extends StringOrObject = StringOrObject> = Omit<

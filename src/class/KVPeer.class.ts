@@ -24,6 +24,8 @@ export interface KVOptions<T extends StringOrObject = Record<string, any>, K ext
   adapter: DatabaseConnection;
   type?: KVType;
   mapValue?: KVMapper<T, K>;
+  prefix?: string;
+  prefixSeparator?: string;
 }
 
 export type KVPeerSetValueOptions<T extends StringOrObject = StringOrObject> = Omit<
@@ -47,13 +49,17 @@ export class KVPeer<T extends StringOrObject = StringOrObject, K extends Record<
   protected type: KVType;
   protected mapValue: KVMapper<T, K>;
   protected adapter: DatabaseConnection;
+  protected prefix: string;
+  protected prefixSeparator: string;
 
   constructor(options: KVOptions<T, K>) {
     super();
 
-    const { type, mapValue, adapter } = options;
+    const { type, mapValue, adapter, prefix = "", prefixSeparator = "-" } = options;
 
     this.adapter = adapter;
+    this.prefix = prefix;
+    this.prefixSeparator = prefix.length ? prefixSeparator : "";
 
     this.type = type ?? kDefaultKVType;
     this.mapValue = mapValue ?? this.defaultMapValue;
@@ -63,7 +69,7 @@ export class KVPeer<T extends StringOrObject = StringOrObject, K extends Record<
     const { key, value, ...rest } = options;
 
     return this.adapter.setValue({
-      key,
+      key: this.keyWithPrefix(key),
       value,
       type: this.type,
       ...rest
@@ -71,17 +77,21 @@ export class KVPeer<T extends StringOrObject = StringOrObject, K extends Record<
   }
 
   async getValue(key: KeyType): Promise<MappedValue<T, K> | null> {
-    const result = await this.adapter.getValue(key, this.type);
+    const result = await this.adapter.getValue(this.keyWithPrefix(key), this.type);
 
     return result === null ? null : this.mapValue(result as T);
   }
 
   async deleteValue(key: KeyType): Promise<number> {
-    return this.adapter.deleteValue(key);
+    return this.adapter.deleteValue(this.keyWithPrefix(key));
   }
 
   private defaultMapValue(value: T): MappedValue<T, K> {
     return value as MappedValue<T, K>;
+  }
+
+  protected keyWithPrefix(key: KeyType) {
+    return `${this.prefix}${this.prefixSeparator}${key}`;
   }
 }
 

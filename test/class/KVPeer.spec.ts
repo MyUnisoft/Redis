@@ -205,6 +205,43 @@ describe("KVPeer", () => {
         });
       });
     });
+
+    test("With prefix", async() => {
+      const kvPeer = new KVPeer({
+        type: "raw",
+        adapter: redisAdapter,
+        prefix: "super-prefix"
+      });
+      await kvPeer.setValue({ key: "super-key", value: "boo" });
+
+      const valueWithNoPrefix = await redisAdapter.getValue("super-key", "raw");
+      assert.strictEqual(valueWithNoPrefix, null);
+
+      const valueWithPrefix = await redisAdapter.getValue("super-prefix-super-key", "raw");
+      assert.strictEqual(valueWithPrefix, "boo");
+
+      const valueFromKVPeer = await kvPeer.getValue("super-key");
+      assert.strictEqual(valueFromKVPeer, "boo");
+    });
+
+    test("With prefix and prefixSeparator", async() => {
+      const kvPeer = new KVPeer({
+        type: "raw",
+        adapter: redisAdapter,
+        prefix: "super-prefix",
+        prefixSeparator: ":::"
+      });
+      await kvPeer.setValue({ key: "super-key", value: "boo" });
+
+      const valueWithNoPrefix = await redisAdapter.getValue("super-key", "raw");
+      assert.strictEqual(valueWithNoPrefix, null);
+
+      const valueWithPrefix = await redisAdapter.getValue("super-prefix:::super-key", "raw");
+      assert.strictEqual(valueWithPrefix, "boo");
+
+      const valueFromKVPeer = await kvPeer.getValue("super-key");
+      assert.strictEqual(valueFromKVPeer, "boo");
+    });
   });
 
   describe("MemoryAdapter", () => {
