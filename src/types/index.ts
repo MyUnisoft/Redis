@@ -39,7 +39,9 @@ export type GetConnectionPerfResponse = {
   perf?: number;
 };
 
-export interface DatabaseConnection {
+export type DatabaseConnection<T extends unknown = unknown> = BasicDatabaseConnection & T;
+
+export interface BasicDatabaseConnection {
   initialize?(...unknown): Promise<unknown>;
   close?(forceExit?: boolean): Promise<void>;
   isAlive?(): Promise<boolean>;
