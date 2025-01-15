@@ -20,8 +20,12 @@ type MappedValue<T extends StringOrObject, K extends Record<string, any> | null 
 
 export type KVMapper<T extends StringOrObject, K extends Record<string, any> | null = null> = (value: T) => MappedValue<T, K>;
 
-export interface KVOptions<T extends StringOrObject = Record<string, any>, K extends Record<string, any> | null = null> {
-  adapter: DatabaseConnection;
+export interface KVOptions<
+  T extends StringOrObject = Record<string, any>,
+  K extends Record<string, any> | null = null,
+  L extends unknown = unknown
+> {
+  adapter: DatabaseConnection<L>;
   type?: KVType;
   mapValue?: KVMapper<T, K>;
   prefix?: string;
@@ -45,14 +49,18 @@ export type KVPeerSetValueOptions<T extends StringOrObject = StringOrObject> = O
 * new KVPeer();
 * ```
 */
-export class KVPeer<T extends StringOrObject = StringOrObject, K extends Record<string, any> | null = null> extends EventEmitter {
+export class KVPeer<
+  T extends StringOrObject = StringOrObject,
+  K extends Record<string, any> | null = null,
+  L extends unknown = unknown
+> extends EventEmitter {
   protected type: KVType;
   protected mapValue: KVMapper<T, K>;
-  protected adapter: DatabaseConnection;
+  protected adapter: DatabaseConnection<L>;
   protected prefix: string;
   protected prefixSeparator: string;
 
-  constructor(options: KVOptions<T, K>) {
+  constructor(options: KVOptions<T, K, L>) {
     super();
 
     const { type, mapValue, adapter, prefix = "", prefixSeparator = "-" } = options;

@@ -14,8 +14,12 @@ const kDefaultTtl = 1_000 * 60 * 10;
 // eslint-disable-next-line func-style
 const kDefaultRandomKeyGenerator = () => randomBytes(6).toString("hex");
 
-export interface TimedKVPeerOptions<T extends object, K extends Record<string, any> | null = null>
-  extends Omit<KVOptions<T, K>, "type"> {
+export interface TimedKVPeerOptions<
+  T extends object,
+  K extends Record<string, any> | null = null,
+  L extends unknown = unknown
+>
+  extends Omit<KVOptions<T, K, L>, "type"> {
   /** How long the keys are kept, by default set to 10 minutes **/
   ttl?: number;
   /** A random key callback generator for setValue() method **/
@@ -33,11 +37,15 @@ interface TimedSetValueOptions<T extends object> extends Omit<
 * @class TimedKVPeer
 * @description TimedKVPeer represents an abstraction design to store time-lifed key-value peer. You probably don't need to use this class directly.
 */
-export class TimedKVPeer<T extends object, K extends Record<string, any> | null = null> extends KVPeer<T, K> {
+export class TimedKVPeer<
+  T extends object,
+  K extends Record<string, any> | null = null,
+  L extends unknown = unknown
+> extends KVPeer<T, K, L> {
   protected randomKeyGenerator: () => string;
   private ttl: number;
 
-  constructor(options: TimedKVPeerOptions<T, K>) {
+  constructor(options: TimedKVPeerOptions<T, K, L>) {
     super({ ...options, type: "object" });
 
     this.ttl = options.ttl ?? kDefaultTtl;
