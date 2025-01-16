@@ -1,6 +1,5 @@
 // Import Internal Dependencies
 import { TimedKVPeer, TimedKVPeerOptions } from "./TimedKVPeer.class";
-import { getRedis } from "../index";
 
 // CONSTANTS
 const kDefaultCookiesOptions: CookieSerializeOptions = { sameSite: "none", secure: true };
@@ -72,16 +71,6 @@ export class StoreContext<T extends Store = Store> extends TimedKVPeer<T> {
     this.authenticationField = options?.authentificationField ?? null;
     this.cookiesOptions = typeof options?.setCookiesOptions === "undefined" ? Object.assign({}, kDefaultCookiesOptions) :
       Object.assign({}, kDefaultCookiesOptions, options.setCookiesOptions);
-  }
-
-  get redis() {
-    const redis = getRedis();
-
-    if (!redis) {
-      throw new Error("Redis must be init");
-    }
-
-    return redis;
   }
 
   /**

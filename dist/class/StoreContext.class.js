@@ -3,7 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.StoreContext = void 0;
 // Import Internal Dependencies
 const TimedKVPeer_class_1 = require("./TimedKVPeer.class");
-const index_1 = require("../index");
 // CONSTANTS
 const kDefaultCookiesOptions = { sameSite: "none", secure: true };
 const kStoreContextSessionName = "session-id";
@@ -32,13 +31,6 @@ class StoreContext extends TimedKVPeer_class_1.TimedKVPeer {
         this.authenticationField = options?.authentificationField ?? null;
         this.cookiesOptions = typeof options?.setCookiesOptions === "undefined" ? Object.assign({}, kDefaultCookiesOptions) :
             Object.assign({}, kDefaultCookiesOptions, options.setCookiesOptions);
-    }
-    get redis() {
-        const redis = (0, index_1.getRedis)();
-        if (!redis) {
-            throw new Error("Redis must be init");
-        }
-        return redis;
     }
     /**
     * @description this method allow you to initialize a session

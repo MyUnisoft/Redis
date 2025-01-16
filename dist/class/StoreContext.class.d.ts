@@ -54,7 +54,6 @@ export declare class StoreContext<T extends Store = Store> extends TimedKVPeer<T
     protected authenticationField: keyof T | null;
     protected cookiesOptions: CookieSerializeOptions;
     constructor(options?: Partial<StoreContextOptions<T>>);
-    get redis(): import("ioredis/built/Redis").default;
     /**
     * @description this method allow you to initialize a session
     *

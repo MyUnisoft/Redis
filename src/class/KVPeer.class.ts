@@ -3,7 +3,7 @@
 import { EventEmitter } from "node:events";
 
 // Import Internal Dependencies
-import { getRedis } from "..";
+import { getRedis, Redis } from "..";
 import { KeyType, Value } from "../types/index";
 
 // CONSTANTS
@@ -25,6 +25,7 @@ export interface KVOptions<T extends StringOrObject = Record<string, any>, K ext
   prefix?: string;
   type?: KVType;
   mapValue?: KVMapper<T, K>;
+  redis?: Redis;
 }
 
 export interface SetValueOptions<T extends StringOrObject = Record<string, any>> {
@@ -52,6 +53,7 @@ export class KVPeer<T extends StringOrObject = StringOrObject, K extends Record<
   protected prefixedName: string;
   protected type: KVType;
   protected mapValue: KVMapper<T, K>;
+  protected redis: Redis;
 
   constructor(options: KVOptions<T, K> = {}) {
     super();
@@ -61,20 +63,15 @@ export class KVPeer<T extends StringOrObject = StringOrObject, K extends Record<
     this.prefix = prefix ? `${prefix}-` : "";
     this.type = type ?? kDefaultKVType;
     this.mapValue = mapValue ?? this.defaultMapValue;
+    this.redis = options.redis ?? getRedis()!;
+
+    if (!this.redis) {
+      throw new Error("Redis must be init");
+    }
   }
 
   private defaultMapValue(value: T): MappedValue<T, K> {
     return value as MappedValue<T, K>;
-  }
-
-  get redis() {
-    const redis = getRedis();
-
-    if (!redis) {
-      throw new Error("Redis must be init");
-    }
-
-    return redis;
   }
 
   async setValue(options: SetValueOptions<T>): Promise<KeyType> {

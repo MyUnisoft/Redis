@@ -29,16 +29,13 @@ class KVPeer extends node_events_1.EventEmitter {
         this.prefix = prefix ? `${prefix}-` : "";
         this.type = type ?? kDefaultKVType;
         this.mapValue = mapValue ?? this.defaultMapValue;
+        this.redis = options.redis ?? (0, __1.getRedis)();
+        if (!this.redis) {
+            throw new Error("Redis must be init");
+        }
     }
     defaultMapValue(value) {
         return value;
-    }
-    get redis() {
-        const redis = (0, __1.getRedis)();
-        if (!redis) {
-            throw new Error("Redis must be init");
-        }
-        return redis;
     }
     async setValue(options) {
         const { key, value, expiresIn } = options;
