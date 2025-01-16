@@ -49,11 +49,11 @@ export async function initRedis(
   instance: Instance = "publisher",
   external?: boolean
 ): Promise<Redis> {
-  const { port, host, password } = redisOptions;
+  const { port, host } = redisOptions;
 
   const redis = typeof port !== "undefined" && typeof host !== "undefined" ?
-    new Redis(port, host, { password }) :
-    new Redis({ password });
+    new Redis(port, host, redisOptions) :
+    new Redis(redisOptions);
 
   if (external) {
     await assertConnection(instance, kDefaultAttempt, redis);
@@ -161,7 +161,8 @@ export async function closeRedis(
   forceExit: boolean = false,
   timeout?: number
 ): Promise<void> {
-  const redis = typeof redisInstance === "undefined" ? getRedis(instance) : redisInstance;
+  const isExt = typeof redisInstance !== "undefined";
+  const redis = isExt ? redisInstance : getRedis(instance);
 
   if (!redis) {
     throw new Error("Unavailable redis instance");
@@ -169,11 +170,13 @@ export async function closeRedis(
 
   await closeConnection(instance, redis, forceExit, timeout);
 
-  if (instance === "publisher") {
-    publisher = undefined;
-  }
-  else {
-    subscriber = undefined;
+  if (!isExt) {
+    if (instance === "publisher") {
+      publisher = undefined;
+    }
+    else {
+      subscriber = undefined;
+    }
   }
 }
 
