@@ -56,7 +56,7 @@ describe("TimedKVPeer", () => {
     it("Given a expired key", async() => {
       const key = await timedKVPeer.setValue({ key: "foo", value: { mail: "bar" } });
 
-      await timers.setTimeout(3_600);
+      await timers.setTimeout(5_000);
 
       const deletedValues = await timedKVPeer.deleteValue(key);
 
