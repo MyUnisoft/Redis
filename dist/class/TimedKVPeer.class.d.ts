@@ -1,4 +1,3 @@
-/// <reference types="node" />
 import { KVPeer, KVOptions, SetValueOptions } from "./KVPeer.class";
 import { KeyType } from "../types/index";
 export interface TimedKVPeerOptions<T extends object, K extends Record<string, any> | null = null> extends Omit<KVOptions<T, K>, "type"> {

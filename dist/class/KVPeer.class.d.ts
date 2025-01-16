@@ -1,4 +1,3 @@
-/// <reference types="node" />
 import { EventEmitter } from "node:events";
 import { KeyType } from "../types/index";
 export type KVType = "raw" | "object";

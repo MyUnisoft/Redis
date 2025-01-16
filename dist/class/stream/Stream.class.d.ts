@@ -1,4 +1,3 @@
-/// <reference types="node" />
 import { EventEmitter } from "node:events";
 import * as utils from "../../utils/stream/index";
 import { Data, Entry, Group } from "../../types/index";
