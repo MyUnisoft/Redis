@@ -130,3 +130,5 @@ out
 
 # VSCode settings
 .vscode
+
+dist/
