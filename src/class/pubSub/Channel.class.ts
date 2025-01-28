@@ -1,7 +1,8 @@
 // Import Internal Dependencies
-import { RedisAdapter, RedisAdapterOptions } from "../adapter/redis.adapter.js";
+import { RedisAdapter } from "../adapter/redis.adapter.js";
 
-export type ChannelOptions = RedisAdapterOptions & {
+export type ChannelOptions = {
+  redis: RedisAdapter;
   name: string;
 };
 
@@ -16,18 +17,19 @@ export type PublishOptions<
 
 export class Channel<
   T extends Record<string, any> = Record<string, any>,
-  K extends Record<string, any> | null = null> extends RedisAdapter {
+  K extends Record<string, any> | null = null> {
   readonly name: string;
 
-  constructor(options: ChannelOptions) {
-    const { name } = options;
+  #redis: RedisAdapter;
 
-    super({ ...options });
+  constructor(options: ChannelOptions) {
+    const { name, redis } = options;
 
     this.name = name;
+    this.#redis = redis;
   }
 
   public async pub(options: PublishOptions<T, K>) {
-    await this.publish(this.name, JSON.stringify(options));
+    await this.#redis.publish(this.name, JSON.stringify(options));
   }
 }

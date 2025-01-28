@@ -17,143 +17,134 @@ function mockedEvents(...args: any) {
 }
 
 describe("Channel", () => {
-  describe("Channel with extInstance", () => {
-    let channel: Channel;
+  const redis = new RedisAdapter({
+    port: Number(process.env.REDIS_PORT),
+    host: process.env.REDIS_HOST
+  });
 
-    // CONSTANTS
+  before(async() => {
+    await redis.initialize();
+  });
+
+  after(async() => {
+    await redis.close();
+  });
+
+  describe("Channel without metadata", () => {
+    let channel: Channel;
+    let subscriber: RedisAdapter;
+
     const name = "channel";
 
     before(async() => {
       channel = new Channel({
-        name,
+        redis,
+        name
+      });
+
+      subscriber = new RedisAdapter({
         port: Number(process.env.REDIS_PORT),
         host: process.env.REDIS_HOST
       });
 
-      await channel.initialize();
+      await subscriber.initialize();
+
+      await subscriber.subscribe(name);
+      subscriber.on("message", (channel, message) => mockedEvents(channel, message));
     });
 
     after(async() => {
-      await channel.close(true);
+      await subscriber.close(true);
     });
 
     test("channel should be instance of Channel", async() => {
       assert.ok(channel instanceof Channel);
       assert.ok(channel.name, name);
     });
+
+    test(`WHEN calling publish,
+          THEN it should send a new message`, async() => {
+      const options = {
+        data: {
+          event: "foo",
+          foo: "bar"
+        }
+      };
+
+      await channel.pub(options);
+
+      await timers.setTimeout(1_000);
+
+      assert.deepEqual(mockedEventsArgs.shift(), [name, JSON.stringify(options)]);
+    });
   });
 
-  describe("Channel with local instance", () => {
-    describe("Channel without metadata", () => {
-      let channel: Channel;
-      let subscriber: RedisAdapter;
+  describe("Channel with metadata", () => {
+    interface Metadata {
+      bar: string;
+    }
 
-      const name = "channel";
+    let channel: Channel<Record<string, any>, Metadata>;
+    let subscriber: RedisAdapter;
 
-      before(async() => {
-        channel = new Channel({
-          name,
-          port: Number(process.env.REDIS_PORT),
-          host: process.env.REDIS_HOST
-        });
-
-        subscriber = new RedisAdapter({
-          port: Number(process.env.REDIS_PORT),
-          host: process.env.REDIS_HOST
-        });
-
-        await channel.initialize();
-        await subscriber.initialize();
-
-        await subscriber.subscribe(name);
-        subscriber.on("message", (channel, message) => mockedEvents(channel, message));
-      });
-
-      after(async() => {
-        await channel.close(true);
-        await subscriber.close(true);
-      });
-
-      test("channel should be instance of Channel", async() => {
-        assert.ok(channel instanceof Channel);
-        assert.ok(channel.name, name);
-      });
-
-      test(`WHEN calling publish,
-            THEN it should send a new message`, async() => {
-        const options = {
-          data: {
-            event: "foo",
-            foo: "bar"
-          }
-        };
-
-        await channel.pub(options);
-
-        await timers.setTimeout(1_000);
-
-        assert.deepEqual(mockedEventsArgs.shift(), [name, JSON.stringify(options)]);
-      });
+    // CONSTANTS
+    const name = "channel";
+    const redis = new RedisAdapter({
+      port: Number(process.env.REDIS_PORT),
+      host: process.env.REDIS_HOST
     });
 
-    describe("Channel with metadata", () => {
-      interface Metadata {
-        bar: string;
-      }
+    before(async() => {
+      await redis.initialize();
+    });
 
-      let channel: Channel<Record<string, any>, Metadata>;
-      let subscriber: RedisAdapter;
+    after(async() => {
+      await redis.close();
+    });
 
-      // CONSTANTS
-      const name = "channel";
-
-      before(async() => {
-        channel = new Channel<Record<string, any>, Metadata>({
-          name,
-          port: Number(process.env.REDIS_PORT),
-          host: process.env.REDIS_HOST
-        });
-
-        subscriber = new RedisAdapter({
-          port: Number(process.env.REDIS_PORT),
-          host: process.env.REDIS_HOST
-        });
-
-        await channel.initialize();
-        await subscriber.initialize();
-
-        await subscriber.subscribe(name);
-        subscriber.on("message", (channel, message) => mockedEvents(channel, message));
+    before(async() => {
+      channel = new Channel<Record<string, any>, Metadata>({
+        redis,
+        name
       });
 
-      after(async() => {
-        await channel.close(true);
-        await subscriber.close(true);
+      subscriber = new RedisAdapter({
+        port: Number(process.env.REDIS_PORT),
+        host: process.env.REDIS_HOST
       });
 
-      test("channel should be instance of Channel", async() => {
-        assert.ok(channel instanceof Channel);
-        assert.ok(channel.name, name);
-      });
+      await subscriber.initialize();
 
-      test(`WHEN calling publish,
-            THEN it should send a new message`, async() => {
-        const options: PublishOptions<Record<string, any>, Metadata> = {
-          data: {
-            event: "foo",
-            foo: "bar"
-          },
-          metadata: {
-            bar: "foo"
-          }
-        };
+      await subscriber.subscribe(name);
+      subscriber.on("message", (channel, message) => mockedEvents(channel, message));
+    });
 
-        await channel.pub(options);
+    after(async() => {
+      await subscriber.close(true);
+    });
 
-        await timers.setTimeout(1_000);
+    test("channel should be instance of Channel", async() => {
+      assert.ok(channel instanceof Channel);
+      assert.ok(channel.name, name);
+    });
 
-        assert.deepEqual(mockedEventsArgs.shift(), [name, JSON.stringify(options)]);
-      });
+    test(`WHEN calling publish,
+          THEN it should send a new message`, async() => {
+      const options: PublishOptions<Record<string, any>, Metadata> = {
+        data: {
+          event: "foo",
+          foo: "bar"
+        },
+        metadata: {
+          bar: "foo"
+        }
+      };
+
+      await channel.pub(options);
+
+      await timers.setTimeout(1_000);
+
+      assert.deepEqual(mockedEventsArgs.shift(), [name, JSON.stringify(options)]);
     });
   });
 });

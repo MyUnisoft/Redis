@@ -10,6 +10,7 @@
 
 ```ts
 export interface ChannelOptions {
+  redis: RedisAdapter;
   name: string;
 }
 
@@ -19,8 +20,8 @@ export type MessageWithMetadata<T, K> = T & {
 
 export type PublishOptions<
   T extends Record<string, any> = Record<string, any>,
-  K extends Record<string, any> | null = null> = K extends Record<string, any> ?
-    (MessageWithMetadata<T, K> | MessageWithMetadata<T, K>[]) : (T | T[]);
+  K extends Record<string, any> | null = null> = K extends null ?
+    (T | T[]) : (MessageWithMetadata<T, K> | MessageWithMetadata<T, K>[]);
 ```
 
 ## 📚 Usage
@@ -29,22 +30,34 @@ export type PublishOptions<
 import { Channel } from "@myunisoft/redis";
 
 const name = "foo";
+const redis = new RedisAdapter({
+  port: Number(process.env.REDIS_PORT),
+  host: process.env.REDIS_HOST
+});
+const subscriber = new RedisAdapter({
+  port: Number(process.env.REDIS_PORT),
+  host: process.env.REDIS_HOST
+});
 
-const subscriber = await initRedis(options, true);
+await redis.initialize();
+
 await subscriber.subscribe(name);
 subscriber.on("message", (channel, message) => {
   // Handle incoming event
 });
 
-const channel = new Channel({ name });
+const channel = new Channel({
+  redis,
+  name
+});
 ```
 
 ## 📜 API
 
-### publish(options: PublishOptions< T, K >): Promise< void >
+### pub(options: PublishOptions< T, K >): Promise< void >
 
 Publish an event on the pubsub channel
 
 ```ts
-await channel.publish({ data: { foo: "bar" }});
+await channel.pub({ data: { foo: "bar" }});
 ```
