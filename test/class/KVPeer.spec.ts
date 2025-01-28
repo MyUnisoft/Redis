@@ -13,14 +13,12 @@ import { KVPeer } from "../../src/index";
 
 describe("KVPeer", () => {
   describe("RedisAdapter", () => {
-    let redisAdapter: RedisAdapter;
+    const redisAdapter = new RedisAdapter({
+      port: Number(process.env.REDIS_PORT),
+      host: process.env.REDIS_HOST
+    });
 
     before(async() => {
-      redisAdapter = new RedisAdapter({
-        port: Number(process.env.REDIS_PORT),
-        host: process.env.REDIS_HOST
-      });
-
       await redisAdapter.initialize();
       await redisAdapter.flushdb();
     });
