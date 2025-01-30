@@ -46,7 +46,7 @@ export class RedisAdapter extends Redis implements DatabaseConnection {
   #attempt: number;
   #disconnectionTimeout: number;
 
-  constructor(options: RedisAdapterOptions) {
+  constructor(options: RedisAdapterOptions = {}) {
     super(options);
 
     this.#attempt = options.attempt ?? kDefaultAttempt;
