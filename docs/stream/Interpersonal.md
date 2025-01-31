@@ -16,7 +16,7 @@ interface ClaimOptions {
   idleTime: number;
 }
 
-interface GroupConsumerOptions extends BasementOptions {
+export interface InterpersonalOptions extends StreamOptions {
   groupName: string;
   consumerName: string;
   claimOptions?: ClaimOptions;
@@ -26,10 +26,17 @@ interface GroupConsumerOptions extends BasementOptions {
 ## 📚 Usage
 
 ```ts
-import { GroupConsumer } from "@myunisoft/redis";
+import { Interpersonal, RedisAdapter } from "@myunisoft/redis";
 
-const consumer = new GroupConsumer({
-  connection,
+const redis = new RedisAdapter({
+  port: Number(process.env.REDIS_PORT),
+  host: process.env.REDIS_HOST
+});
+
+await redis.initialize();
+
+const consumer = new Interpersonal({
+  redis,
   streamName: "my-stream-name",
   groupName: "my-group-name",
   consumerName: "my-consumer-name",
@@ -41,7 +48,6 @@ const consumer = new GroupConsumer({
   }
 });
 
-await consumer.initialize();
 await consumer.init();
 
 const readable = Readable.from(firstConsumer[Symbol.asyncIterator]());

@@ -10,17 +10,23 @@
 ## 📚 Usage
 
 ```ts
-import { Intrapersonal } from "@myunisoft/redis";
+import { Intrapersonal, RedisAdapter } from "@myunisoft/redis";
+
+const redis = new RedisAdapter({
+  port: Number(process.env.REDIS_PORT),
+  host: process.env.REDIS_HOST
+});
+
+await redis.initialize();
 
 const consumer = new Intrapersonal({
-  connection,
+  redis,
   streamName: "my-stream-name",
   frequency: 10000, 
   lastId: "0-0",
   count: 10
 });
 
-await consumer.initialize();
 await consumer.init();
 
 const readable = Readable.from(basicStream[Symbol.asyncIterator]());
