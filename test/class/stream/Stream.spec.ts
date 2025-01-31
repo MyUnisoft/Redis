@@ -3,7 +3,7 @@ import assert from "node:assert";
 import { describe, before, after, test } from "node:test";
 
 // Import Internal Dependencies
-import { Stream } from "../../../src";
+import { RedisAdapter, Stream } from "../../../src";
 import { randomValue } from "../../fixtures/utils/randomValue";
 
 // CONSTANTS
@@ -14,18 +14,22 @@ const kParseRegex = new RegExp("-([0-9])");
 const kFrequency = 3000;
 
 describe("RedisStream instance", () => {
+  const redis = new RedisAdapter({
+    port: Number(process.env.REDIS_PORT),
+    host: process.env.REDIS_HOST
+  });
+
   let stream: Stream;
 
   before(async() => {
+    await redis.initialize();
+
     stream = new Stream({
+      redis,
       streamName: kStreamName,
       lastId: "0-0",
-      frequency: kFrequency,
-      port: Number(process.env.REDIS_PORT),
-      host: process.env.REDIS_HOST
+      frequency: kFrequency
     });
-
-    await stream.initialize();
 
     const streamExist = await stream.streamExist();
 
@@ -49,7 +53,7 @@ describe("RedisStream instance", () => {
       await stream.delEntry(entryId);
     }
 
-    await stream.close(true);
+    await redis.close(true);
   });
 
   test("should instantiate with differents options in constructor", () => {

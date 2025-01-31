@@ -6,7 +6,7 @@ import { Readable } from "node:stream";
 import { once } from "node:events";
 
 // Import Internal Dependencies
-import { Interpersonal } from "../../../src/index";
+import { Interpersonal, RedisAdapter } from "../../../src/index";
 import { randomValue } from "../../fixtures/utils/randomValue";
 
 // Import Types
@@ -43,6 +43,11 @@ const kDiff = 1000;
 const kCount = 2;
 
 describe("Interpersonal", () => {
+  const redis = new RedisAdapter({
+    port: Number(process.env.REDIS_PORT),
+    host: process.env.REDIS_HOST
+  });
+
   let firstConsumer: Interpersonal;
   let secondConsumer: Interpersonal;
   let thirdConsumer: Interpersonal;
@@ -53,7 +58,10 @@ describe("Interpersonal", () => {
   let thirdConsumerReadable: Readable;
 
   before(async() => {
+    await redis.initialize();
+
     firstConsumer = new Interpersonal({
+      redis,
       streamName: kStreamName,
       claimOptions: {
         idleTime: 1000
@@ -62,12 +70,11 @@ describe("Interpersonal", () => {
       consumerName: kFirstConsumerName,
       lastId: kLastId,
       count: kCount,
-      frequency: kTimer,
-      port: Number(process.env.REDIS_PORT),
-      host: process.env.REDIS_HOST
+      frequency: kTimer
     });
 
     secondConsumer = new Interpersonal({
+      redis,
       streamName: kStreamName,
       claimOptions: {
         idleTime: 1000
@@ -76,26 +83,20 @@ describe("Interpersonal", () => {
       consumerName: kSecondConsumerName,
       lastId: kLastId,
       count: kCount,
-      frequency: kTimer,
-      port: Number(process.env.REDIS_PORT),
-      host: process.env.REDIS_HOST
+      frequency: kTimer
     });
 
     thirdConsumer = new Interpersonal({
+      redis,
       streamName: kStreamName,
       groupName: kGroupName,
       consumerName: kThirdConsumerName,
       lastId: kLastId,
-      frequency: kTimer + kDiff,
-      port: Number(process.env.REDIS_PORT),
-      host: process.env.REDIS_HOST
+      frequency: kTimer + kDiff
     });
 
-    await firstConsumer.initialize();
     await firstConsumer.init();
-    await secondConsumer.initialize();
     await secondConsumer.init();
-    await thirdConsumer.initialize();
     await thirdConsumer.init();
 
     for (let index = 0; index < (kLength / 3); index++) {
@@ -145,9 +146,7 @@ describe("Interpersonal", () => {
     const promises = [once(secondConsumerReadable, "close"), once(thirdConsumerReadable, "close")];
     await Promise.all(promises);
 
-    await firstConsumer.close(true);
-    await secondConsumer.close(true);
-    await thirdConsumer.close(true);
+    await redis.close(true);
   });
 
   test(`WHEN calling init()

@@ -6,7 +6,7 @@ import { once } from "node:events";
 import { Readable } from "node:stream";
 
 // Import Internal Dependencies
-import { Intrapersonal } from "../../../src";
+import { Intrapersonal, RedisAdapter } from "../../../src";
 import { randomValue } from "../../fixtures/utils/randomValue";
 
 // Import Types
@@ -30,20 +30,25 @@ const kCount = 3;
 const kFrequency = 300;
 
 describe("Intrapersonal", () => {
+  const redis = new RedisAdapter({
+    port: Number(process.env.REDIS_PORT),
+    host: process.env.REDIS_HOST
+  });
+
   let intrapersonalStream: Intrapersonal;
   let readable: Readable;
 
   before(async() => {
+    await redis.initialize();
+
     intrapersonalStream = new Intrapersonal({
+      redis,
       streamName: kStreamName,
       lastId: kLastId,
       count: kCount,
-      frequency: kFrequency,
-      port: Number(process.env.REDIS_PORT),
-      host: process.env.REDIS_HOST
+      frequency: kFrequency
     });
 
-    await intrapersonalStream.initialize();
     await intrapersonalStream.init();
 
     assert.ok(await intrapersonalStream.streamExist());
@@ -67,7 +72,7 @@ describe("Intrapersonal", () => {
     readable.destroy();
 
     await once(readable, "close");
-    await intrapersonalStream.close(true);
+    await redis.close(true);
   });
 
   test("reading data", async() => {

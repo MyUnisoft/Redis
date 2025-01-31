@@ -67,7 +67,7 @@ export interface StreamOptions {
    * Number of entries it must pull at each iteration
    */
   count?: number;
-};
+}
 
 /**
  *
