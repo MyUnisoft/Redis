@@ -65,17 +65,24 @@ interface ConsumeOptions {
 ## 📚 Usage
 
 ```ts
-import { Stream } from "@myunisoft/redis";
+import { Stream, RedisAdapter } from "@myunisoft/redis";
 
-const redisStream = new Stream({
+const redis = new RedisAdapter({
+  port: Number(process.env.REDIS_PORT),
+  host: process.env.REDIS_HOST
+});
+
+await redis.initialize();
+
+const stream = new Stream({
+  redis,
   streamName: "my-stream-name",
   frequency: 10000, 
   lastId: "0-0",
   count: 10
 });
 
-await redisStream.initialize();
-await redisStream.init();
+await stream.init();
 ```
 
 ## 📜 API

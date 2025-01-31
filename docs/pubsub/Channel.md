@@ -27,7 +27,7 @@ export type PublishOptions<
 ## 📚 Usage
 
 ```ts
-import { Channel } from "@myunisoft/redis";
+import { Channel, RedisAdapter } from "@myunisoft/redis";
 
 const name = "foo";
 const redis = new RedisAdapter({
@@ -40,6 +40,7 @@ const subscriber = new RedisAdapter({
 });
 
 await redis.initialize();
+await subscriber.initialize();
 
 await subscriber.subscribe(name);
 subscriber.on("message", (channel, message) => {

@@ -9,7 +9,7 @@ import type {
   Entry,
   Group
 } from "../../types/index.js";
-import { RedisAdapter, RedisAdapterOptions } from "../adapter/redis.adapter.js";
+import { RedisAdapter } from "../adapter/redis.adapter.js";
 
 // CONSTANTS
 const kDefaultRangeOptions = { min: "-", max: "+" };
@@ -52,7 +52,8 @@ export interface PushOptions {
 
 export type DelEntryResponse = Result<void, string>;
 
-export type StreamOptions = RedisAdapterOptions & {
+export interface StreamOptions {
+  redis: RedisAdapter;
   streamName: string;
   /**
    * Interval of time between two iteration on the stream
@@ -66,31 +67,31 @@ export type StreamOptions = RedisAdapterOptions & {
    * Number of entries it must pull at each iteration
    */
   count?: number;
-};
+}
 
 /**
  *
  * @description Shared method used to work on a Redis Stream
  */
-export class Stream extends RedisAdapter {
+export class Stream {
   public streamName: string;
   public lastId: string;
 
   protected frequency: number;
   protected count?: number;
+  protected redis: RedisAdapter;
 
   constructor(options: StreamOptions) {
-    super({ ...options });
+    const { lastId } = options;
 
-    this.streamName = options.streamName;
-    this.frequency = options.frequency;
-    this.count = options.count;
-    this.lastId = options.lastId ?? kMinId;
+    Object.assign(this, options);
+
+    this.lastId = lastId ?? kMinId;
   }
 
   public async streamExist(): Promise<boolean> {
     try {
-      await this.xinfo("STREAM", this.streamName);
+      await this.redis.xinfo("STREAM", this.streamName);
 
       return true;
     }
@@ -108,14 +109,14 @@ export class Stream extends RedisAdapter {
       return;
     }
 
-    await this.xadd(this.streamName, "0-1", "init", "stream");
-    await this.xdel(this.streamName, "0-1");
+    await this.redis.xadd(this.streamName, "0-1", "init", "stream");
+    await this.redis.xdel(this.streamName, "0-1");
   }
 
   public async getInfo(): Promise<XINFOStreamData> {
     const formattedStreamData = {};
 
-    const streamData = await this.xinfo("STREAM", this.streamName, "FULL", "COUNT", 0) as utils.XRedisData;
+    const streamData = await this.redis.xinfo("STREAM", this.streamName, "FULL", "COUNT", 0) as utils.XRedisData;
 
     for (const [key, value] of utils.parseData(streamData)) {
       formattedStreamData[key as string] = value;
@@ -125,11 +126,11 @@ export class Stream extends RedisAdapter {
   }
 
   public async getLength(): Promise<number> {
-    return await this.xlen(this.streamName);
+    return await this.redis.xlen(this.streamName);
   }
 
   public async getGroupsData(): Promise<utils.XINFOGroupData[]> {
-    const groups = await this.xinfo("GROUPS", this.streamName) as utils.XINFOGroups;
+    const groups = await this.redis.xinfo("GROUPS", this.streamName) as utils.XINFOGroups;
 
     return utils.parseXINFOGroups(groups);
   }
@@ -168,11 +169,11 @@ export class Stream extends RedisAdapter {
 
     const formattedId = id ?? "*";
 
-    return await this.xadd(this.streamName, formattedId, ...entries) as string;
+    return await this.redis.xadd(this.streamName, formattedId, ...entries) as string;
   }
 
   public async delEntry(entryId: string): Promise<DelEntryResponse> {
-    const res = await this.xdel(this.streamName, entryId);
+    const res = await this.redis.xdel(this.streamName, entryId);
 
     if (res !== 1) {
       return Err(`Failed entry deletion for ${entryId}`);
@@ -219,7 +220,7 @@ export class Stream extends RedisAdapter {
     const { min, max, count } = options;
     const redisOptions = utils.createRedisOptions(this.streamName, min, max, { count }) as unknown;
 
-    return utils.parseEntries(await this.xrange(...redisOptions as utils.FormattedRedisOptions));
+    return utils.parseEntries(await this.redis.xrange(...redisOptions as utils.FormattedRedisOptions));
   }
 
   /**
@@ -255,7 +256,7 @@ export class Stream extends RedisAdapter {
     const { min, max, count } = options;
     const redisOptions = utils.createRedisOptions(this.streamName, max, min, { count }) as unknown;
 
-    return utils.parseEntries(await this.xrevrange(...redisOptions as utils.FormattedRedisOptions));
+    return utils.parseEntries(await this.redis.xrevrange(...redisOptions as utils.FormattedRedisOptions));
   }
 
   /**
@@ -274,12 +275,12 @@ export class Stream extends RedisAdapter {
    */
   public async trim(threshold: number | string): Promise<number> {
     return typeof threshold === "number" ?
-      await this.xtrim(
+      await this.redis.xtrim(
         this.streamName,
         "MAXLEN",
         threshold
       ) :
-      await this.xtrim(
+      await this.redis.xtrim(
         this.streamName,
         "MINID",
         threshold
@@ -310,7 +311,7 @@ export class Stream extends RedisAdapter {
       return;
     }
 
-    await this.xgroup("CREATE", this.streamName, name, "$", "MKSTREAM");
+    await this.redis.xgroup("CREATE", this.streamName, name, "$", "MKSTREAM");
   }
 
   /**
@@ -325,7 +326,7 @@ export class Stream extends RedisAdapter {
       return;
     }
 
-    await this.xgroup("DESTROY", this.streamName, name);
+    await this.redis.xgroup("DESTROY", this.streamName, name);
   }
 
   /**
@@ -336,7 +337,7 @@ export class Stream extends RedisAdapter {
    * @returns {Promise<utils.XINFOConsumerData | undefined>}
    */
   public async getConsumerData(groupName: string, consumerName: string): Promise<utils.XINFOConsumerData | undefined> {
-    const consumers = await this.xinfo("CONSUMERS", this.streamName, groupName);
+    const consumers = await this.redis.xinfo("CONSUMERS", this.streamName, groupName);
 
     const formattedConsumers = utils.parseXINFOConsumers(consumers as utils.XINFOConsumers);
 
@@ -369,7 +370,7 @@ export class Stream extends RedisAdapter {
       return;
     }
 
-    await this.xgroup("CREATECONSUMER", this.streamName, groupName, consumerName);
+    await this.redis.xgroup("CREATECONSUMER", this.streamName, groupName, consumerName);
   }
 
   /**
@@ -385,6 +386,6 @@ export class Stream extends RedisAdapter {
       return;
     }
 
-    await this.xgroup("DELCONSUMER", this.streamName, groupName, consumerName);
+    await this.redis.xgroup("DELCONSUMER", this.streamName, groupName, consumerName);
   }
 }
