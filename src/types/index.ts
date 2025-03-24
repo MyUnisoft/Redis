@@ -49,5 +49,5 @@ export interface BasicDatabaseConnection {
 
   setValue(...unknown): Promise<Result<KeyType, Error>> | Result<KeyType, Error>;
   deleteValue(...unknown): Promise<number> | number;
-  getValue(...unknown): Promise<unknown> | unknown;
+  getValue<T = unknown>(...unknown): (Promise<T | null>) | (T | null);
 }

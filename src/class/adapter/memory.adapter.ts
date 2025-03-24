@@ -9,9 +9,9 @@ import type {
 } from "../../types";
 import { SetValueError } from "../error/memory.adapter.error";
 
-export interface InMemSetValueOptions {
+export type InMemSetValueOptions<T = unknown> = {
   key: string;
-  value: unknown;
+  value: T;
   expiresIn?: number;
 }
 
@@ -20,14 +20,14 @@ export interface InMemIsKeyExpiredOptions {
   banTimeInSecond: number;
 }
 
-export class MemoryAdapter implements DatabaseConnection {
-  #values: EphemeralMap<string, unknown> = new EphemeralMap();
+export class MemoryAdapter<T = unknown> implements DatabaseConnection {
+  #values: EphemeralMap<string, T> = new EphemeralMap();
 
   flushall() {
     this.#values = new EphemeralMap();
   }
 
-  setValue(options: InMemSetValueOptions): Result<KeyType, SetValueError> {
+  setValue<U extends T = T>(options: InMemSetValueOptions<U>): Result<KeyType, SetValueError> {
     const { key, value, expiresIn } = options;
 
     const valueExist = this.#values.has(key);
@@ -47,14 +47,13 @@ export class MemoryAdapter implements DatabaseConnection {
     return isDelete ? 1 : 0;
   }
 
-  // Implement the no-argument version of getValue
-  getValue(key: string): null | unknown {
+  getValue<U = T>(key: string): U | null {
     const valueExist = this.#values.has(key);
 
     if (!valueExist) {
       return null;
     }
 
-    return this.#values.get(key);
+    return this.#values.get(key) as U;
   }
 }
