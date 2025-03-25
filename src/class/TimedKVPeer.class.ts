@@ -15,9 +15,9 @@ const kDefaultTtl = 1_000 * 60 * 10;
 const kDefaultRandomKeyGenerator = () => randomBytes(6).toString("hex");
 
 export interface TimedKVPeerOptions<
-  L extends unknown = unknown
+  T extends unknown = unknown
 >
-  extends Omit<KVOptions<L>, "type"> {
+  extends Omit<KVOptions<T>, "type"> {
   /** How long the keys are kept, by default set to 10 minutes **/
   ttl?: number;
   /** A random key callback generator for setValue() method **/
@@ -37,7 +37,7 @@ interface TimedSetValueOptions<T extends object> extends Omit<
 */
 export class TimedKVPeer<
   T extends object,
-  K extends unknown = unknown
+  K = unknown
 > extends KVPeer<T, K> {
   protected randomKeyGenerator: () => string;
   private ttl: number;
