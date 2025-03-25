@@ -1,4 +1,3 @@
-/* eslint-disable func-style */
 // Import Node.js Dependencies
 import EventEmitter from "node:events";
 import assert from "node:assert/strict";

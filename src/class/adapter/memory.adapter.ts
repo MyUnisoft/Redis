@@ -13,7 +13,7 @@ export type InMemSetValueOptions<T = unknown> = {
   key: string;
   value: T;
   expiresIn?: number;
-}
+};
 
 export interface InMemIsKeyExpiredOptions {
   value: Record<string, unknown>;
