@@ -6,6 +6,24 @@
   This class is used to store, retrieve and delete key-value pairs in Redis.
 </p>
 
+## Interface
+
+```ts
+export type KeyType = string | Buffer;
+export type KVType = "raw" | "object";
+
+export type StringOrObject = string | Record<string, any>;
+
+
+export interface KVOptions<T extends unknown = unknown> {
+  adapter: DatabaseConnection<T>;
+  type?: KVType;
+  prefix?: string;
+  prefixSeparator?: string;
+}
+```
+
+
 ## 📚 Usage
 
 ```ts
@@ -25,16 +43,15 @@ const value = await kvPeer.getValue("myKey"); // "boo"
 
 ## 📜 API
 
-### constructor(options: KVOptions<T>)
+### constructor< T extends StringOrObject = StringOrObject, K = unknown >(options: KVOptions<K>)
 
 You can instantiate a new `KVPeer` object by passing the following options:
 - `adapter: DatabaseConnection` - the database connection object.
 - `type?: KVType` - the type of the value that will be stored in Redis. It can be either `"raw"` or `"object"`. Default is `"raw"`.
-- `mapValue?: KVMapper<T, K>` - a function that will be used to map the value before storing it in Redis (only for `"object"` type). There is no map by default.
 - `prefix?: string` - a prefix that will be added to the key before storing it in Redis.
 - `prefixSeparator?: string` - a separator that will be used to separate the prefix from the key. Default is `"-"`.
 
-### setValue(options: KVPeerSetValueOptions<T>): Promise<Result<KeyType, Error>>
+### setValue< U extends StringOrObject = T >(options: KVPeerSetValueOptions<U>): Promise< Result< KeyType, Error > >
 
 This method is used to set a key-value pair in Redis.
 
@@ -70,7 +87,7 @@ export type KVPeerSetValueOptions<T extends StringOrObject = StringOrObject> = O
 >;
 ```
 
-### getValue(key: KeyType): Promise<MappedValue<T, K> | null >
+### getValue< U extends StringOrObject = T >(key: KeyType): Promise< U | null >
 
 This method is used to get a value in Redis.
 
@@ -79,7 +96,7 @@ const value = await kvPeer.getValue("foo");
 // { bar: "baz" }
 ```
 
-### deleteValue(key: KeyType): Promise<number>
+### deleteValue(key: KeyType): Promise< number >
 
 This method is used to delete a key-value pair in Redis.
 
@@ -87,50 +104,4 @@ This method is used to delete a key-value pair in Redis.
 const result = await kvPeer.deleteValue("key");
 
 console.log(result); // 0 for Failure, 1 for Success
-```
-
-## Usage with `mapValue`
-
-```ts
-const kvPeer = new KVPeer({
-  type: "object",
-  adapter: redisAdapter,
-  mapValue: (value) => {
-    return {
-      ...value,
-      metadata: {
-        bar: "baz",
-      },
-    };
-  },
-});
-
-await kvPeer.setValue({ key: "myKey", value: { foo: "foz" } });
-const value = await kvPeer.getValue("myKey");
-// { foo: "foz", metadata: { bar: "baz" } }
-```
-
-## Interface
-
-```ts
-export type KeyType = string | Buffer;
-export type KVType = "raw" | "object";
-
-export type StringOrObject = string | Record<string, any>;
-
-type IsMetadataDefined<T extends Record<string, any>, K extends Record<string, any> | null = null> =
-  K extends Record<string, any> ? T & { customData: K; } : T;
-
-type MappedValue<T extends StringOrObject, K extends Record<string, any> | null = null> = T extends Record<string, any> ?
-  IsMetadataDefined<T, K> : T;
-
-export type KVMapper<T extends StringOrObject, K extends Record<string, any> | null = null> = (value: T) => MappedValue<T, K>;
-
-export interface KVOptions<T extends StringOrObject = Record<string, any>, K extends Record<string, any> | null = null> {
-  adapter: DatabaseConnection;
-  type?: KVType;
-  mapValue?: KVMapper<T, K>;
-  prefix?: string;
-  prefixSeparator?: string;
-}
 ```

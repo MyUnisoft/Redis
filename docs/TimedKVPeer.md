@@ -9,11 +9,18 @@
 ## Interface
 
 ```ts
-export interface TimedKVPeerOptions<T extends object, K extends Record<string, any> | null = null> extends Omit<KVOptions<T, K>, "type"> {
+export interface TimedKVPeerOptions<T extends unknown = unknown> extends Omit<KVOptions<T, K>, "type"> {
   /** How long the keys are kept, by default set to 10 minutes **/
   ttl?: number;
   /** A random key callback generator for setValue() method **/
   randomKeyCallback?: () => string;
+}
+
+interface TimedSetValueOptions<T extends object> extends Omit<
+  RedisSetValueOptions<T>,
+  "expiresIn" | "key" | "type"
+> {
+  key?: string | Buffer;
 }
 ```
 
@@ -43,7 +50,9 @@ const store = new TimedKVPeer<MyCustomObject>({
 
 ## 📜 API
 
-### setValue(value: T, key?: KeyType): Promise< KeyType >
+### constructor< T extends object, K = unknown >(options: TimedKVPeerOptions<K>)
+
+### setValue< U extends object = T >(options: TimedSetValueOptions<U>): Promise< Result< KeyType, Error > >
 
 this method is used to set a key-value peer
 
