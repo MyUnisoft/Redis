@@ -39,15 +39,14 @@ export type GetConnectionPerfResponse = {
   perf?: number;
 };
 
-export type DatabaseConnection<T extends unknown = unknown> = BasicDatabaseConnection & T;
 
-export interface BasicDatabaseConnection {
-  initialize?(...unknown): Promise<unknown>;
+export type DatabaseConnection<T = unknown> = {
+  initialize?(...args: unknown[]): Promise<unknown>;
   close?(forceExit?: boolean): Promise<void>;
   isAlive?(): Promise<boolean>;
   getPerformance?(): Promise<GetConnectionPerfResponse>;
 
-  setValue(...unknown): Promise<Result<KeyType, Error>> | Result<KeyType, Error>;
-  deleteValue(...unknown): Promise<number> | number;
-  getValue<T = unknown>(...unknown): (Promise<T | null>) | (T | null);
+  setValue(...args: unknown[]): Promise<Result<KeyType, Error>>;
+  deleteValue(...args: unknown[]): Promise<number>
+  getValue(...args: unknown[]): Promise<T | null>;
 }

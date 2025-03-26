@@ -20,14 +20,14 @@ export interface InMemIsKeyExpiredOptions {
   banTimeInSecond: number;
 }
 
-export class MemoryAdapter<T = unknown> implements DatabaseConnection {
+export class MemoryAdapter <T = unknown> implements DatabaseConnection {
   #values: EphemeralMap<string, T> = new EphemeralMap();
 
   flushall() {
     this.#values = new EphemeralMap();
   }
 
-  setValue<U extends T = T>(options: InMemSetValueOptions<U>): Result<KeyType, SetValueError> {
+  async setValue(options: InMemSetValueOptions<T>): Promise<Result<KeyType, SetValueError>> {
     const { key, value, expiresIn } = options;
 
     const valueExist = this.#values.has(key);
@@ -41,19 +41,11 @@ export class MemoryAdapter<T = unknown> implements DatabaseConnection {
     return Ok(key);
   }
 
-  deleteValue(key: string) {
-    const isDelete = this.#values.delete(key);
-
-    return isDelete ? 1 : 0;
+  deleteValue(key: string): Promise<number> {
+    return Promise.resolve(this.#values.delete(key) ? 1 : 0);
   }
 
-  getValue<U = T>(key: string): U | null {
-    const valueExist = this.#values.has(key);
-
-    if (!valueExist) {
-      return null;
-    }
-
-    return this.#values.get(key) as U;
+  getValue(key: string): Promise<T | null> {
+    return Promise.resolve(this.#values.get(key) ?? null);
   }
 }

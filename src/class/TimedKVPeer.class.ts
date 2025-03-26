@@ -14,10 +14,8 @@ const kDefaultTtl = 1_000 * 60 * 10;
 // eslint-disable-next-line func-style
 const kDefaultRandomKeyGenerator = () => randomBytes(6).toString("hex");
 
-export interface TimedKVPeerOptions<
-  T extends unknown = unknown
->
-  extends Omit<KVOptions<T>, "type"> {
+export interface TimedKVPeerOptions
+  extends Omit<KVOptions, "type"> {
   /** How long the keys are kept, by default set to 10 minutes **/
   ttl?: number;
   /** A random key callback generator for setValue() method **/
@@ -36,20 +34,19 @@ interface TimedSetValueOptions<T extends object> extends Omit<
 * @description TimedKVPeer represents an abstraction design to store time-lifed key-value peer. You probably don't need to use this class directly.
 */
 export class TimedKVPeer<
-  T extends object,
-  K = unknown
-> extends KVPeer<T, K> {
+  T extends object
+> extends KVPeer<T> {
   protected randomKeyGenerator: () => string;
   private ttl: number;
 
-  constructor(options: TimedKVPeerOptions<K>) {
+  constructor(options: TimedKVPeerOptions) {
     super({ ...options, type: "object" });
 
     this.ttl = options.ttl ?? kDefaultTtl;
     this.randomKeyGenerator = options.randomKeyCallback ?? kDefaultRandomKeyGenerator;
   }
 
-  override async setValue<U extends object = T>(options: TimedSetValueOptions<U>): Promise<Result<KeyType, Error>> {
+  override async setValue(options: TimedSetValueOptions<T>): Promise<Result<KeyType, Error>> {
     const { key, ...restOptions } = options;
 
     const finalKey = key ?? this.randomKeyGenerator();

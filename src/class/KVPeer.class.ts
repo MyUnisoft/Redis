@@ -12,10 +12,8 @@ import type { KVType, RedisSetValueOptions, StringOrObject } from "./adapter/red
 // CONSTANTS
 const kDefaultKVType = "raw";
 
-export interface KVOptions<
-  T extends unknown = unknown
-> {
-  adapter: DatabaseConnection<T>;
+export interface KVOptions {
+  adapter: DatabaseConnection;
   type?: KVType;
   prefix?: string;
   prefixSeparator?: string;
@@ -39,27 +37,28 @@ export type KVPeerSetValueOptions<T extends StringOrObject = StringOrObject> = O
 * ```
 */
 export class KVPeer<
-  T extends StringOrObject = StringOrObject,
-  K = unknown
+  T extends StringOrObject = StringOrObject
 > extends EventEmitter {
   protected type: KVType;
-  protected adapter: DatabaseConnection<K>;
+  protected adapter: DatabaseConnection<T>;
   protected prefix: string;
   protected prefixSeparator: string;
 
-  constructor(options: KVOptions<K>) {
+  constructor(options: KVOptions) {
     super();
 
     const { type, adapter, prefix = "", prefixSeparator = "-" } = options;
 
-    this.adapter = adapter;
+    this.adapter = adapter as DatabaseConnection<T>;
     this.prefix = prefix;
     this.prefixSeparator = prefix.length ? prefixSeparator : "";
 
     this.type = type ?? kDefaultKVType;
   }
 
-  async setValue<U extends StringOrObject = T>(options: KVPeerSetValueOptions<U>): Promise<Result<KeyType, Error>> {
+  async setValue(
+    options: KVPeerSetValueOptions<T>
+  ): Promise<Result<KeyType, Error>> {
     const { key, value, ...rest } = options;
 
     return this.adapter.setValue({
@@ -70,8 +69,8 @@ export class KVPeer<
     });
   }
 
-  async getValue<U extends StringOrObject = T>(key: KeyType): Promise<U | null> {
-    const result = await this.adapter.getValue<U>(this.keyWithPrefix(key), this.type);
+  async getValue(key: KeyType): Promise<T | null> {
+    const result = await this.adapter.getValue(this.keyWithPrefix(key), this.type);
 
     return result;
   }

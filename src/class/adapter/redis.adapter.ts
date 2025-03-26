@@ -42,7 +42,7 @@ export type RedisAdapterOptions = Partial<RedisOptions> & {
   disconnectionTimeout?: number;
 };
 
-export class RedisAdapter extends Redis implements DatabaseConnection {
+export class RedisAdapter <T extends StringOrObject = Record<string, any>> extends Redis implements DatabaseConnection {
   #attempt: number;
   #disconnectionTimeout: number;
 
@@ -94,7 +94,7 @@ export class RedisAdapter extends Redis implements DatabaseConnection {
     };
   }
 
-  async setValue<T extends StringOrObject = Record<string, any>>(
+  async setValue(
     options: RedisSetValueOptions<T>
   ): Promise<Result<KeyType, Error>> {
     const { key, value, expiresIn, type } = options;
@@ -131,7 +131,7 @@ export class RedisAdapter extends Redis implements DatabaseConnection {
     return Ok(finalKey);
   }
 
-  async getValue<T extends unknown>(key: KeyType, type: KVType): Promise<T | null> {
+  async getValue(key: KeyType, type: KVType): Promise<T | null> {
     const finalKey = typeof key === "object" ? Buffer.from(key) : key;
     const result = type === "raw" ?
       await this.get(finalKey) :
