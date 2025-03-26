@@ -174,7 +174,7 @@ describe("RedisAdapter", () => {
             foo: "bar"
           },
           type: "raw"
-        })
+        });
 
         assert.equal(firstKey, firstResultedKey.val);
         assert.equal(secondKey, secondResultedKey.val);
