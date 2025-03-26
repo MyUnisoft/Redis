@@ -84,3 +84,78 @@ IterableIterator<(string | number) | (string | number)[]> {
     }
   }
 }
+
+export function* deepParseInput(input: Record<string, any> | any[]) {
+  if (Array.isArray(input)) {
+    for (const value of input) {
+      if (typeof value === "object" && value !== null) {
+        if (Buffer.isBuffer(value)) {
+          yield value.toString();
+        }
+        else if (Array.isArray(value)) {
+          yield [...deepParseInput(value)];
+        }
+        else {
+          yield Object.fromEntries(deepParseInput(value));
+        }
+      }
+      else {
+        yield value;
+      }
+    }
+  }
+  else {
+    for (const [key, value] of Object.entries(input)) {
+      if (typeof value === "object" && value !== null) {
+        if (Buffer.isBuffer(value)) {
+          yield [key, value.toString()];
+        }
+        else if (Array.isArray(value)) {
+          yield [key, [...deepParseInput(value)]];
+        }
+        else {
+          yield [key, JSON.stringify(Object.fromEntries(deepParseInput(value)))];
+        }
+      }
+      else {
+        yield [key, value];
+      }
+    }
+  }
+}
+
+export function parseInput(object: Record<string, unknown>) {
+  return Object.fromEntries(deepParseInput(object));
+}
+
+export function parseOutput(object: Record<string, any>) {
+  if (typeof object === "string") {
+    if (!Number.isNaN(Number(object))) {
+      return object;
+    }
+    else if (object === "false" || object === "true") {
+      return object;
+    }
+
+    try {
+      return parseOutput(JSON.parse(object));
+    }
+    catch {
+      return object;
+    }
+  }
+
+  if (Array.isArray(object)) {
+    return object.map((val) => parseOutput(val));
+  }
+
+  if (typeof object === "object" && object !== null) {
+    return Object.keys(object).reduce(
+      (obj, key) => Object.assign(obj, {
+        [key]: parseOutput(object[key])
+      }), {}
+    );
+  }
+
+  return object;
+}
