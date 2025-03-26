@@ -63,7 +63,7 @@ describe("MemoryAdapter", () => {
     const fakeKey = "fake";
     const value = { value: "bar", lastTry: Date.now() };
 
-    const memoryAdapter = new MemoryAdapter<{ value: string, lastTry: number }>();
+    const memoryAdapter = new MemoryAdapter<{ value: string; lastTry: number; }>();
 
     test("Given a key that exist, it should return the related value", async() => {
       memoryAdapter.setValue({ key, value });

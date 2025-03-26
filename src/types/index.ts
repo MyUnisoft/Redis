@@ -39,7 +39,6 @@ export type GetConnectionPerfResponse = {
   perf?: number;
 };
 
-
 export type DatabaseConnection<T = unknown> = {
   initialize?(...args: unknown[]): Promise<unknown>;
   close?(forceExit?: boolean): Promise<void>;
@@ -49,4 +48,4 @@ export type DatabaseConnection<T = unknown> = {
   setValue(...args: unknown[]): Promise<Result<KeyType, Error>>;
   deleteValue(...args: unknown[]): Promise<number>
   getValue(...args: unknown[]): Promise<T | null>;
-}
+};

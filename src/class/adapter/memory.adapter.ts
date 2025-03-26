@@ -20,7 +20,7 @@ export interface InMemIsKeyExpiredOptions {
   banTimeInSecond: number;
 }
 
-export class MemoryAdapter <T = unknown> implements DatabaseConnection {
+export class MemoryAdapter<T = unknown> implements DatabaseConnection {
   #values: EphemeralMap<string, T> = new EphemeralMap();
 
   flushall() {

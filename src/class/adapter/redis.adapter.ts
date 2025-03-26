@@ -42,7 +42,7 @@ export type RedisAdapterOptions = Partial<RedisOptions> & {
   disconnectionTimeout?: number;
 };
 
-export class RedisAdapter <T extends StringOrObject = Record<string, any>> extends Redis implements DatabaseConnection {
+export class RedisAdapter<T extends StringOrObject = Record<string, any>> extends Redis implements DatabaseConnection {
   #attempt: number;
   #disconnectionTimeout: number;
 
