@@ -15,8 +15,8 @@ export type KVType = "raw" | "object";
 export type StringOrObject = string | Record<string, any>;
 
 
-export interface KVOptions<T extends unknown = unknown> {
-  adapter: DatabaseConnection<T>;
+export interface KVOptions {
+  adapter: DatabaseConnection;
   type?: KVType;
   prefix?: string;
   prefixSeparator?: string;
@@ -43,7 +43,7 @@ const value = await kvPeer.getValue("myKey"); // "boo"
 
 ## 📜 API
 
-### constructor< T extends StringOrObject = StringOrObject, K = unknown >(options: KVOptions<K>)
+### constructor< T extends StringOrObject = StringOrObject >(options: KVOptions)
 
 You can instantiate a new `KVPeer` object by passing the following options:
 - `adapter: DatabaseConnection` - the database connection object.
@@ -51,7 +51,7 @@ You can instantiate a new `KVPeer` object by passing the following options:
 - `prefix?: string` - a prefix that will be added to the key before storing it in Redis.
 - `prefixSeparator?: string` - a separator that will be used to separate the prefix from the key. Default is `"-"`.
 
-### setValue< U extends StringOrObject = T >(options: KVPeerSetValueOptions<U>): Promise< Result< KeyType, Error > >
+### setValue(options: KVPeerSetValueOptions<T>): Promise< Result< KeyType, Error > >
 
 This method is used to set a key-value pair in Redis.
 
@@ -87,7 +87,7 @@ export type KVPeerSetValueOptions<T extends StringOrObject = StringOrObject> = O
 >;
 ```
 
-### getValue< U extends StringOrObject = T >(key: KeyType): Promise< U | null >
+### getValue(key: KeyType): Promise< T | null >
 
 This method is used to get a value in Redis.
 

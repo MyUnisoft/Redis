@@ -9,7 +9,7 @@
 ## Interface
 
 ```ts
-export interface TimedKVPeerOptions<T extends unknown = unknown> extends Omit<KVOptions<T, K>, "type"> {
+export interface TimedKVPeerOptions extends Omit<KVOptions<T, K>, "type"> {
   /** How long the keys are kept, by default set to 10 minutes **/
   ttl?: number;
   /** A random key callback generator for setValue() method **/
@@ -50,9 +50,9 @@ const store = new TimedKVPeer<MyCustomObject>({
 
 ## 📜 API
 
-### constructor< T extends object, K = unknown >(options: TimedKVPeerOptions<K>)
+### constructor< T extends object >(options: TimedKVPeerOptions)
 
-### setValue< U extends object = T >(options: TimedSetValueOptions<U>): Promise< Result< KeyType, Error > >
+### setValue(options: TimedSetValueOptions<T>): Promise< Result< KeyType, Error > >
 
 this method is used to set a key-value peer
 

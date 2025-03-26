@@ -31,7 +31,9 @@ const memoryAdapter = new MemoryAdapter();
 
 ## 📜 API
 
-### setValue(options: InMemSetValueOptions): Result<KeyType, SetValueError>
+### constructor< T = unknown >()
+
+### setValue(options: InMemSetValueOptions<T>): Promise< Result< KeyType, SetValueError > >
 
 this method is used to set a key-value pair in memory
 
@@ -44,7 +46,7 @@ const value = {
 await memoryAdapter.setValue({ key, value });
 ```
 
-### deleteValue(key: string): number
+### deleteValue(key: string): Promise< number >
 
 this method is used to delete a key-value pair in memory
 
@@ -56,7 +58,7 @@ const result = await memoryAdapter.deleteValue(key);
 console.log(result); // 0 for Failure, 1 for Success
 ```
 
-### getValue(key: string): null | unknown
+### getValue(key: string): Promise< T | null >
 
 this method is used to get a value from memory
 
