@@ -46,6 +46,6 @@ export type DatabaseConnection<T = unknown> = {
   getPerformance?(): Promise<GetConnectionPerfResponse>;
 
   setValue(...args: unknown[]): Promise<Result<KeyType, Error>>;
-  deleteValue(...args: unknown[]): Promise<number>
+  deleteValue(...args: unknown[]): Promise<number>;
   getValue(...args: unknown[]): Promise<T | null>;
 };
