@@ -43,7 +43,7 @@ export type GetSessionIdErr = "Unable to found any cookie session-id. Your sessi
 
 type InitSessionResponse = Result<string, InitSessionErr>;
 
-export interface StoreContextOptions<T extends Store> extends TimedKVPeerOptions<T> {
+export interface StoreContextOptions<T extends Store> extends TimedKVPeerOptions {
   /** Property name used in isUserAuthenticated() method to define if the user is authenticated or not **/
   authenticationField?: keyof T;
   /** HTTP Cookies options. Will be used when creating the session cookie. **/

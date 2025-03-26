@@ -7,6 +7,7 @@ import { Err, Ok, Result } from "@openally/result";
 
 // Import Internal Dependencies
 import { AssertConnectionError, AssertDisconnectionError } from "../error/connection.error.js";
+import { parseInput, parseOutput } from "../../utils/stream/index.js";
 import type { DatabaseConnection, KeyType, Value } from "../../types/index.js";
 
 // CONSTANTS
@@ -42,7 +43,7 @@ export type RedisAdapterOptions = Partial<RedisOptions> & {
   disconnectionTimeout?: number;
 };
 
-export class RedisAdapter extends Redis implements DatabaseConnection {
+export class RedisAdapter<T extends StringOrObject = Record<string, any>> extends Redis implements DatabaseConnection {
   #attempt: number;
   #disconnectionTimeout: number;
 
@@ -94,7 +95,7 @@ export class RedisAdapter extends Redis implements DatabaseConnection {
     };
   }
 
-  async setValue<T extends StringOrObject = Record<string, any>>(
+  async setValue(
     options: RedisSetValueOptions<T>
   ): Promise<Result<KeyType, Error>> {
     const { key, value, expiresIn, type } = options;
@@ -111,7 +112,7 @@ export class RedisAdapter extends Redis implements DatabaseConnection {
       multiRedis.set(finalKey, payload);
     }
     else {
-      const propsMap = new Map(Object.entries(this.parseInput(value)).map(([key, value]) => {
+      const propsMap = new Map(Object.entries(parseInput(value)).map(([key, value]) => {
         if (typeof value === "object") {
           return [key, JSON.stringify(value)];
         }
@@ -131,11 +132,11 @@ export class RedisAdapter extends Redis implements DatabaseConnection {
     return Ok(finalKey);
   }
 
-  async getValue<T extends unknown>(key: KeyType, type: KVType): Promise<T | null> {
+  async getValue(key: KeyType, type: KVType): Promise<T | null> {
     const finalKey = typeof key === "object" ? Buffer.from(key) : key;
     const result = type === "raw" ?
       await this.get(finalKey) :
-      this.parseOutput(await this.hgetall(finalKey));
+      parseOutput(await this.hgetall(finalKey));
 
     if (type === "object" && result && Object.keys(result).length === 0) {
       return null;
@@ -148,80 +149,6 @@ export class RedisAdapter extends Redis implements DatabaseConnection {
     const finalKey = typeof key === "object" ? Buffer.from(key) : key;
 
     return this.del(finalKey);
-  }
-
-  private* deepParseInput(input: Record<string, any> | any[]) {
-    if (Array.isArray(input)) {
-      for (const value of input) {
-        if (typeof value === "object" && value !== null) {
-          if (Buffer.isBuffer(value)) {
-            yield value.toString();
-          }
-          else if (Array.isArray(value)) {
-            yield [...this.deepParseInput(value)];
-          }
-          else {
-            yield Object.fromEntries(this.deepParseInput(value));
-          }
-        }
-        else {
-          yield value;
-        }
-      }
-    }
-    else {
-      for (const [key, value] of Object.entries(input)) {
-        if (typeof value === "object" && value !== null) {
-          if (Buffer.isBuffer(value)) {
-            yield [key, value.toString()];
-          }
-          else if (Array.isArray(value)) {
-            yield [key, [...this.deepParseInput(value)]];
-          }
-          else {
-            yield [key, JSON.stringify(Object.fromEntries(this.deepParseInput(value)))];
-          }
-        }
-        else {
-          yield [key, value];
-        }
-      }
-    }
-  }
-
-  private parseInput(object: Record<string, any>) {
-    return Object.fromEntries(this.deepParseInput(object));
-  }
-
-  private parseOutput(object: Record<string, any>) {
-    if (typeof object === "string") {
-      if (!Number.isNaN(Number(object))) {
-        return object;
-      }
-      else if (object === "false" || object === "true") {
-        return object;
-      }
-
-      try {
-        return this.parseOutput(JSON.parse(object));
-      }
-      catch {
-        return object;
-      }
-    }
-
-    if (Array.isArray(object)) {
-      return object.map((val) => this.parseOutput(val));
-    }
-
-    if (typeof object === "object" && object !== null) {
-      return Object.keys(object).reduce(
-        (obj, key) => Object.assign(obj, { [key]: this.parseOutput(object[key]) }),
-        {}
-      );
-    }
-
-    return object;
   }
 
   private async assertConnection(attempt = this.#attempt): Promise<Result<void, AssertConnectionError>> {

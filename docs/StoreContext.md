@@ -21,7 +21,7 @@ interface FrameworkContext {
   setCookie: (cookieName: string, cookieValue: string | null, opts?: CookieSerializeOptions) => void
 }
 
-interface StoreContextOptions<T extends Store> extends TimedKVPeerOptions<T> {
+interface StoreContextOptions<T extends Store> extends TimedKVPeerOptions {
   /** Property name used in isUserAuthenticated() method to define if the user is authenticated or not **/
   authenticationField?: keyof T;
   /** HTTP Cookies options. Will be used when creating the session cookie. **/
@@ -46,6 +46,8 @@ const store: StoreContext = new StoreContext(options);
 ```
 
 ## 📜 API
+
+### constructor< T extends Store = Store >(options: StoreContextOptions<T>)
 
 ### initSession(id: string, ctx: FrameworkContext, payload: Store & T): Promise< InitSessionResponse >
 

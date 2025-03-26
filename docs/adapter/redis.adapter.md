@@ -56,7 +56,9 @@ const redisAdapter = new RedisAdapter();
 
 ## 📜 API
 
-### setValue(options: RedisSetValueOptions<T>): Result<KeyType, SetValueError>
+### constructor< T extends StringOrObject = Record< string, any > >(options: RedisAdapterOptions = {})
+
+### setValue(options: RedisSetValueOptions<T>): Promise< Result< KeyType, SetValueError > >
 
 this method is used to set a key-value pair in redis
 
@@ -69,7 +71,7 @@ const value = {
 await redisAdapter.setValue({ key, value });
 ```
 
-### getValue(key: KeyType): null | unknown
+### getValue(key: KeyType, type: KVType): Promise< T | null >
 
 this method is used to get a value from redis
 
@@ -81,7 +83,7 @@ const result = await redisAdapter.getValue(key);
 console.log(result); // { foo: "bar" }
 ```
 
-### deleteValue(key: KeyType): number
+### deleteValue(key: KeyType): Promise< number >
 
 this method is used to delete a key-value pair in redis
 
@@ -93,27 +95,4 @@ const result = await redisAdapter.deleteValue(key);
 console.log(result); // 0 for Failure, 1 for Success
 ``` 
 
-### deepParseInput(input: Record<string, any> | any[]): Generator<string | Record<string, any> | any[]>
-
-this method is used to deep parse input
-
-```ts
-const input = { foo: "bar" };
-
-const result = await redisAdapter.deepParseInput(input);
-
-console.log(result); // { foo: "bar" }
-``` 
-
-### parseInput(object: Record<string, any>): Record<string, any>
-
-this method is used to parse input
-
-```ts
-const input = { foo: "bar" };
-
-const result = await redisAdapter.parseInput(input);
-
-console.log(result); // { foo: "bar" }
-```
 

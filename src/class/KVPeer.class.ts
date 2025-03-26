@@ -12,22 +12,9 @@ import type { KVType, RedisSetValueOptions, StringOrObject } from "./adapter/red
 // CONSTANTS
 const kDefaultKVType = "raw";
 
-type IsMetadataDefined<T extends Record<string, any>, K extends Record<string, any> | null = null> =
-  K extends Record<string, any> ? T & { customData: K; } : T;
-
-type MappedValue<T extends StringOrObject, K extends Record<string, any> | null = null> = T extends Record<string, any> ?
-  IsMetadataDefined<T, K> : T;
-
-export type KVMapper<T extends StringOrObject, K extends Record<string, any> | null = null> = (value: T) => MappedValue<T, K>;
-
-export interface KVOptions<
-  T extends StringOrObject = Record<string, any>,
-  K extends Record<string, any> | null = null,
-  L extends unknown = unknown
-> {
-  adapter: DatabaseConnection<L>;
+export interface KVOptions {
+  adapter: DatabaseConnection;
   type?: KVType;
-  mapValue?: KVMapper<T, K>;
   prefix?: string;
   prefixSeparator?: string;
 }
@@ -50,30 +37,28 @@ export type KVPeerSetValueOptions<T extends StringOrObject = StringOrObject> = O
 * ```
 */
 export class KVPeer<
-  T extends StringOrObject = StringOrObject,
-  K extends Record<string, any> | null = null,
-  L extends unknown = unknown
+  T extends StringOrObject = StringOrObject
 > extends EventEmitter {
   protected type: KVType;
-  protected mapValue: KVMapper<T, K>;
-  protected adapter: DatabaseConnection<L>;
+  protected adapter: DatabaseConnection<T>;
   protected prefix: string;
   protected prefixSeparator: string;
 
-  constructor(options: KVOptions<T, K, L>) {
+  constructor(options: KVOptions) {
     super();
 
-    const { type, mapValue, adapter, prefix = "", prefixSeparator = "-" } = options;
+    const { type, adapter, prefix = "", prefixSeparator = "-" } = options;
 
-    this.adapter = adapter;
+    this.adapter = adapter as DatabaseConnection<T>;
     this.prefix = prefix;
     this.prefixSeparator = prefix.length ? prefixSeparator : "";
 
     this.type = type ?? kDefaultKVType;
-    this.mapValue = mapValue ?? this.defaultMapValue;
   }
 
-  async setValue(options: KVPeerSetValueOptions<T>): Promise<Result<KeyType, Error>> {
+  async setValue(
+    options: KVPeerSetValueOptions<T>
+  ): Promise<Result<KeyType, Error>> {
     const { key, value, ...rest } = options;
 
     return this.adapter.setValue({
@@ -84,22 +69,17 @@ export class KVPeer<
     });
   }
 
-  async getValue(key: KeyType): Promise<MappedValue<T, K> | null> {
+  async getValue(key: KeyType): Promise<T | null> {
     const result = await this.adapter.getValue(this.keyWithPrefix(key), this.type);
 
-    return result === null ? null : this.mapValue(result as T);
+    return result;
   }
 
   async deleteValue(key: KeyType): Promise<number> {
     return this.adapter.deleteValue(this.keyWithPrefix(key));
   }
 
-  private defaultMapValue(value: T): MappedValue<T, K> {
-    return value as MappedValue<T, K>;
-  }
-
   protected keyWithPrefix(key: KeyType) {
     return `${this.prefix}${this.prefixSeparator}${key}`;
   }
 }
-

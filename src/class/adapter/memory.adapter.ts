@@ -9,25 +9,25 @@ import type {
 } from "../../types";
 import { SetValueError } from "../error/memory.adapter.error";
 
-export interface InMemSetValueOptions {
+export type InMemSetValueOptions<T = unknown> = {
   key: string;
-  value: unknown;
+  value: T;
   expiresIn?: number;
-}
+};
 
 export interface InMemIsKeyExpiredOptions {
   value: Record<string, unknown>;
   banTimeInSecond: number;
 }
 
-export class MemoryAdapter implements DatabaseConnection {
-  #values: EphemeralMap<string, unknown> = new EphemeralMap();
+export class MemoryAdapter<T = unknown> implements DatabaseConnection {
+  #values: EphemeralMap<string, T> = new EphemeralMap();
 
   flushall() {
     this.#values = new EphemeralMap();
   }
 
-  setValue(options: InMemSetValueOptions): Result<KeyType, SetValueError> {
+  async setValue(options: InMemSetValueOptions<T>): Promise<Result<KeyType, SetValueError>> {
     const { key, value, expiresIn } = options;
 
     const valueExist = this.#values.has(key);
@@ -41,20 +41,11 @@ export class MemoryAdapter implements DatabaseConnection {
     return Ok(key);
   }
 
-  deleteValue(key: string) {
-    const isDelete = this.#values.delete(key);
-
-    return isDelete ? 1 : 0;
+  deleteValue(key: string): Promise<number> {
+    return Promise.resolve(this.#values.delete(key) ? 1 : 0);
   }
 
-  // Implement the no-argument version of getValue
-  getValue(key: string): null | unknown {
-    const valueExist = this.#values.has(key);
-
-    if (!valueExist) {
-      return null;
-    }
-
-    return this.#values.get(key);
+  getValue(key: string): Promise<T | null> {
+    return Promise.resolve(this.#values.get(key) ?? null);
   }
 }
