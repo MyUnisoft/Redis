@@ -20,14 +20,14 @@ describe("MemoryAdapter", () => {
 
     const memoryAdapter = new MemoryAdapter();
 
-    test("Given any value, it should store the given value", () => {
-      const resultedKey = memoryAdapter.setValue({ key, value });
+    test("Given any value, it should store the given value", async() => {
+      const resultedKey = await memoryAdapter.setValue({ key, value });
 
       assert.equal(resultedKey.val, key);
     });
 
-    test("Given a key that already exist, it should throw", () => {
-      const result = memoryAdapter.setValue({ key, value });
+    test("Given a key that already exist, it should throw", async() => {
+      const result = await memoryAdapter.setValue({ key, value });
 
       assert.equal(result.err, true);
 
@@ -41,18 +41,18 @@ describe("MemoryAdapter", () => {
 
     const memoryAdapter = new MemoryAdapter();
 
-    before(() => {
-      memoryAdapter.setValue({ key, value });
+    before(async() => {
+      await memoryAdapter.setValue({ key, value });
     });
 
-    test("Given a value that exist, it return 1", () => {
-      const result = memoryAdapter.deleteValue(key);
+    test("Given a value that exist, it return 1", async() => {
+      const result = await memoryAdapter.deleteValue(key);
 
       assert.equal(result, 1);
     });
 
-    test("Given a value that exist, it return 0", () => {
-      const result = memoryAdapter.deleteValue(key);
+    test("Given a value that exist, it return 0", async() => {
+      const result = await memoryAdapter.deleteValue(key);
 
       assert.equal(result, 0);
     });
@@ -63,18 +63,18 @@ describe("MemoryAdapter", () => {
     const fakeKey = "fake";
     const value = { value: "bar", lastTry: Date.now() };
 
-    const memoryAdapter = new MemoryAdapter();
+    const memoryAdapter = new MemoryAdapter<{ value: string, lastTry: number }>();
 
-    test("Given a key that exist, it should return the related value", () => {
+    test("Given a key that exist, it should return the related value", async() => {
       memoryAdapter.setValue({ key, value });
 
-      const result = memoryAdapter.getValue(key);
+      const result = await memoryAdapter.getValue(key);
 
       assert.equal(result, value);
     });
 
-    test("Given a key that doesn't exist, it should return null", () => {
-      const result = memoryAdapter.getValue(fakeKey);
+    test("Given a key that doesn't exist, it should return null", async() => {
+      const result = await memoryAdapter.getValue(fakeKey);
 
       assert.equal(result, null);
     });

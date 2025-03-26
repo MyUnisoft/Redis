@@ -12,10 +12,9 @@ import {
 } from "../../src/index";
 import { randomValue } from "../fixtures/utils/randomValue";
 
-// Constants & variables
+// CONSTANTS
 const kDefaultCookieOptions = { sameSite: "none", secure: true };
 
-// type Definition
 interface CustomStore extends Store {
   mail?: string;
 }

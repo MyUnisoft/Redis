@@ -29,7 +29,6 @@ describe("KVPeer", () => {
     describe("Working with object type", () => {
       let kvPeer: KVPeer;
 
-      // CONSTANTS
       const [key, value] = ["foo", {
         my: [
           {
@@ -131,9 +130,6 @@ describe("KVPeer", () => {
     });
 
     describe("Working with object type", () => {
-      let kvPeer: KVPeer;
-
-      // CONSTANTS
       const [key, value] = ["foo", {
         my: [
           {
@@ -162,6 +158,8 @@ describe("KVPeer", () => {
           }
         }
       }];
+
+      let kvPeer: KVPeer<typeof value>;
 
       before(async() => {
         kvPeer = new KVPeer({
