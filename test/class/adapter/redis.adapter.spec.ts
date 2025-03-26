@@ -143,9 +143,9 @@ describe("RedisAdapter", () => {
     });
 
     describe("Working with raw type", () => {
-      let redisAdapter: RedisAdapter<string>;
+      let redisAdapter: RedisAdapter;
 
-      const key = "foo";
+      const [firstKey, secondKey] = ["foo", "bar"];
 
       before(async() => {
         redisAdapter = new RedisAdapter({
@@ -163,12 +163,21 @@ describe("RedisAdapter", () => {
 
       test("Given a valid value, it should return the initial key", async() => {
         const firstResultedKey = await redisAdapter.setValue({
-          key,
+          key: firstKey,
           value: "bar",
           type: "raw"
         });
 
-        assert.equal(key, firstResultedKey.val);
+        const secondResultedKey = await redisAdapter.setValue({
+          key: "bar",
+          value: {
+            foo: "bar"
+          },
+          type: "raw"
+        });
+
+        assert.equal(firstKey, firstResultedKey.val);
+        assert.equal(secondKey, secondResultedKey.val);
       });
     });
   });
