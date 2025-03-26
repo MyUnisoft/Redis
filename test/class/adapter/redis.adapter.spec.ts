@@ -163,7 +163,7 @@ describe("RedisAdapter", () => {
 
       test("Given a valid value, it should return the initial key", async() => {
         const firstResultedKey = await redisAdapter.setValue({
-          key: key,
+          key,
           value: "bar",
           type: "raw"
         });
