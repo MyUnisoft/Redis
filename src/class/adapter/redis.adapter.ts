@@ -9,6 +9,7 @@ import { Err, Ok, Result } from "@openally/result";
 import { AssertConnectionError, AssertDisconnectionError } from "../error/connection.error.js";
 import { parseInput, parseOutput } from "../../utils/stream/index.js";
 import type { DatabaseConnection, KeyType, Value } from "../../types/index.js";
+import { SetValueError } from "../error/redis.adapter.error.js";
 
 // CONSTANTS
 const kDefaultAttempt = 4;
@@ -107,9 +108,12 @@ export class RedisAdapter<T extends StringOrObject = StringOrObject> extends Red
       return value === "false" || value === "true" ? Buffer.from(value) : value;
     }
 
+    let finalValue;
+
     if (type === "raw") {
       const payload = typeof value === "object" ? JSON.stringify(value) : booleanStringToBuffer(value);
-      multiRedis.set(finalKey, payload);
+      finalValue = payload;
+      multiRedis.set(finalKey, finalValue);
     }
     else {
       const propsMap = new Map(Object.entries(parseInput(value)).map(([key, value]) => {
@@ -120,14 +124,21 @@ export class RedisAdapter<T extends StringOrObject = StringOrObject> extends Red
         return [key, booleanStringToBuffer(value)];
       })) as Map<string, Value>;
 
-      multiRedis.hmset(finalKey, propsMap);
+      finalValue = Object.fromEntries(propsMap);
+
+      multiRedis.hmset(finalKey, finalValue);
     }
 
     if (expiresIn) {
       multiRedis.pexpire(finalKey, expiresIn);
     }
 
-    await multiRedis.exec();
+    try {
+      await multiRedis.exec();
+    }
+    catch {
+      return Err(new SetValueError(finalKey, finalValue));
+    }
 
     return Ok(finalKey);
   }
