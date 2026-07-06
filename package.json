@@ -48,7 +48,7 @@
   },
   "dependencies": {
     "@openally/ephemeral-map": "^2.0.0",
-    "@openally/result": "^1.3.0",
+    "@openally/result": "^2.0.0",
     "ioredis": "^5.4.2"
   }
 }
